@@ -103,7 +103,7 @@ regression
 ==========
 
 $$\displaystyle L(\boldsymbol{x}, \boldsymbol{y}, m, c) = \frac{1}{2n}\sum_{i=1}^n (y - (mx + c))^2$$
-
+ 
 
 [ad
 types](http://stackoverflow.com/questions/11654168/acceptable-types-in-numeric-ad-functions)
