@@ -1,0 +1,60 @@
+<p><meta charset="utf-8"> <link rel="stylesheet" href="https://tonyday567.github.io/other/lhs.css"></p>
+<h1 id="online-build-status"><a href="https://tonyday567.github.io/online-dev/index.html">online</a> <a href="https://travis-ci.org/tonyday567/online-dev"><img src="https://travis-ci.org/tonyday567/online-dev.png" alt="Build Status" /></a></h1>
+<h2 id="daily-stock-market-data">daily stock market data</h2>
+<p>Exploring the online library using the most data-mined time-series in history; the S&amp;P500 return since 1958. Here's the accumulation of all those daily random variates:</p>
+<div class="figure">
+<img src="other/asum.svg" />
+
+</div>
+<p>And here's the histogram of daily log returns (grey background), and the most recent histogram onlined with a rate of 0.99:</p>
+<div class="figure">
+<img src="other/hist.svg" />
+
+</div>
+<p>Recent returns have been higher and less volatile than the long history. Roll on bull market.</p>
+<h1 id="momentum">momentum</h1>
+<p>Starting with a hypothesis that the current conditional mean is related to historical average return, we can construct a linear map as so:</p>
+<p><br /><span class="math display"><em>r</em><sub><em>t</em></sub> = <em>b</em><em>e</em><em>t</em><em>a</em> * <em>a</em><em>v</em><sub><em>o</em></sub> + <em>a</em><em>l</em><em>p</em><em>h</em><em>a</em> + <em>e</em></span><br /> <br /><span class="math display"><em>e</em> = <em>r</em><sub><em>t</em></sub> − <em>b</em><em>e</em><em>t</em><em>a</em> * <em>a</em><em>v</em><sub><em>o</em></sub> − <em>a</em><em>l</em><em>p</em><em>h</em><em>a</em></span><br /></p>
+<p>Without this structure, each daily value can be seen as a surprise, so that <span class="math inline"><em>e</em> = <em>r</em><sub><em>t</em></sub></span>.</p>
+<p>We can make the results of the regression an online fold as well:</p>
+<div class="figure">
+<img src="other/cmean.svg" />
+
+</div>
+<p>The (online) alpha regression estimate through time is orange and beta is blue. A typical pattern for regression - terms of opposite sign pretending to make sense of noise. This is not the get-rich droid you are looking for.</p>
+<p>But let's say it was. Let's look at the histograms of return, and the residual error term if we include the conditional mean relationship:</p>
+<div class="figure">
+<img src="other/cmeane.svg" />
+
+</div>
+<p>If there is an effect of recent returns on current return stochastics, it's small, but it does move the residual stochastics more towards a more symetrical distribution.</p>
+<h2 id="fat-tails">fat tails</h2>
+<p>We can do similar things for magnitude measures.</p>
+<p><br /><span class="math display"><em>r</em><sub><em>t</em></sub> * *2 = <em>b</em><em>e</em><em>t</em><em>a</em> * <em>r</em>2<sub><em>o</em></sub> + <em>a</em><em>l</em><em>p</em><em>h</em><em>a</em></span><br /> <br /><span class="math display"><em>r</em><sub><em>t</em></sub> = (<em>s</em><em>q</em><em>r</em><em>t</em><em>r</em><sub><em>t</em></sub> * *2)*<em>e</em></span><br />e = r_t / sqrt (beta * r2_o + alpha)</p>
+<div class="figure">
+<img src="other/csqma.svg" />
+
+</div>
+<h2 id="arrows">arrows</h2>
+<div class="figure">
+<img src="other/arrows.svg" />
+
+</div>
+<h2 id="data-munge">data munge</h2>
+<p>https://github.com/pvdbrand/quandl-api</p>
+<p>data is from <a href="https://www.quandl.com/data/YAHOO/INDEX_GSPC-S-P-500-Index">yahoo</a> and consists of the following fields:</p>
+<pre><code>Date,Open,High,Low,Close,Volume,Adjusted Close</code></pre>
+<p>Stats are soley on adjusted close.</p>
+<p>The base unit for analysis (which I've called ys to abstract) is log(1+return). Returns are geometric by nature, and this premap removes the effect before we get to distributions.</p>
+<h2 id="quantiles">quantiles</h2>
+<pre><code>[min, 10th, 20th, .. 90th, max]: -0.229 -0.00427 -0.00277 -0.00178 -0.000526 0.00271 0.00313 0.00579 0.0133 0.0169 0.110
+online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year) -0.0339 0.000708 0.000708 0.000708 0.000708 0.000792 0.00139 0.00240 0.00391 0.00682 0.0133</code></pre>
+<h2 id="digitize">digitize</h2>
+<p>A related computation is to output the quantile of each value:</p>
+<pre><code>first 100 values digitized into quantiles: 0.00 0.00 1.00 1.00 1.00 3.00 2.00 2.00 2.00 2.00 2.00 2.00 2.00 1.00 1.00 2.00 2.00 2.00 2.00 2.00 2.00 1.00 1.00 2.00 1.00 2.00 3.00 1.00 2.00 1.00 1.00 1.00 2.00 1.00 1.00 1.00 3.00 1.00 2.00 1.00 1.00 1.00 2.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 2.00 2.00 1.00 1.00 2.00 2.00 1.00 2.00 1.00 2.00 1.00 1.00 2.00 1.00 2.00 2.00 1.00 1.00 1.00 1.00 1.00 2.00 2.00 2.00 1.00 1.00 4.00 1.00 2.00 1.00 1.00 2.00 2.00 2.00 4.00 1.00 1.00 3.00 2.00 1.00 4.00 1.00 1.00 4.00 4.00 4.00 1.00 1.00 1.00</code></pre>
+<h1 id="regression">regression</h1>
+<p><br /><span class="math display">$$\displaystyle L(\boldsymbol{x}, \boldsymbol{y}, m, c) = \frac{1}{2n}\sum_{i=1}^n (y - (mx + c))^2$$</span><br /></p>
+<p><a href="http://stackoverflow.com/questions/11654168/acceptable-types-in-numeric-ad-functions">ad types</a></p>
+<p><br /><span class="math display"><em>d</em><em>x</em> = <em>A</em>(<em>x</em>)<em>d</em><em>t</em> + √​<em>σ</em>(<em>t</em>)​​​<em>B</em>(<em>x</em>)<em>d</em><em>W</em><em>w</em><em>h</em><em>e</em><em>r</em><em>e</em><em>W</em> ∼ <em>p</em>?</span><br /></p>
+<h2 id="workflow">workflow</h2>
+<pre><code>stack build --copy-bins --exec &quot;online-readme&quot; --exec &quot;pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include&quot; --exec &quot;pandoc -f markdown+lhs -t markdown -i examples/examples.md -o readme.md --filter pandoc-include&quot;</code></pre>
