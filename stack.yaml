@@ -15,3 +15,7 @@ packages:
     git: https://github.com/tonyday567/online.git
     commit: e56d10c903a928b98b1b6ec4156f725da1f2b521
   extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-tdigest
+    commit: 7b16d730b84b1fca2f97dfa3862d5781856d19e9
+  extra-dep: true
