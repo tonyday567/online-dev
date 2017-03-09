@@ -108,8 +108,6 @@ $$\displaystyle L(\boldsymbol{x}, \boldsymbol{y}, m, c) = \frac{1}{2n}\sum_{i=1}
 [ad
 types](http://stackoverflow.com/questions/11654168/acceptable-types-in-numeric-ad-functions)
 
-
-
 $$dx=A(x)dt+√​σ(t)​​​B(x)dW where W∼p?$$
 
 workflow

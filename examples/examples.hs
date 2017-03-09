@@ -29,6 +29,33 @@ import Data.Text (pack)
 import Data.Text.Encoding (encodeUtf8Builder)
 import Data.ByteString.Builder (toLazyByteString)
 import Data.Vector (Vector)
+import Data.Quandl
+
+
+import qualified Data.Attoparsec.Text as A
+import Data.Binary
+
+-- https://www.quandl.com/data/YAHOO/INDEX_GSPC-S-P-500-Index
+
+
+
+getData :: IO (Either Text [Double])
+getData = do
+    t <- getTable "YAHOO" "INDEX_GSPC" Nothing
+    case t of
+      Nothing -> pure $ Left "No data downloaded"
+      Just t1 -> case elemIndex "Close" (daColumnNames t1) of
+        Nothing -> pure $ Left "No Close column"
+        Just i1 ->
+            let d1 = (!! i1) <$> daData t1 in
+            pure $ Right $
+            ( either (const nan) identity
+            . A.parseOnly (A.double <* A.endOfInput))
+            <$> d1
+
+dataToFile :: FilePath -> [Double] -> IO ()
+dataToFile f xs = encodeFile f xs
+
 
 data YahooRep = YahooRep
   { date :: ByteString
@@ -163,6 +190,8 @@ A histogram with r=0.99 with lifetime stats as the grey background
        $ rectColor .~ Color 0.333 0.333 0.333 0.1
        $ def])
       [h, h']
+
+
 {-
 quantiles
 ---
@@ -171,10 +200,10 @@ quantiles
     writeFile "other/quantiles.md" $
         "\n    [min, 10th, 20th, .. 90th, max]:" <>
         mconcat (sformat (" " % prec 3) <$> toList
-                 (L.fold (quantiles' 11) vs)) <>
+                 (L.fold (tQuantiles $ (0.1*) <$> [0..10]) vs)) <>
         "\n    online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year)" <>
         mconcat (sformat (" " % prec 3) <$> toList
-                 (L.fold (quantiles 11 identity 0.996) vs))
+                 (L.fold (onlineQuantiles 0.996 $ (0.1*) <$> [0..10]) vs))
 {-
 
 digitize
@@ -184,7 +213,7 @@ digitize
     writeFile "other/digitize.md" $
         "\n    first 100 values digitized into quantiles:" <>
         mconcat ((sformat (" " % prec 3) <$>)
-                 (take 100 $ L.scan (digitize 5 identity 0.996) vs))
+                 (take 100 $ L.scan (onlineDigitize 0.996 $ (0.1*) <$> [0..10]) vs))
 
     fileSvg "other/scratchpad.png" (400,400) $ withChart def (lines [def])
         [ zipWith V2 [0..] (L.scan L.sum vs)
@@ -204,7 +233,7 @@ cost_ ::
     f a -> f a -> f a -> f (f a) -> a
 cost_ ms c ys xss = av
   where
-    av = (P./( fromIntegral $ length ys)) (L.fold L.sum $ P.abs <$> es)
+    av = (P./( P.fromIntegral $ length ys)) (L.fold L.sum $ P.abs <$> es)
     es = ys Main..-. (L.fold L.sum <$> (c Main..+ (ms Main..* xss)))
 
 
@@ -332,7 +361,7 @@ chartArrow :: Chart' a
 chartArrow = arrows [def] (V4 (Range (-0.5,0.5)) (Range (-0.5,0.5)) (Range (-0.5,0.5)) (Range (-0.5,0.5))) [d] <> axes (chartAspect .~ asquare $ chartRange .~ Just (rangeR2s [pos]) $ def)
   where
     d = zipWith (\(V2 x y) (V2 z w) -> V4 x y z w) pos (gradF costR' step <$> pos)
-    pos = locs0 (Range (-0.004, 0.001)) (Range (-0.005, 0.005)) 10
+    pos = locs0 (Range (-0.006, -0.003)) (Range (-0.001, 0.001)) 20
     step = 0.01
 
 extrap :: (Double, [Double]) -> (Double, [Double])

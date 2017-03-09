@@ -59,7 +59,10 @@ executable online-dev-examples
     ListLike,
     reflection,
     diagrams-lib,
-    tower
+    tower,
+    quandl-api,
+    attoparsec,
+    binary
   default-extensions:
     NoImplicitPrelude,
     UnicodeSyntax,

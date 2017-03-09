@@ -5,17 +5,20 @@ packages:
 - '.'
 - location:
     git: https://github.com/tonyday567/tower.git
-    commit: ff36e3028c84d45329b6dc928150f317e598ee1c
+    commit: 471f23f34fb989b1947625c985ded4e94e6fc86f
   extra-dep: true
 - location:
     git: https://github.com/tonyday567/chart-unit.git
-    commit: 44ab3937808f0210036c0cb2b054af1ca5933c9e
+    commit: 25da6b33dae9dea8aa6144bcfba65b8cb0286a33
   extra-dep: true
 - location:
     git: https://github.com/tonyday567/online.git
-    commit: e56d10c903a928b98b1b6ec4156f725da1f2b521
+    commit: 4a650ec63fd1cb5609a704d34412181393180710
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-tdigest
     commit: 7b16d730b84b1fca2f97dfa3862d5781856d19e9
   extra-dep: true
+
+extra-deps:
+- quandl-api-0.2.1.0
