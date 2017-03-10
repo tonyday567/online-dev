@@ -85,15 +85,15 @@ the effect before we get to distributions.
 quantiles
 ---------
 
-    [min, 10th, 20th, .. 90th, max]: -0.229 -0.00427 -0.00277 -0.00178 -0.000526 0.00271 0.00313 0.00579 0.0133 0.0169 0.110
-    online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year) -0.0339 0.000708 0.000708 0.000708 0.000708 0.000792 0.00139 0.00240 0.00391 0.00682 0.0133
+    [min, 10th, 20th, .. 90th, max]: -0.229 -0.00993 -0.00555 -0.00296 -0.00108 0.000461 0.00204 0.00394 0.00623 0.0102 0.110
+    online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year) -0.229 -0.00777 -0.00489 -0.00282 -0.000546 0.00116 0.00260 0.00423 0.00698 0.0105 0.0494
 
 digitize
 --------
 
 A related computation is to output the quantile of each value:
 
-    first 100 values digitized into quantiles: 0.00 0.00 1.00 1.00 1.00 3.00 2.00 2.00 2.00 2.00 2.00 2.00 2.00 1.00 1.00 2.00 2.00 2.00 2.00 2.00 2.00 1.00 1.00 2.00 1.00 2.00 3.00 1.00 2.00 1.00 1.00 1.00 2.00 1.00 1.00 1.00 3.00 1.00 2.00 1.00 1.00 1.00 2.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 2.00 2.00 1.00 1.00 2.00 2.00 1.00 2.00 1.00 2.00 1.00 1.00 2.00 1.00 2.00 2.00 1.00 1.00 1.00 1.00 1.00 2.00 2.00 2.00 1.00 1.00 4.00 1.00 2.00 1.00 1.00 2.00 2.00 2.00 4.00 1.00 1.00 3.00 2.00 1.00 4.00 1.00 1.00 4.00 4.00 4.00 1.00 1.00 1.00
+    first 100 values digitized into quantiles: 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0
 
 regression
 ==========
@@ -108,4 +108,4 @@ $$dx=A(x)dt+√​σ(t)​​​B(x)dW where W∼p?$$
 workflow
 --------
 
-    stack build --copy-bins --exec "online-readme" --exec "pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include" --exec "pandoc -f markdown+lhs -t markdown -i examples/examples.md -o readme.md --filter pandoc-include"
+    stack build --copy-bins --exec "online-dev-examples run" --exec "pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include" --exec "pandoc -f markdown+lhs -t markdown -i examples/examples.md -o readme.md --filter pandoc-include"

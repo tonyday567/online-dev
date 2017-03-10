@@ -47,14 +47,14 @@
 <p>Stats are soley on adjusted close.</p>
 <p>The base unit for analysis (which I've called ys to abstract) is log(1+return). Returns are geometric by nature, and this premap removes the effect before we get to distributions.</p>
 <h2 id="quantiles">quantiles</h2>
-<pre><code>[min, 10th, 20th, .. 90th, max]: -0.229 -0.00427 -0.00277 -0.00178 -0.000526 0.00271 0.00313 0.00579 0.0133 0.0169 0.110
-online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year) -0.0339 0.000708 0.000708 0.000708 0.000708 0.000792 0.00139 0.00240 0.00391 0.00682 0.0133</code></pre>
+<pre><code>[min, 10th, 20th, .. 90th, max]: -0.229 -0.00993 -0.00555 -0.00296 -0.00108 0.000461 0.00204 0.00394 0.00623 0.0102 0.110
+online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year) -0.229 -0.00777 -0.00489 -0.00282 -0.000546 0.00116 0.00260 0.00423 0.00698 0.0105 0.0494</code></pre>
 <h2 id="digitize">digitize</h2>
 <p>A related computation is to output the quantile of each value:</p>
-<pre><code>first 100 values digitized into quantiles: 0.00 0.00 1.00 1.00 1.00 3.00 2.00 2.00 2.00 2.00 2.00 2.00 2.00 1.00 1.00 2.00 2.00 2.00 2.00 2.00 2.00 1.00 1.00 2.00 1.00 2.00 3.00 1.00 2.00 1.00 1.00 1.00 2.00 1.00 1.00 1.00 3.00 1.00 2.00 1.00 1.00 1.00 2.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 2.00 2.00 1.00 1.00 2.00 2.00 1.00 2.00 1.00 2.00 1.00 1.00 2.00 1.00 2.00 2.00 1.00 1.00 1.00 1.00 1.00 2.00 2.00 2.00 1.00 1.00 4.00 1.00 2.00 1.00 1.00 2.00 2.00 2.00 4.00 1.00 1.00 3.00 2.00 1.00 4.00 1.00 1.00 4.00 4.00 4.00 1.00 1.00 1.00</code></pre>
+<pre><code>first 100 values digitized into quantiles: 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0</code></pre>
 <h1 id="regression">regression</h1>
 <p><br /><span class="math display">$$\displaystyle L(\boldsymbol{x}, \boldsymbol{y}, m, c) = \frac{1}{2n}\sum_{i=1}^n (y - (mx + c))^2$$</span><br /></p>
 <p><a href="http://stackoverflow.com/questions/11654168/acceptable-types-in-numeric-ad-functions">ad types</a></p>
 <p><br /><span class="math display"><em>d</em><em>x</em> = <em>A</em>(<em>x</em>)<em>d</em><em>t</em> + √​<em>σ</em>(<em>t</em>)​​​<em>B</em>(<em>x</em>)<em>d</em><em>W</em><em>w</em><em>h</em><em>e</em><em>r</em><em>e</em><em>W</em> ∼ <em>p</em>?</span><br /></p>
 <h2 id="workflow">workflow</h2>
-<pre><code>stack build --copy-bins --exec &quot;online-readme&quot; --exec &quot;pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include&quot; --exec &quot;pandoc -f markdown+lhs -t markdown -i examples/examples.md -o readme.md --filter pandoc-include&quot;</code></pre>
+<pre><code>stack build --copy-bins --exec &quot;online-dev-examples run&quot; --exec &quot;pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include&quot; --exec &quot;pandoc -f markdown+lhs -t markdown -i examples/examples.md -o readme.md --filter pandoc-include&quot;</code></pre>

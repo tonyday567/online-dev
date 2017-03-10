@@ -61,6 +61,7 @@ executable online-dev-examples
     diagrams-lib,
     tower,
     quandl-api,
+    optparse-generic,
     attoparsec,
     binary
   default-extensions:

@@ -114,6 +114,6 @@ workflow
 --------
 
 ~~~
-stack build --copy-bins --exec "online-readme" --exec "pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include" --exec "pandoc -f markdown+lhs -t markdown -i examples/examples.md -o readme.md --filter pandoc-include"
+stack build --copy-bins --exec "online-dev-examples run" --exec "pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include" --exec "pandoc -f markdown+lhs -t markdown -i examples/examples.md -o readme.md --filter pandoc-include"
 ~~~
 
