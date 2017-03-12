@@ -7,15 +7,25 @@ daily stock market data
 -----------------------
 
 Exploring the online library using the most data-mined time-series in history;
-the S&P500 return since 1958. Here's the accumulation of all those daily
-random variates:
+the S&P500 return since 1958. 
+
+An accumulation of the daily random variates:
 
 ![](other/asum.svg)
 
-And here's the histogram of daily log returns (grey background), and the
-most recent histogram onlined with a rate of 0.99:
+The data is expressed in terms of log(1+return).
+
+A histogram of daily log returns (grey background), and the most recent histogram onlined with a rate of 0.9975:
 
 ![](other/hist.svg)
+
+Over the last 10 years (specifically the trend with a half-life of 4000 days), there have been a lot more days with a slightly positive return than compared with the full history.
+
+
+The full histogram coming out of tdigest:
+
+![](other/histtotal.svg)
+
 
 Recent returns have been higher and less volatile than the long history.
 Roll on bull market.

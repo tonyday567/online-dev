@@ -5,19 +5,23 @@ packages:
 - '.'
 - location:
     git: https://github.com/tonyday567/tower.git
-    commit: 471f23f34fb989b1947625c985ded4e94e6fc86f
+    commit: d6988a7b5503cb33e1c3c7cd65a0a50f18e01862
   extra-dep: true
 - location:
     git: https://github.com/tonyday567/chart-unit.git
-    commit: 25da6b33dae9dea8aa6144bcfba65b8cb0286a33
+    commit: 5bf04a1c1ff0ab035472153560fb81f74326eaeb
   extra-dep: true
 - location:
     git: https://github.com/tonyday567/online.git
-    commit: 4a650ec63fd1cb5609a704d34412181393180710
+    commit: dcb4a08b71b34ceae7db61fdcb89729eb769abfe
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-tdigest
     commit: 7b16d730b84b1fca2f97dfa3862d5781856d19e9
+  extra-dep: true
+- location:
+    git: https://github.com/effectfully/prefolds.git
+    commit: bccf3b756272e87206b90918cd12d4599f32a44a
   extra-dep: true
 
 extra-deps:

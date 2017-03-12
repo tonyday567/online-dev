@@ -63,7 +63,8 @@ executable online-dev-examples
     quandl-api,
     optparse-generic,
     attoparsec,
-    binary
+    binary,
+    vector
   default-extensions:
     NoImplicitPrelude,
     UnicodeSyntax,
