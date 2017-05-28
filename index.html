@@ -2,23 +2,31 @@
 <h1 id="online-build-status"><a href="https://tonyday567.github.io/online-dev/index.html">online</a> <a href="https://travis-ci.org/tonyday567/online-dev"><img src="https://travis-ci.org/tonyday567/online-dev.png" alt="Build Status" /></a></h1>
 <h2 id="daily-stock-market-data">daily stock market data</h2>
 <p>Exploring the online library using the most data-mined time-series in history; the S&amp;P500 return since 1958.</p>
+<p>moving average</p>
+<p><img style="border:5px solid grey" src="other/c1.svg"></p>
+<p>moving standard deviation</p>
+<p><img style="border:5px solid grey" src="other/c2.svg"></p>
+<p>regression on ma</p>
+<p><img style="border:5px solid grey" src="other/c3.svg"></p>
+<p>forecast based on ma regression</p>
+<p><img style="border:5px solid grey" src="other/c4.svg"></p>
+<p>The first 2k data points:</p>
+<div class="figure">
+<img src="other/elems.svg" />
+
+</div>
 <p>An accumulation of the daily random variates:</p>
 <div class="figure">
 <img src="other/asum.svg" />
 
 </div>
 <p>The data is expressed in terms of log(1+return).</p>
-<p>A histogram of daily log returns (grey background), and the most recent histogram onlined with a rate of 0.9975:</p>
+<p>A histogram of daily log returns (grey background), and the most recent histogram onlined with a rate of 0.975:</p>
 <div class="figure">
-<img src="other/hist.svg" />
+<img src="other/hist-compare.svg" />
 
 </div>
-<p>Over the last 10 years (specifically the trend with a half-life of 4000 days), there have been a lot more days with a slightly positive return than compared with the full history.</p>
-<p>The full histogram coming out of tdigest:</p>
-<div class="figure">
-<img src="other/histtotal.svg" />
-
-</div>
+<p>Most recently (specifically the trend with a half-life of 40 days), there have been a lot more days with a slightly positive return than compared with the full history.</p>
 <p>Recent returns have been higher and less volatile than the long history. Roll on bull market.</p>
 <h1 id="momentum">momentum</h1>
 <p>Starting with a hypothesis that the current conditional mean is related to historical average return, we can construct a linear map as so:</p>
@@ -55,8 +63,8 @@
 <p>Stats are soley on adjusted close.</p>
 <p>The base unit for analysis (which I've called ys to abstract) is log(1+return). Returns are geometric by nature, and this premap removes the effect before we get to distributions.</p>
 <h2 id="quantiles">quantiles</h2>
-<pre><code>[min, 10th, 20th, .. 90th, max]: -0.229 -0.00993 -0.00555 -0.00296 -0.00108 0.000461 0.00204 0.00394 0.00623 0.0102 0.110
-online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year) -0.229 -0.00777 -0.00489 -0.00282 -0.000546 0.00116 0.00260 0.00423 0.00698 0.0105 0.0494</code></pre>
+<pre><code>[min, 10th, 20th, .. 90th, max]:</code></pre>
+<p>-0.229 -0.00993 -0.00555 -0.00296 -0.00108 0.000461 0.00204 0.00394 0.00623 0.0102 0.110 online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year) -0.229 -0.00777 -0.00489 -0.00282 -0.000546 0.00116 0.00260 0.00423 0.00698 0.0105 0.0494</p>
 <h2 id="digitize">digitize</h2>
 <p>A related computation is to output the quantile of each value:</p>
 <pre><code>first 100 values digitized into quantiles: 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0 11.0</code></pre>

@@ -59,12 +59,13 @@ executable online-dev-examples
     ListLike,
     reflection,
     diagrams-lib,
-    tower,
+    numhask,
     quandl-api,
     optparse-generic,
     attoparsec,
     binary,
-    vector
+    vector,
+    numhask-range
   default-extensions:
     NoImplicitPrelude,
     UnicodeSyntax,

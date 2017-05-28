@@ -9,23 +9,37 @@ daily stock market data
 Exploring the online library using the most data-mined time-series in history;
 the S&P500 return since 1958. 
 
+moving average
+
+<img style="border:5px solid grey" src="other/c1.svg">
+
+moving standard deviation
+
+<img style="border:5px solid grey" src="other/c2.svg">
+
+regression on ma
+
+<img style="border:5px solid grey" src="other/c3.svg">
+
+forecast based on ma regression
+
+<img style="border:5px solid grey" src="other/c4.svg">
+
+The first 2k data points:
+
+![](other/elems.svg)
+
 An accumulation of the daily random variates:
 
 ![](other/asum.svg)
 
 The data is expressed in terms of log(1+return).
 
-A histogram of daily log returns (grey background), and the most recent histogram onlined with a rate of 0.9975:
+A histogram of daily log returns (grey background), and the most recent histogram onlined with a rate of 0.975:
 
-![](other/hist.svg)
+![](other/hist-compare.svg)
 
-Over the last 10 years (specifically the trend with a half-life of 4000 days), there have been a lot more days with a slightly positive return than compared with the full history.
-
-
-The full histogram coming out of tdigest:
-
-![](other/histtotal.svg)
-
+Most recently (specifically the trend with a half-life of 40 days), there have been a lot more days with a slightly positive return than compared with the full history.
 
 Recent returns have been higher and less volatile than the long history.
 Roll on bull market.

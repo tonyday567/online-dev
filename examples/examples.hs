@@ -4,7 +4,7 @@ import Online
 
 import Chart
 import Data.Binary
-import Data.List hiding (lines)
+import Data.List
 import Data.Quandl
 import Data.Reflection
 import Formatting
@@ -12,10 +12,9 @@ import Numeric.AD
 import Numeric.AD.Internal.Reverse
 import Options.Generic
 
-import Protolude hiding ((%), (&), log, (+), (-), (*), (/), (**), fromIntegral, abs, one)
-import Tower.Algebra.Num
-import qualified Tower.Algebra as T
+import NumHask.Prelude hiding ((%))
 import qualified Control.Foldl as L
+import Control.Lens (element)
 import qualified Data.Attoparsec.Text as A
 import qualified Data.ListLike as List
 import qualified Protolude as P
@@ -82,74 +81,31 @@ lret xs = (\x -> log (1+x)) <$> L.fold dif (reverse xs)
 getData :: IO [Double]
 getData = either (const []) lret <$> decodeFileOrFail "other/data.bin"
 
-compareHistsChart :: DealOvers -> Histogram -> Histogram -> Chart' a
-compareHistsChart o h1 h2 =
-    let h = fromHist o h1
-        h' = fromHist o h2
-        h'' = zipWith (\(V4 x y z w) (V4 _ _ _ w') -> V4 x y z (w-w')) h h'
-        flat = Aspect $ V2 (Range (-0.75,0.75)) (Range (-0.25,0.25))
-    in
-      pad 1.1 $ 
-        beside (r2 (0,-1)) (hists
-        [ def
-        , rectBorderColor .~ Color 0 0 0 0
-        $ rectColor .~ Color 0.333 0.333 0.333 0.1
-        $ def ] sixbyfour [h,h'] <>
-        axes (ChartConfig 1.1
-              [def]
-              (Just (rangeRects [h,h']))
-              sixbyfour (uncolor transparent)))
-        (hists
-        [ rectBorderColor .~ Color 0 0 0 0
-        $ rectColor .~ Color 0.888 0.333 0.333 0.8
-        $ def ] flat [h''] <>
-        axes (ChartConfig 1.1
-              [ axisAlignedTextBottom .~ 0.65 $
-                axisAlignedTextRight .~ 1 $
-                axisOrientation .~ Y $
-                axisPlacement .~ AxisLeft $
-                def
-              ]
-              (Just (rangeRects [h'']))
-              flat (uncolor transparent)))
-
 run :: RunConfig -> [Double] -> IO ()
 run cfg xs = do
     let gr = fromMaybe 20 (grain cfg)
+    let d0 = fmap r2 <$>
+            zipWith (\x y -> [(x,0.0),(x,y)]) (fromIntegral <$> [(0::Int)..]) (take 2000 xs)
+    fileSvg "other/elems.svg" (600,400) $
+        lineChart (repeat $ LineConfig 0.001 (Color 0.3 0.3 0.3 1)) sixbyfour d0 <>
+        axes ( chartRange .~ Just (rangeR2s d0) $ chartAxes .~
+               [axisPlacement .~ AxisLeft $ axisOrientation .~ Y $ def] $ def)
+
     fileSvg
         "other/asum.svg" (300,300)
         ( withChart def
-          (lines [LineConfig 0.002 (Color 0.33 0.33 0.33 0.4)])
+          (lineChart [LineConfig 0.002 (Color 0.33 0.33 0.33 0.4)])
           [zipWith V2 [0..] (L.scan L.sum xs)]
         )
 
-    let cuts = rangeCuts 4 (-0.02) 0.02
+    let cuts = linearSpace OuterPos (Range (-0.02,0.02)) 20
     let h = toHistogramWithCuts cuts $ L.fold (onlineDigestHist 0.975) xs
     let h' = toHistogramWithCuts cuts $ L.fold tDigestHist xs
-    fileSvg "other/hist.svg" (300,300) $ compareHistsChart (IncludeOvers 0.01) h h'
-
-    let htotal = fromHist IgnoreOvers $ toHistogram $ L.fold tDigestHist xs    
-    fileSvg "other/histtotal.svg" (300,300) $ pad 1.1
-        (hists
-        [ def
-        , rectBorderColor .~ Color 0 0 0 0
-        $ rectColor .~ Color 0.333 0.333 0.333 0.1
-        $ def ] sixbyfour [htotal] <>
-        axes (ChartConfig 1.1
-              [ axisTickStyle .~ TickLabels (labelsFromCuts (IncludeOvers 0.01) cuts)
-              $ def]
-              (Just (rangeRects [htotal]))
-              sixbyfour (uncolor transparent)))
-
-    fileSvg "other/elems.svg" (300,300)
-        ( withChart
-          (chartAxes . element 0 . axisTickStyle .~ TickNone $ def)
-          (hists [def])
-          [zipWith4 V4 [0..] (replicate 2000 0) [1..] (take 2000 xs)])
+    fileSvg "other/hist-compare.svg" (300,300) $ histCompare (IncludeOvers 0.01) h h'
 
     fileSvg "other/cmean.svg" (300,300) $
         withChart def
-        (lines
+        (lineChart
          [ LineConfig 0.002 (Color 0.88 0.33 0.12 1)
          , LineConfig 0.002 (Color 0.12 0.33 0.83 1)
          ])
@@ -162,29 +118,96 @@ run cfg xs = do
           L.scan (alpha 0.99) $ drop 1 $
           zip xs (L.scan (ma 0.9975) xs)
         ]
+        
+    c1 $ withChart def
+        (lineChart
+         [ LineConfig 0.002 (Color 0.33 0.33 0.33 1)
+         , LineConfig 0.001 (Color 0.7 0.7 0.33 1)
+         ])
+        [ zipWith V2 [0..] $
+          drop 1 $
+          L.scan (ma 0.9975) xs
+        , zipWith V2 [0..] $
+          drop 1 $
+          L.scan (ma 0.99) xs
+        ]
 
-    let cmeane =
-         [ fromHist IgnoreOvers $ L.fold (Online.hist (rangeCuts 6 (-0.03) 0.03) 1) $
-          take 5000 $ drop 100 $
-          L.scan ((\r b o a -> r - b * o - a) <$>
+    c2 $ withChart def
+        (lineChart
+         [ LineConfig 0.002 (Color 0.33 0.33 0.33 1)
+         , LineConfig 0.001 (Color 0.7 0.7 0.33 1)
+         ])
+        [ zipWith V2 [0..] $
+          drop 1 $
+          L.scan (std 0.9975) xs
+        , zipWith V2 [0..] $
+          drop 1 $
+          L.scan (std 0.99) xs
+        ]
+
+    c3 $ withChart def
+        (lineChart
+         [ LineConfig 0.002 (Color 0.88 0.33 0.12 1)
+         , LineConfig 0.002 (Color 0.12 0.33 0.83 1)
+         ])
+        [ zipWith V2 [0..] $
+          drop 2 $
+          L.scan (beta 0.99) $ drop 1 $
+          zip xs (L.scan (ma 0.9975) xs)
+        , zipWith V2 [0..] $
+          drop 2 $
+          L.scan (alpha 0.99) $ drop 1 $
+          zip xs (L.scan (ma 0.9975) xs)
+        ]
+
+    c4 $ withChart def
+        (lineChart
+         [ LineConfig 0.002 (Color 0.88 0.33 0.12 1)
+         ])
+        [ zipWith V2 [0..] $
+          drop 2 $
+          L.scan ((\b o a -> a + b * o) <$>
+             beta 0.99 <*>
+             L.premap snd (ma 0.00001) <*>
+             alpha 0.99) $
+           drop 1 $ zip xs (L.scan (ma 0.9975) xs)
+        ]
+
+    fileSvg "other/c5.svg" (600,400) $
+        histChart [def] sixbyfour
+        [ fromHist (IncludeOvers 0.001)
+        $ toHistogramWithCuts (linearSpace OuterPos (Range (-0.004,0.004)) 16)
+        $ L.fold tDigestHist $ drop 2 $
+          L.scan ((\b o a -> a + b * o) <$>
+             beta 0.99 <*>
+             L.premap snd (ma 0.00001) <*>
+             alpha 0.99) $
+           drop 1 $ zip xs (L.scan (ma 0.9975) xs)]
+
+    fileSvg "other/c6.svg" (600,400) $
+        scatterChart [ScatterConfig 0.0005 (Color 0.33 0.33 0.33 0.02)] sixbyfour
+        [ fmap (\(x,y) -> V2 x y) $ drop 2 $
+          L.scan ((\r b o a -> (r,a+b*o)) <$>
              L.premap fst (ma 0.00001) <*>
              beta 0.99 <*>
              L.premap snd (ma 0.00001) <*>
              alpha 0.99) $
-           drop 400 $ zip xs (L.scan (ma 0.9975) xs)
-         , fromHist IgnoreOvers $ L.fold (Online.hist (rangeCuts 6 (-0.03) 0.03) 1) $
-           take 5000 $ drop 100 xs
-         ]
+           drop 1 $ zip xs (L.scan (ma 0.9975) xs)]
 
-    fileSvg "other/cmeane.svg" (300,300) $
-        withChart (chartRange .~ Just (rangeRects cmeane) $ def)
-        (hists
-         [def, RectConfig 0 (Color 0.88 0.33 0.12 0) (Color 0.33 0.33 0.12 0.3)])
-        cmeane
 
+    let h = toHistogramWithCuts cuts $ L.fold tDigestHist $
+          take 5000 $ drop 100 $
+          L.scan ((\r b o a -> r - b * o - a) <$>
+             L.premap fst (ma 0.00001) <*>
+             beta 0.975 <*>
+             L.premap snd (ma 0.00001) <*>
+             alpha 0.975) $
+           drop 400 $ zip xs (L.scan (ma 0.975) xs)
+    let h' = toHistogramWithCuts cuts $ L.fold tDigestHist $ take 5000 $ drop 100 xs
+    fileSvg "other/cmeane.svg" (300,300) $ histCompare (IncludeOvers 0.01) h h'
     fileSvg "other/csqma.svg" (300,300) $
         withChart def
-        (lines
+        (lineChart
          [ LineConfig 0.002 (Color 0.88 0.33 0.12 1)
          , LineConfig 0.002 (Color 0.12 0.33 0.83 1)
          ])
@@ -194,7 +217,7 @@ run cfg xs = do
            drop 100 $ zip ((**2)<$> xs) (L.scan (sqma 0.9975) xs))
 
     fileSvg "other/arrows.svg" (600,600)
-        (chartGrad (V2 T.one T.one) gr 0.01 xs # pad 1.1)
+        (chartGrad (Rect (V2 one one)) gr 0.01 xs # pad 1.1)
 
 {-
 
@@ -206,7 +229,7 @@ online mean and std at a 0.99 decay rate:
 
 -}
     let st = drop 1 $ L.scan ((,) <$> ma 0.9 <*> std 0.99) xs
-    fileSvg "other/moments.svg" (300,300) (withChart def (lines [LineConfig 0.002 (Color 0.33 0.33 0.33 0.4), LineConfig 0.002 (Color 0.88 0.33 0.12 0.4)])
+    fileSvg "other/moments.svg" (300,300) (withChart def (lineChart [LineConfig 0.002 (Color 0.33 0.33 0.33 0.4), LineConfig 0.002 (Color 0.88 0.33 0.12 0.4)])
         [ zipWith V2 [0..] (fst <$> st)
         , zipWith V2 [0..] (snd <$> st)
         ])
@@ -215,7 +238,7 @@ scan of 1000 recent ma 0.99 and std 0.99, in basis points, rendered as a scatter
 
 -}
     fileSvg "other/scatter.svg" (500,500) $
-        withChart def (scatters [def]) [drop (length xs - 1000) $
+        withChart def (scatterChart [def]) [drop (length xs - 1000) $
         fmap (10000*) <$> L.scan (V2 <$> ma 0.99 <*> std 0.99) xs]
 
 
@@ -225,10 +248,10 @@ quantiles
 
 -}
     writeFile "other/quantiles.md" $
-        "\n    [min, 10th, 20th, .. 90th, max]:" <>
+        "\n    [min, 10th, 20th, .. 90th, max]:\n" <>
         mconcat (sformat (" " % prec 3) <$> toList
                  (L.fold (tDigestQuantiles $ (0.1*) <$> [0..10]) xs)) <>
-        "\n    online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year)" <>
+        "\n    online [min, 10th, 20th, .. 90th, max] with decay rate = 0.996 (one year)\n" <>
         mconcat (sformat (" " % prec 3) <$> toList
                  (L.fold (onlineQuantiles 0.996 $ (0.1*) <$> [0..10]) xs))
 {-
@@ -242,7 +265,7 @@ digitize
         mconcat ((sformat (" " % prec 3) <$>)
                  (take 100 $ L.scan (onlineDigitize 0.996 $ (0.1*) <$> [0..10]) xs))
 
-    fileSvg "other/scratchpad.png" (400,400) $ withChart def (lines [def])
+    fileSvg "other/scratchpad.png" (400,400) $ withChart def (lineChart [def])
         [ zipWith V2 [0..] (L.scan L.sum xs)
         , zipWith V2 [0..] ((2*) <$> L.scan L.sum xs)]
 
@@ -256,14 +279,11 @@ costAbs ::
     ( List.ListLike (f a) a
     , Fractional a
     , Foldable f
-    , Applicative f
-    , Ring a
-    , Normed a a
-    , MultiplicativeGroup a) =>
+    , Applicative f) =>
     f a -> f a -> f a -> f (f a) -> a
 costAbs ms c ys xss = av
   where
-    av = (/( fromIntegral $ length ys)) (L.fold L.sum $ abs <$> es)
+    av = (P./( P.fromIntegral $ length ys)) (L.fold L.sum $ P.abs <$> es)
     es = ys ~-~ (L.fold L.sum <$> (c ~+ (ms ~* xss)))
 
 (~*) :: (Num a, Applicative f) => f a -> f (f a) -> f (f a)
@@ -280,7 +300,7 @@ costScan xs (m:c:_) = costAbs [m] [c] (auto <$> drop 1 xs) [fmap auto <$> drop 1
 costScan xs [] = costAbs [] [] (auto <$> drop 1 xs) [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
 costScan xs [m] = costAbs [m] [] (auto <$> drop 1 xs) [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
 
-grid :: (Fractional b) => Range b -> Int -> [b]
+grid :: (Field b, FromInteger b, Fractional b) => Range b -> Int -> [b]
 grid (Range (l,u)) steps =
     (\a -> l + (u - l) / fromIntegral steps * a) .
     fromIntegral <$>
@@ -306,9 +326,9 @@ addGrad ::
 addGrad f xys step =
     zipWith (\(V2 x y) (V2 z w) -> V4 x y z w) xys (gradF f step <$> xys)
 
-chartGrad :: XY -> Int -> Double -> [Double] -> Chart' a
-chartGrad (V2 rx ry) grain step xs =
-    arrows [def] (V4 T.one T.one T.one T.one) [d] <> axes
+chartGrad :: Rect Double -> Int -> Double -> [Double] -> Chart' a
+chartGrad (Rect (V2 rx ry)) grain step xs =
+    arrowChart def (V4 one one one one) d <> axes
     (chartAspect .~ asquare $ chartRange .~ Just (rangeR2s [pos]) $ def)
   where
     d = addGrad (costScan xs) pos step
@@ -332,3 +352,17 @@ extrap xs (eta0, x0) = expand eta0 x0
         x' = x ~-~ ((eta *) <$> g)
         (_,g) = grad' (costScan xs) x
         (res',_) = grad' (costScan xs) x'
+
+c1 :: Chart SVG -> IO ()
+c1 = fileSvg "other/c1.svg" (600,400)
+
+c2 :: Chart SVG -> IO ()
+c2 = fileSvg "other/c2.svg" (600,400)
+
+c3 :: Chart SVG -> IO ()
+c3 = fileSvg "other/c3.svg" (600,400)
+
+c4 :: Chart SVG -> IO ()
+c4 = fileSvg "other/c4.svg" (600,400)
+
+
