@@ -6,4 +6,6 @@ See https://tonyday567.github.io/online-dev/index.html
 workflow
 ===
 
-    stack build --copy-bins --exec "online-dev-examples run" --exec "pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include"
+~~~
+stack build && $(stack path --local-install-root)/bin/online-dev-examples run && $(stack path --local-bin)/pandoc -f markdown+lhs -t html -i examples/examples.md -o index.html --filter pandoc-include
+~~~
