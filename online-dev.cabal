@@ -52,7 +52,6 @@ executable online-dev-examples
     reflection,
     bytestring,
     numhask,
-    quandl-api,
     cassava,
     optparse-generic,
     attoparsec,

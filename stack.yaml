@@ -3,14 +3,15 @@ resolver: lts-8.9
 # Local packages, usually specified by relative directory name
 packages:
   - '.'
-  - location:
-      git: https://github.com/tonyday567/online.git
-      commit: a552781078449cba2eb2a216460b12f67c9e06b5
-    extra-dep: true
+  - '../online'
+  - '../chart-unit'
+
+#- location:
+#      git: https://github.com/tonyday567/online.git
+#      commit: a552781078449cba2eb2a216460b12f67c9e06b5
+#    extra-dep: true
 
 extra-deps:
-  - quandl-api-0.2.1.0
   - tdigest-0.1
   - numhask-0.0.4
-  - numhask-range-0.0.2
-  - chart-unit-0.3.1
+  - numhask-range-0.0.3

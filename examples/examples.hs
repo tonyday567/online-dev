@@ -10,7 +10,6 @@ import Data.List
 import Data.Csv
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Vector as V
-import Data.Quandl
 import Data.Reflection
 import Numeric.AD
 import Numeric.AD.Internal.Reverse
@@ -18,13 +17,13 @@ import Options.Generic
 
 import NumHask.Prelude hiding ((%))
 import qualified Control.Foldl as L
-import qualified Data.Attoparsec.Text as A
+-- import qualified Data.Attoparsec.Text as A
 import qualified Data.ListLike as List
 import qualified Protolude as P
 import GHC.Base (String)
 import Data.Default()
 
-data Opts = Download | FromCsvFile String | Run (Maybe RunConfig)
+data Opts = FromCsvFile String | Run (Maybe RunConfig)
    deriving (Generic, Show)
 
 data RunConfig = RunConfig { grain :: Maybe Int } deriving (Generic, Show, Read)
@@ -61,13 +60,6 @@ main :: IO ()
 main = do
    o :: Opts <- getRecord "online-dev example"
    case o of
-     Download -> do
-         t <- downloadData
-         case t of
-           (Left e) -> putStrLn $ "download failed: " <> e
-           (Right xs) -> do
-               putStrLn $ "data points: " <> (show $ length xs :: Text)
-               encodeFile "other/data.bin" (reverse xs)
      FromCsvFile f -> do
          s <- B.readFile f
          case decodeByName s of
@@ -80,23 +72,6 @@ main = do
 
 -- decode' <$> simpleHttp $ createUrl options items
 -- https://finance.yahoo.com/quote/%5EGSPC/history?period1=-631015200&period2=1497103200&interval=1d&filter=history&frequency=1d
-
-
--- | get data from this site:
--- https://www.quandl.com/data/YAHOO/INDEX_GSPC-S-P-500-Index
-downloadData :: IO (Either Text [Double])
-downloadData = do
-    t <- getTable "YAHOO" "INDEX_GSPC" Nothing
-    case t of
-      Nothing -> pure $ Left "No data downloaded"
-      Just t1 -> case elemIndex "Close" (daColumnNames t1) of
-        Nothing -> pure $ Left "No Close column"
-        Just i1 ->
-            let d1 = (!! i1) <$> daData t1 in
-            pure $ Right $
-            ( either (const nan) identity
-            . A.parseOnly (A.double <* A.endOfInput))
-            <$> d1
 
 -- | compute the log return from a price series
 -- returns are geometric by nature, and using log(1+daily return) as the base unit of the time series leads to all sorts of benefits, not least of which is you can then add up the variates to get the cumulative return, without having to go through log and exp chicanery.  Ditto for distributional assumptions.
@@ -125,22 +100,22 @@ run1 xs = do
     c "other/c1.svg" 1000 (L.scan . ma) xs
     c "other/c2.svg" 1000 (L.scan . std) xs
     c "other/c3.svg" 1000
-        (\r xs -> drop 2 $ L.scan (beta r) $ drop 2 $ zip xs (L.scan (ma r) xs)) xs
+        (\r xs -> drop 2 $ L.scan (beta (ma r)) $ drop 2 $ zip xs (L.scan (ma r) xs)) xs
     c "other/c4.svg" 1000
-        (\r xs -> L.scan (alpha r) $ drop 2 $ zip xs (L.scan (ma r) xs)) xs
+        (\r xs -> L.scan (alpha (ma r)) $ drop 2 $ zip xs (L.scan (ma r) xs)) xs
     c "other/c5.svg" 1000
         (\r xs ->
            L.scan ((\b o a -> a + b * o) <$>
-             beta r <*>
+             beta (ma r) <*>
              L.premap snd (ma 0.00001) <*>
-             alpha r) $
+             alpha (ma r)) $
            drop 2 $
            zip xs (L.scan (ma r) xs)) xs
 
     let fore r1 r0 = L.scan ((\b o a -> a + b * o) <$>
-             beta r1 <*>
+             beta (ma r1) <*>
              L.premap snd (ma 0.00001) <*>
-             alpha r1) $
+             alpha (ma r1)) $
            drop 2 $ zip xs (L.scan (ma r0) xs)
 
     let fhist = fromHist (IncludeOvers 0.0001)
@@ -156,9 +131,9 @@ run1 xs = do
         $ def)
 
     let fore2 r1 r0 = L.scan ((\b o a r -> (V2 (a + b * o) r)) <$>
-             beta r1 <*>
+             beta (ma r1) <*>
              L.premap snd (ma 0.00001) <*>
-             alpha r1 <*>
+             alpha (ma r1) <*>
              L.premap fst (ma 0.00001) ) $
            drop 2 $ zip xs (L.scan (ma r0) xs)
 
@@ -169,9 +144,9 @@ run1 xs = do
 
 fore2 :: (Floating a, Multiplicative a, Additive a) => a -> a -> [a] -> [V2 a]
 fore2 r1 r0 xs = L.scan ((\b o a r -> (V2 (a + b * o) r)) <$>
-             beta r1 <*>
+             beta (ma r1) <*>
              L.premap snd (ma 0.00001) <*>
-             alpha r1 <*>
+             alpha (ma r1) <*>
              L.premap fst (ma 0.00001) ) $
            drop 2 $ zip xs (L.scan (ma r0) xs)
 
@@ -190,11 +165,11 @@ runOld xs = do
          ])
         [ zipWith V2 [0..] $
           take 5000 $ drop 100 $ drop 2 $
-          L.scan (beta 0.99) $ drop 1 $
+          L.scan (beta (ma 0.99)) $ drop 1 $
           zip xs (L.scan (ma 0.9975) xs)
         , zipWith V2 [0..] $
           take 5000 $ drop 100 $ drop 2 $
-          L.scan (alpha 0.99) $ drop 1 $
+          L.scan (alpha (ma 0.99)) $ drop 1 $
           zip xs (L.scan (ma 0.9975) xs)
         ]
 
