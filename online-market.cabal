@@ -1,13 +1,10 @@
-name:
-  online-dev
-version:
-  0.1.0.0
-synopsis:
-  online statistics - development library
+name: online-market
+version: 0.1.0
+synopsis: online market daily statistics
 description:
-  see readme.md for description.
+  Applying the online library to daily market returns.
 homepage:
-  https://github.com/tonyday567/online-dev
+  https://github.com/tonyday567/online-market
 license:
   BSD3
 license-file:
@@ -25,7 +22,7 @@ build-type:
 cabal-version:
   >=1.10
 
-executable online-dev-examples
+executable online-market-examples
   default-language:
     Haskell2010
   ghc-options:
@@ -55,7 +52,8 @@ executable online-dev-examples
     cassava,
     optparse-generic,
     attoparsec,
-    binary
+    binary,
+    tdigest
   default-extensions:
     NoImplicitPrelude,
     UnicodeSyntax,

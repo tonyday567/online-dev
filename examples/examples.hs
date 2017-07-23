@@ -22,6 +22,8 @@ import qualified Data.ListLike as List
 import qualified Protolude as P
 import GHC.Base (String)
 import Data.Default()
+import Data.TDigest
+import Data.List.NonEmpty (NonEmpty, last)
 
 data Opts = FromCsvFile String | Run (Maybe RunConfig)
    deriving (Generic, Show)
@@ -352,3 +354,18 @@ regression
 -}
 
 -}
+
+toHistogramWithCuts :: [Double] -> Maybe (NonEmpty HistBin) -> Histogram
+toHistogramWithCuts cuts Nothing = Histogram cuts mempty
+toHistogramWithCuts cuts (Just bins) =
+        L.fold (L.Fold step0 (Histogram cuts mempty) done0) bins
+      where
+        step0 h (HistBin l u _ v _) = insertW h ((l+u)/2) v
+        done0 = identity
+
+toHistogram :: Maybe (NonEmpty HistBin) -> Histogram
+toHistogram Nothing = Histogram mempty mempty
+toHistogram h@(Just bins) = toHistogramWithCuts cuts h
+      where
+        bins'= toList bins
+        cuts = ((\(HistBin l _ _ _ _) -> l) <$> bins') <> [(\(HistBin _ u _ _ _) -> u) $ Data.List.NonEmpty.last bins]

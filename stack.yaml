@@ -1,17 +1,10 @@
-resolver: lts-8.9
+resolver: lts-8.23
 
-# Local packages, usually specified by relative directory name
 packages:
   - '.'
-  - '../online'
-  - '../chart-unit'
-
-#- location:
-#      git: https://github.com/tonyday567/online.git
-#      commit: a552781078449cba2eb2a216460b12f67c9e06b5
-#    extra-dep: true
 
 extra-deps:
-  - tdigest-0.1
-  - numhask-0.0.4
-  - numhask-range-0.0.3
+  - chart-unit-0.4.1
+  - numhask-0.0.7
+  - numhask-range-0.0.4
+  - online-0.2.0
