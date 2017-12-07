@@ -1,204 +1,240 @@
+{-# LANGUAGE OverloadedLabels #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-import Online
-
-import Chart hiding ((<&>))
+import Chart
+import Control.Lens hiding ((<&>))
 import Data.Binary
-import Data.List
 import Data.Csv
-import qualified Data.ByteString.Lazy as B
-import qualified Data.Vector as V
+import Data.Default ()
+import Data.List
+import Data.List.NonEmpty (NonEmpty, last)
 import Data.Reflection
+import Data.TDigest
+import Data.Time
+import Diagrams.Backend.SVG (SVG)
+import Diagrams.Prelude (Diagram)
+import GHC.Base (String)
+import NumHask.Histogram
+import NumHask.Prelude hiding ((<&>))
+-- import NumHask.Space
 import Numeric.AD
 import Numeric.AD.Internal.Reverse
+import Online
 import Options.Generic
 
-import NumHask.Prelude hiding ((%))
 import qualified Control.Foldl as L
--- import qualified Data.Attoparsec.Text as A
+import qualified Data.ByteString.Lazy as B
 import qualified Data.ListLike as List
+import qualified Data.Vector as V
 import qualified Protolude as P
-import GHC.Base (String)
-import Data.Default()
-import Data.TDigest
-import Data.List.NonEmpty (NonEmpty, last)
 
-data Opts = FromCsvFile String | Run (Maybe RunConfig)
-   deriving (Generic, Show)
+data Opts
+  = FromCsvFile String
+  | Run (Maybe RunConfig)
+  deriving (Generic, Show)
 
-data RunConfig = RunConfig { grain :: Maybe Int } deriving (Generic, Show, Read)
+newtype RunConfig = RunConfig
+  { grain :: Maybe Int
+  } deriving (Generic, Show, Read)
 
 instance Default RunConfig where
-    def = RunConfig Nothing
+  def = RunConfig Nothing
 
 instance ParseRecord RunConfig
+
 instance ParseFields RunConfig
+
 instance ParseField RunConfig
+
 instance ParseRecord Opts
 
 data YahooData = YahooData
-    { yDate :: !Text
-    , yOpen :: Float
-    , yHigh :: Float
-    , yLow :: Float
-    , yClose :: Float
-    , yAdjClose :: !Float
-    , yVolume :: Float
-    }
+  { yDate :: !Text
+  , yOpen :: Float
+  , yHigh :: Float
+  , yLow :: Float
+  , yClose :: Float
+  , yAdjClose :: !Float
+  , yVolume :: Float
+  }
 
 instance FromNamedRecord YahooData where
-    parseNamedRecord m = YahooData <$>
-        m .: "Date" <*>
-        m .: "Open" <*>
-        m .: "High" <*>
-        m .: "Low" <*>
-        m .: "Close" <*>
-        m .: "Adj Close" <*>
-        m .: "Volume"
+  parseNamedRecord m =
+    YahooData <$> m .: "Date" <*> m .: "Open" <*> m .: "High" <*> m .: "Low" <*>
+    m .:
+    "Close" <*>
+    m .:
+    "Adj Close" <*>
+    m .:
+    "Volume"
 
 main :: IO ()
 main = do
-   o :: Opts <- getRecord "online-dev example"
-   case o of
-     FromCsvFile f -> do
-         s <- B.readFile f
-         case decodeByName s of
-           (Left e) -> putStrLn $ "csv decode failed: " <> e
-           (Right (_, v)) -> do
-               let xs = V.toList $ V.map yAdjClose v
-               putStrLn $ "data points: " <> (show $ length xs :: Text)
-               encodeFile "other/data.bin" xs
-     Run _ -> join $ run1 <$> getData
+  o :: Opts <- getRecord "online-dev example"
+  case o of
+    FromCsvFile f -> do
+      d <- fromFile f
+      case d of
+        Left e -> putStrLn $ "something happened" <> e
+        Right xs -> do
+          putStrLn $ "data points: " <> (show $ length xs :: Text)
+          encodeFile "other/data.bin" xs
 
--- decode' <$> simpleHttp $ createUrl options items
+    Run x -> do
+        let nall = 20000
+        let n = 500
+        let rs = [0.95, 0.99, 0.996]
+        dates <- chartDates nall (fromMaybe n $ grain $ fromMaybe def x)
+        vs <- fmap snd <$> getData nall
+        let putes =
+                [ ("c1", "moving average", L.scan . ma)
+                , ("c2", "std deviation",  L.scan . std)
+                , ("c3", "beta on ma",
+                   \r xs -> drop 2 $ L.scan (beta (ma r)) $ drop 2 $ zip xs (L.scan (ma r) xs))
+                , ("c4", "alpha on ma",
+                   \r xs -> L.scan (alpha (ma r)) $ drop 2 $ zip xs (L.scan (ma r) xs))
+                , ("c5", "beta on std",
+                   \r xs -> drop 2 $ L.scan (beta (ma r)) $ drop 2 $ zip xs (L.scan (std r) xs))
+                , ("c6", "alpha on std",
+                   \r xs -> L.scan (alpha (ma r)) $ drop 2 $ zip xs (L.scan (std r) xs))
+                ]
+        run1 dates vs n rs putes
+
+run1 :: [(Int, Text)] -> [Double] -> Int -> [Double] -> [(FilePath,Text,Double -> [Double] -> [Double])] -> IO ()
+run1 dates vs n rs putes = sequence_ $ run' vs n rs <$> putes
+  where
+    run' vs n rs (f, title, sc) = do
+        let res = scanData vs n rs sc
+        fileSvg ("other/"<>f<>".svg") (600,400) (ch1 title rs dates res)
+
+fromFile :: FilePath -> IO (Either String [(Text, Float)])
+fromFile f = do
+  s <- B.readFile f
+  case decodeByName s of
+    (Left e) -> pure $ Left $ "csv decode failed: " <> e
+    (Right (_, v)) -> do
+      let extract x = (yDate x, yAdjClose x)
+      let xs :: [(Text, Float)] = V.toList $ V.map extract v
+      pure $ Right xs
+
 -- https://finance.yahoo.com/quote/%5EGSPC/history?period1=-631015200&period2=1497103200&interval=1d&filter=history&frequency=1d
-
--- | compute the log return from a price series
+-- compute the log return from a price series
 -- returns are geometric by nature, and using log(1+daily return) as the base unit of the time series leads to all sorts of benefits, not least of which is you can then add up the variates to get the cumulative return, without having to go through log and exp chicanery.  Ditto for distributional assumptions.
-lret :: [Double] -> [Double]
+lret :: [(Text, Double)] -> [(UTCTime, Double)]
 lret [] = []
 lret [_] = []
-lret (x:xs) = L.fold (L.Fold step ([],x) (reverse . fst)) xs
+lret ((_, v0):xs) = L.fold (L.Fold step ([], v0) (reverse . fst)) xs
   where
-    step (acc,a) a' = (log (a'/a):acc, a')
+    step (acc, v) (d', v') = case parseUTCTime d' of
+      Just d -> ((d, log (v' / v)) : acc, v')
+      Nothing -> (acc, v)
 
-getData :: IO [Double]
-getData = either (const []) lret <$> decodeFileOrFail "other/data.bin"
+taker :: Int -> [a] -> [a]
+taker n = reverse . take n . reverse
 
-run1 :: [Double] -> IO ()
-run1 xs = do
-    let ls = cycle $ LineConfig 0.001 <$> palette
-    let l1 xs = zipWith V2 [0..] xs
-    let rs = [ 0.999, 0.996, 0.95]
-    let c s recent ff xs =
-            fileSvg s (600,400)
-            ( withChart def (lineChart ls) $
-              (reverse . take recent . reverse . l1) <$>
-              (ff <$> rs) <&> xs
-            )
+getData :: Int -> IO [(UTCTime, Double)]
+getData n = taker n . either (const []) lret <$> decodeFileOrFail "other/data.bin"
 
-    c "other/c1.svg" 1000 (L.scan . ma) xs
-    c "other/c2.svg" 1000 (L.scan . std) xs
-    c "other/c3.svg" 1000
-        (\r xs -> drop 2 $ L.scan (beta (ma r)) $ drop 2 $ zip xs (L.scan (ma r) xs)) xs
-    c "other/c4.svg" 1000
-        (\r xs -> L.scan (alpha (ma r)) $ drop 2 $ zip xs (L.scan (ma r) xs)) xs
-    c "other/c5.svg" 1000
-        (\r xs ->
-           L.scan ((\b o a -> a + b * o) <$>
-             beta (ma r) <*>
-             L.premap snd (ma 0.00001) <*>
-             alpha (ma r)) $
-           drop 2 $
-           zip xs (L.scan (ma r) xs)) xs
+(<&>) :: (Functor t) => t (a -> b) -> a -> t b
+fs <&> a = fmap (\f -> f a) fs
 
-    let fore r1 r0 = L.scan ((\b o a -> a + b * o) <$>
-             beta (ma r1) <*>
-             L.premap snd (ma 0.00001) <*>
-             alpha (ma r1)) $
-           drop 2 $ zip xs (L.scan (ma r0) xs)
+lastOnes :: (Eq a) => (a -> a -> Bool) -> [a] -> [a]
+lastOnes _ [] = []
+lastOnes _ [x] = [x]
+lastOnes f (x:xs) = L.fold (L.Fold step (x,[]) (\(x0,x1) -> reverse $ x0:x1)) xs
+  where
+    step (a0, rs) a1 = if f a0 a1 then (a1,rs) else (a1,a0:rs)
 
-    let fhist = fromHist (IncludeOvers 0.0001)
-            $ toHistogramWithCuts (linearSpace OuterPos (Range (-0.002,0.002)) 20)
-            $ L.fold tDigestHist $ drop 2 $ fore 0.99 0.99
+chartDates :: Int -> Int -> IO [(Int,Text)]
+chartDates alln n = do
+  xs <- getData alln
+  let dates = taker n $ fst <$> xs
+  let (ticks,_) = placedTimeLabelDiscontinuous PosInnerOnly Nothing 8 dates
+  let ticks' = lastOnes (\(_,x0) (_,x1) -> x0==x1) ticks
+  pure ticks'
 
-    fileSvg "other/c6.svg" (600,400) $
-        histChart [def] sixbyfour
-        [ fhist ] <>
-        axes
-        ( chartRange .~ Just (fold fhist)
-        $ chartAspect .~ sixbyfour
-        $ def)
+scanData :: [Double] -> Int -> [Double] -> (Double -> [Double] -> [Double]) -> [[Pair Double]]
+scanData xs n rs sc =
+  zipWith Pair [0 ..] . taker n . drop 1 <$> (sc <$> rs) <&> xs
 
-    let fore2 r1 r0 = L.scan ((\b o a r -> (V2 (a + b * o) r)) <$>
-             beta (ma r1) <*>
-             L.premap snd (ma 0.00001) <*>
-             alpha (ma r1) <*>
-             L.premap fst (ma 0.00001) ) $
-           drop 2 $ zip xs (L.scan (ma r0) xs)
+ch1 :: Text -> [Double] -> [(Int,Text)] -> [[Pair Double]] -> Diagram SVG
+ch1 title rs ticks' chartd =
+  hud' <> chart'
+  where
+    chart' = lineChart_ ls sixbyfour (zeroLine : chartd)
+    ls = LineOptions 0.001 ugrey : cycle (LineOptions 0.003 . (`withOpacity` 1) . d3Colors1 <$> [0 ..])
+    zeroLine = [Pair lx 0, Pair ux 0]
+    (Aspect (Ranges aspx _)) = sixbyfour
+    (Ranges rx@(Range lx ux) _) = range chartd
+    hud' = hud
+          ( #axes .~
+            [ adjustAxis def aspx rx
+            $ #tickStyle .~ TickPlaced ((\(x,y) -> (fromIntegral x, y)) <$> ticks')
+            $ defXAxis
+            , defYAxis]
+          $ #range .~ Just (range chartd)
+          $ hudbits title Nothing (show <$> rs) (LegendLine <$> drop 1 ls <*> pure 0.1)
+            def
+          )
 
-    fileSvg "other/c7.svg" (600,600) $
-        scatterChart [ScatterConfig 0.0005 (Color 0.33 0.33 0.33 0.02)] sixbyfour
-        [ fore2 0.99 0.99]
+hudbits ::
+     Text
+  -> Maybe Text
+  -> [Text]
+  -> [LegendType b]
+  -> HudOptions b
+  -> HudOptions b
+hudbits t subt ts ls x =
+  #titles .~
+  [ ( #place .~ PlaceLeft
+    $ #align .~ AlignLeft
+    $ #text . #rotation .~ 90
+    $ #text . #size .~ 0.14
+    $ #text . #color .~ d3Colors1 0 `withOpacity` 1
+    $ def
+    , t)
+  ] <>
+  (case subt of
+     Nothing -> []
+     Just subt' ->
+       [ ( #place .~ PlaceBottom
+         $ #align .~ AlignRight
+         $ #text . #rotation .~ 0
+         $ #text . #size .~ 0.14
+         $ #text . #color .~ d3Colors1 0 `withOpacity` 1
+         $ def
+         , subt')
+       ]) $
+  #legends .~
+  [ #chartType .~ [(LegendText def, "decay rate")] <> zip ls ts
+  $ #align .~ AlignRight
+  $ def
+  ]
+  $ #axes . each . #gap .~ 0.1
+  $ x
 
-
-fore2 :: (Floating a, Multiplicative a, Additive a) => a -> a -> [a] -> [V2 a]
-fore2 r1 r0 xs = L.scan ((\b o a r -> (V2 (a + b * o) r)) <$>
-             beta (ma r1) <*>
-             L.premap snd (ma 0.00001) <*>
-             alpha (ma r1) <*>
-             L.premap fst (ma 0.00001) ) $
-           drop 2 $ zip xs (L.scan (ma r0) xs)
-
-runOld :: [Double] -> IO ()
-runOld xs = do
-    let cuts = linearSpace OuterPos (Range (-0.02,0.02)) 20
-    let h = toHistogramWithCuts cuts $ L.fold (onlineDigestHist 0.975) xs
-    let h' = toHistogramWithCuts cuts $ L.fold tDigestHist xs
-    fileSvg "other/hist-compare.svg" (300,300) $ histCompare (IncludeOvers 0.01) h h'
-
-    fileSvg "other/cmean.svg" (300,300) $
-        withChart def
-        (lineChart
-         [ LineConfig 0.002 (Color 0.88 0.33 0.12 1)
-         , LineConfig 0.002 (Color 0.12 0.33 0.83 1)
-         ])
-        [ zipWith V2 [0..] $
-          take 5000 $ drop 100 $ drop 2 $
-          L.scan (beta (ma 0.99)) $ drop 1 $
-          zip xs (L.scan (ma 0.9975) xs)
-        , zipWith V2 [0..] $
-          take 5000 $ drop 100 $ drop 2 $
-          L.scan (alpha (ma 0.99)) $ drop 1 $
-          zip xs (L.scan (ma 0.9975) xs)
-        ]
-
-    -- let gr = fromMaybe 20 (grain cfg)
-    let d0 = fmap r2 <$>
-            zipWith (\x y -> [(x,0.0),(x,y)]) (fromIntegral <$> [(0::Int)..]) (take 2000 xs)
-    fileSvg "other/elems.svg" (600,400) $
-        lineChart (repeat $ LineConfig 0.001 (Color 0.3 0.3 0.3 1)) sixbyfour d0 <>
-        axes ( chartRange .~ Just (rangeR2s d0) $ chartAxes .~
-               [axisPlacement .~ AxisLeft $ axisOrientation .~ Y $ def] $ def)
-
-    fileSvg
-        "other/asum.svg" (300,300)
-        ( withChart def
-          (lineChart [LineConfig 0.002 (Color 0.33 0.33 0.33 0.4)])
-          [zipWith V2 [0..] (L.scan L.sum xs)]
-        )
+fore2 :: (Floating a, Multiplicative a, Additive a) => a -> a -> [a] -> [Pair a]
+fore2 r1 r0 xs =
+  L.scan
+    ((\b o a r -> (Pair (a + b * o) r)) <$> beta (ma r1) <*>
+     L.premap snd (ma 0.00001) <*>
+     alpha (ma r1) <*>
+     L.premap fst (ma 0.00001)) $
+  drop 2 $
+  zip xs (L.scan (ma r0) xs)
 
 costAbs ::
-    ( List.ListLike (f a) a
-    , Fractional a
-    , Foldable f
-    , Applicative f) =>
-    f a -> f a -> f a -> f (f a) -> a
+     (List.ListLike (f a) a, Fractional a, Foldable f, Applicative f)
+  => f a
+  -> f a
+  -> f a
+  -> f (f a)
+  -> a
 costAbs ms c ys xss = av
   where
-    av = (P./( P.fromIntegral $ length ys)) (L.fold L.sum $ P.abs <$> es)
+    av = (P./ (P.fromIntegral $ length ys)) (L.fold L.sum $ P.abs <$> es)
     es = ys ~-~ (L.fold L.sum <$> (c ~+ (ms ~* xss)))
 
 (~*) :: (Num a, Applicative f) => f a -> f (f a) -> f (f a)
@@ -208,43 +244,65 @@ costAbs ms c ys xss = av
 (~+) ms xss = ((<$>) . (P.+)) <$> ms <*> xss
 
 (~-~) :: (List.ListLike (f a) a, Num a) => f a -> f a -> f a
-(~-~) xs xs' = List.zipWith (P.-) xs xs'
+(~-~) = List.zipWith (P.-)
 
-costScan :: (Reifies s Tape) => [Double] -> [Reverse s Double] -> Reverse s Double
-costScan xs (m:c:_) = costAbs [m] [c] (auto <$> drop 1 xs) [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
-costScan xs [] = costAbs [] [] (auto <$> drop 1 xs) [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
-costScan xs [m] = costAbs [m] [] (auto <$> drop 1 xs) [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
+costScan ::
+     (Reifies s Tape) => [Double] -> [Reverse s Double] -> Reverse s Double
+costScan xs (m:c:_) =
+  costAbs
+    [m]
+    [c]
+    (auto <$> drop 1 xs)
+    [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
+costScan xs [] =
+  costAbs
+    []
+    []
+    (auto <$> drop 1 xs)
+    [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
+costScan xs [m] =
+  costAbs
+    [m]
+    []
+    (auto <$> drop 1 xs)
+    [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
 
-grid :: (NumHask.Prelude.Field b, FromInteger b, Fractional b) => Range b -> Int -> [b]
-grid (Range (l,u)) steps =
-    (\a -> l + (u - l) / fromIntegral steps * a) .
-    fromIntegral <$>
-    [0..steps]
+grid ::
+     (NumHask.Prelude.Field b, FromInteger b, Fractional b)
+  => Range b
+  -> Int
+  -> [b]
+grid (Range l u) steps =
+  (\a -> l + (u - l) / fromIntegral steps * a) . fromIntegral <$> [0 .. steps]
 
-locs0 :: Range Double -> Range Double -> Int -> [V2 Double]
-locs0 rx ry steps = [V2 x y | x <- Main.grid rx steps, y <- Main.grid ry steps]
+locs0 :: Range Double -> Range Double -> Int -> [Pair Double]
+locs0 rx ry steps =
+  [Pair x y | x <- Main.grid rx steps, y <- Main.grid ry steps]
 
 gradF ::
-    (forall s. (Reifies s Tape) => [Reverse s Double] -> Reverse s Double) ->
-    Double ->
-    V2 Double ->
-    V2 Double
-gradF f step (V2 x y) =
-    - r2 ((\[x',y'] -> (x',y')) $
-          gradWith (\x0 x1 -> x0 + (x1 - x0) * step) f [x,y])
+     (forall s. (Reifies s Tape) =>
+                  [Reverse s Double] -> Reverse s Double)
+  -> Double
+  -> Pair Double
+  -> Pair Double
+gradF f step (Pair x y) =
+  -1 *.
+  (\[x', y'] -> Pair x' y')
+    (gradWith (\x0 x1 -> x0 + (x1 - x0) * step) f [x, y])
 
 addGrad ::
-    (forall s. (Reifies s Tape) => [Reverse s Double] -> Reverse s Double) ->
-    [V2 Double] ->
-    Double ->
-    [V4 Double]
+     (forall s. (Reifies s Tape) =>
+                  [Reverse s Double] -> Reverse s Double)
+  -> [Pair Double]
+  -> Double
+  -> [Arrow]
 addGrad f xys step =
-    zipWith (\(V2 x y) (V2 z w) -> V4 x y z w) xys (gradF f step <$> xys)
+  zipWith Arrow xys (gradF f step <$> xys)
 
-chartGrad :: Rect Double -> Int -> Double -> [Double] -> Chart' a
-chartGrad (Rect (V2 rx ry)) grain step xs =
-    arrowChart def (V4 one one one one) d <> axes
-    (chartAspect .~ asquare $ chartRange .~ Just (rangeR2s [pos]) $ def)
+chartGrad :: Rect Double -> Int -> Double -> [Double] -> Chart a
+chartGrad (Ranges rx ry) grain step xs =
+    arrowChart_ [def] (Aspect $ Rect one one one one) [d] <> hud
+    (#aspect .~ asquare $ #range .~ Just (range [pos]) $ def)
   where
     d = addGrad (costScan xs) pos step
     pos = locs0 rx ry grain
@@ -252,24 +310,21 @@ chartGrad (Rect (V2 rx ry)) grain step xs =
 extrap :: [Double] -> (Double, [Double]) -> (Double, [Double])
 extrap xs (eta0, x0) = expand eta0 x0
   where
-    (res0,_) = grad' (costScan xs) x0
+    (res0, _) = grad' (costScan xs) x0
     contract eta x
-        | res1 < res0 = (eta, x1)
-        | otherwise = contract (eta/2) x1
+      | res1 < res0 = (eta, x1)
+      | otherwise = contract (eta / 2) x1
       where
         x1 = x ~-~ ((eta *) <$> snd (grad' (costScan xs) x))
         res1 = fst $ grad' (costScan xs) x1
     expand eta x
-        | res' < res0 = expand (eta*2) x'
-        | otherwise = contract (eta/2) x
+      | res' < res0 = expand (eta * 2) x'
+      | otherwise = contract (eta / 2) x
       where
         x' :: [Double]
         x' = x ~-~ ((eta *) <$> g)
-        (_,g) = grad' (costScan xs) x
-        (res',_) = grad' (costScan xs) x'
-
-(<&>) :: (Functor t) => t (a -> b) -> a -> t b
-fs <&> a = fmap (\f -> f a) fs
+        (_, g) = grad' (costScan xs) x
+        (res', _) = grad' (costScan xs) x'
 
 {-
     let hCMeane = toHistogramWithCuts cuts $ L.fold tDigestHist $
@@ -354,18 +409,19 @@ regression
 -}
 
 -}
-
 toHistogramWithCuts :: [Double] -> Maybe (NonEmpty HistBin) -> Histogram
 toHistogramWithCuts cuts Nothing = Histogram cuts mempty
 toHistogramWithCuts cuts (Just bins) =
-        L.fold (L.Fold step0 (Histogram cuts mempty) done0) bins
-      where
-        step0 h (HistBin l u _ v _) = insertW h ((l+u)/2) v
-        done0 = identity
+  L.fold (L.Fold step0 (Histogram cuts mempty) done0) bins
+  where
+    step0 _ HistBin {} = undefined -- insertW h ((l+u)/2) v
+    done0 = identity
 
 toHistogram :: Maybe (NonEmpty HistBin) -> Histogram
 toHistogram Nothing = Histogram mempty mempty
 toHistogram h@(Just bins) = toHistogramWithCuts cuts h
-      where
-        bins'= toList bins
-        cuts = ((\(HistBin l _ _ _ _) -> l) <$> bins') <> [(\(HistBin _ u _ _ _) -> u) $ Data.List.NonEmpty.last bins]
+  where
+    bins' = toList bins
+    cuts =
+      ((\(HistBin l _ _ _ _) -> l) <$> bins') <>
+      [(\(HistBin _ u _ _ _) -> u) $ Data.List.NonEmpty.last bins]

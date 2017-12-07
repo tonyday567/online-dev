@@ -1,10 +1,9 @@
-resolver: lts-8.23
+resolver: nightly-2017-11-07
 
 packages:
   - '.'
+  - '../numhask-histogram'
+  - '../chart-unit'
 
 extra-deps:
-  - chart-unit-0.4.1
-  - numhask-0.0.7
-  - numhask-range-0.0.4
-  - online-0.2.0
+  - generic-lens-0.4.1.0
