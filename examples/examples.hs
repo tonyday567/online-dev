@@ -6,8 +6,9 @@
 import Chart
 import Control.Lens hiding ((<&>))
 import Data.Binary
-import Data.Csv
+import Data.Csv hiding (Field)
 import Data.Default ()
+import Data.Generics.Labels()
 import Data.List
 import Data.List.NonEmpty (NonEmpty, last)
 import Data.Reflection
@@ -107,7 +108,7 @@ run1 dates vs n rs putes = sequence_ $ run' vs n rs <$> putes
   where
     run' vs n rs (f, title, sc) = do
         let res = scanData vs n rs sc
-        fileSvg ("other/"<>f<>".svg") (600,400) (ch1 title rs dates res)
+        fileSvg ("other/"<>f<>".svg") def (ch1 title rs dates res)
 
 fromFile :: FilePath -> IO (Either String [(Text, Float)])
 fromFile f = do
@@ -161,12 +162,12 @@ scanData xs n rs sc =
 
 ch1 :: Text -> [Double] -> [(Int,Text)] -> [[Pair Double]] -> Diagram SVG
 ch1 title rs ticks' chartd =
-  hud' <> chart'
+  hud' sixbyfour (range chartd) <> chart'
   where
     chart' = lineChart_ ls sixbyfour (zeroLine : chartd)
     ls = LineOptions 0.001 ugrey : cycle (LineOptions 0.003 . (`withOpacity` 1) . d3Colors1 <$> [0 ..])
     zeroLine = [Pair lx 0, Pair ux 0]
-    (Aspect (Ranges aspx _)) = sixbyfour
+    (Ranges aspx _) = sixbyfour
     (Ranges rx@(Range lx ux) _) = range chartd
     hud' = hud
           ( #axes .~
@@ -174,7 +175,6 @@ ch1 title rs ticks' chartd =
             $ #tickStyle .~ TickPlaced ((\(x,y) -> (fromIntegral x, y)) <$> ticks')
             $ defXAxis
             , defYAxis]
-          $ #range .~ Just (range chartd)
           $ hudbits title Nothing (show <$> rs) (LegendLine <$> drop 1 ls <*> pure 0.1)
             def
           )
@@ -183,9 +183,9 @@ hudbits ::
      Text
   -> Maybe Text
   -> [Text]
-  -> [LegendType b]
-  -> HudOptions b
-  -> HudOptions b
+  -> [LegendType]
+  -> HudOptions
+  -> HudOptions
 hudbits t subt ts ls x =
   #titles .~
   [ ( #place .~ PlaceLeft
@@ -215,7 +215,7 @@ hudbits t subt ts ls x =
   $ #axes . each . #gap .~ 0.1
   $ x
 
-fore2 :: (Floating a, Multiplicative a, Additive a) => a -> a -> [a] -> [Pair a]
+fore2 :: (Field a, Floating a, Multiplicative a, Additive a) => a -> a -> [a] -> [Pair a]
 fore2 r1 r0 xs =
   L.scan
     ((\b o a r -> (Pair (a + b * o) r)) <$> beta (ma r1) <*>
@@ -301,8 +301,7 @@ addGrad f xys step =
 
 chartGrad :: Rect Double -> Int -> Double -> [Double] -> Chart a
 chartGrad (Ranges rx ry) grain step xs =
-    arrowChart_ [def] (Aspect $ Rect one one one one) [d] <> hud
-    (#aspect .~ asquare $ #range .~ Just (range [pos]) $ def)
+    arrowChart_ [def] (Rect one one one one) [d] <> hud def asquare (range [pos])
   where
     d = addGrad (costScan xs) pos step
     pos = locs0 rx ry grain

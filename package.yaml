@@ -1,5 +1,5 @@
 name: online-market
-version: '0.1.0'
+version: '0.1.0.0'
 synopsis: online market daily statistics
 description: Applying the online library to daily market returns.
 category: statistics
@@ -57,6 +57,7 @@ dependencies:
 - cassava
 - chart-unit
 - data-default
+- generic-lens-labels
 - diagrams-lib
 - diagrams-svg
 - foldl
