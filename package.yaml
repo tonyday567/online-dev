@@ -63,6 +63,7 @@ dependencies:
 - foldl
 - formatting
 - numhask
+- numhask-prelude
 - numhask-range
 - numhask-histogram
 - online
