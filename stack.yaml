@@ -2,10 +2,10 @@ resolver: lts-11.3
 
 packages:
   - .
-  - ../chart-unit
-  - ../online/online
 
 extra-deps:
+  - chart-unit-0.6.2.0
+  - online-0.2.3.0
   - generic-lens-labels-0.1.0.2
   - numhask-histogram-0.1.1.0
   - numhask-0.2.0.0
