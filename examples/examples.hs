@@ -1,35 +1,39 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-import Chart
-import Control.Lens hiding ((<&>))
+import Chart.Core
+import Chart.Svg
+import Chart.Hud
+import Chart.Spot
+import Chart.Data.Time
+import qualified Control.Lens as Lens
 import Data.Binary
 import Data.Csv hiding (Field)
-import Data.Default ()
 import Data.Generics.Labels()
 import Data.List
 import Data.List.NonEmpty (NonEmpty, last)
 import Data.Reflection
 import Data.TDigest
 import Data.Time
-import Diagrams.Backend.SVG (SVG)
-import Diagrams.Prelude (Diagram)
 import GHC.Base (String)
 import NumHask.Histogram
 import NumHask.Prelude hiding ((<&>))
--- import NumHask.Space
+import NumHask.Data.Rect
 import Numeric.AD
 import Numeric.AD.Internal.Reverse
 import Online
 import Options.Generic
-
+import Data.TDigest.Postprocess (HistBin(..), histogram)
+import Codec.Picture.Types
 import qualified Control.Foldl as L
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ListLike as List
 import qualified Data.Vector as V
 import qualified Protolude as P
+import Control.Lens hiding (Wrapped, (&), (<&>), (:>), Unwrapped)
 
 data Opts
   = FromCsvFile String
@@ -40,8 +44,7 @@ newtype RunConfig = RunConfig
   { grain :: Maybe Int
   } deriving (Generic, Show, Read)
 
-instance Default RunConfig where
-  def = RunConfig Nothing
+defaultRunConfig = RunConfig Nothing
 
 instance ParseRecord RunConfig
 
@@ -87,7 +90,7 @@ main = do
         let nall = 20000
         let n = 500
         let rs = [0.95, 0.99, 0.996]
-        dates <- chartDates nall (fromMaybe n $ grain $ fromMaybe def x)
+        dates <- chartDates nall (fromMaybe n $ grain $ fromMaybe defaultRunConfig x)
         vs <- fmap snd <$> getData nall
         let putes =
                 [ ("c1", "moving average", L.scan . ma)
@@ -108,7 +111,7 @@ run1 dates vs n rs putes = sequence_ $ run' vs n rs <$> putes
   where
     run' vs n rs (f, title, sc) = do
         let res = scanData vs n rs sc
-        fileSvg ("other/"<>f<>".svg") def (ch1 title rs dates res)
+        write ("other/"<>f<>".svg") (Point 600 300) (ch1 title rs dates res)
 
 fromFile :: FilePath -> IO (Either String [(Text, Float)])
 fromFile f = do
@@ -156,66 +159,28 @@ chartDates alln n = do
   let ticks' = lastOnes (\(_,x0) (_,x1) -> x0==x1) ticks
   pure ticks'
 
-scanData :: [Double] -> Int -> [Double] -> (Double -> [Double] -> [Double]) -> [[Pair Double]]
+scanData :: [Double] -> Int -> [Double] -> (Double -> [Double] -> [Double]) -> [[Point Double]]
 scanData xs n rs sc =
-  zipWith Pair [0 ..] . taker n . drop 1 <$> (sc <$> rs) <&> xs
+  zipWith Point [0 ..] . taker n . drop 1 <$> (sc <$> rs) <&> xs
 
-ch1 :: Text -> [Double] -> [(Int,Text)] -> [[Pair Double]] -> Diagram SVG
-ch1 title rs ticks' chartd =
-  hud' sixbyfour (range chartd) <> chart'
-  where
-    chart' = lineChart_ ls sixbyfour (zeroLine : chartd)
-    ls = LineOptions 0.001 ugrey : cycle (LineOptions 0.003 . (`withOpacity` 1) . d3Colors1 <$> [0 ..])
-    zeroLine = [Pair lx 0, Pair ux 0]
-    (Ranges aspx _) = sixbyfour
-    (Ranges rx@(Range lx ux) _) = range chartd
-    hud' = hud
-          ( #axes .~
-            [ adjustAxis def aspx rx
-            $ #tickStyle .~ TickPlaced ((\(x,y) -> (fromIntegral x, y)) <$> ticks')
-            $ defXAxis
-            , defYAxis]
-          $ hudbits title Nothing (show <$> rs) (LegendLine <$> drop 1 ls <*> pure 0.1)
-            def
-          )
-
-hudbits ::
-     Text
-  -> Maybe Text
-  -> [Text]
-  -> [LegendType]
-  -> HudOptions
-  -> HudOptions
-hudbits t subt ts ls x =
-  #titles .~
-  [ ( #place .~ PlaceLeft
-    $ #align .~ AlignLeft
-    $ #text . #rotation .~ 90
-    $ #text . #size .~ 0.14
-    $ #text . #color .~ d3Colors1 0 `withOpacity` 1
-    $ def
-    , t)
-  ] <>
-  (case subt of
-     Nothing -> []
-     Just subt' ->
-       [ ( #place .~ PlaceBottom
-         $ #align .~ AlignRight
-         $ #text . #rotation .~ 0
-         $ #text . #size .~ 0.14
-         $ #text . #color .~ d3Colors1 0 `withOpacity` 1
-         $ def
-         , subt')
-       ]) $
-  #legends .~
-  [ #chartType .~ [(LegendText def, "decay rate")] <> zip ls ts
-  $ #align .~ AlignRight
-  $ def
+lopts :: [LineStyle]
+lopts =
+  P.zipWith (\w c -> defaultLineStyle & #color .~ c & #width .~ w)
+  [0.001 :: Double, 0.001, 0.001]
+  [ PixelRGB8 197 140 75
+  , PixelRGB8 60 127 43
+  , PixelRGB8 56 42 140
   ]
-  $ #axes . each . #gap .~ 0.1
-  $ x
 
-fore2 :: (Field a, Floating a, Multiplicative a, Additive a) => a -> a -> [a] -> [Pair a]
+ch1 :: Text -> [Double] -> [(Int,Text)] -> [[Point Double]] -> ChartSvg Double
+ch1 title rs ticks' chartd =
+  hudSvg one [] chart'
+  where
+    chart' = zipWith (\l c -> Chart (LineA l) mempty c) lopts (zeroLine : (fmap SpotPoint <$> chartd))
+    zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
+    (Ranges rx@(Range lx ux) _) = undefined -- getRect $ mconcat $ fmap toArea <$> fmap SpotPoint <$> chartd
+
+fore2 :: (Field a, Floating a, Multiplicative a, Subtractive a, Additive a) => a -> a -> [a] -> [Pair a]
 fore2 r1 r0 xs =
   L.scan
     ((\b o a r -> (Pair (a + b * o) r)) <$> beta (ma r1) <*>
@@ -268,7 +233,7 @@ costScan xs [m] =
     [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
 
 grid ::
-     (NumHask.Prelude.Field b, FromInteger b, Fractional b)
+     (NumHask.Prelude.Field b, Subtractive b, FromInteger b, Fractional b)
   => Range b
   -> Int
   -> [b]
@@ -290,6 +255,7 @@ gradF f step (Pair x y) =
   (\[x', y'] -> Pair x' y')
     (gradWith (\x0 x1 -> x0 + (x1 - x0) * step) f [x, y])
 
+{-
 addGrad ::
      (forall s. (Reifies s Tape) =>
                   [Reverse s Double] -> Reverse s Double)
@@ -299,12 +265,15 @@ addGrad ::
 addGrad f xys step =
   zipWith Arrow xys (gradF f step <$> xys)
 
-chartGrad :: Rect Double -> Int -> Double -> [Double] -> Chart a
+-}
+
+
+chartGrad :: Rect Double -> Int -> Double -> [Double] -> ChartSvg Double
 chartGrad (Ranges rx ry) grain step xs =
-    arrowChart_ [def] (Rect one one one one) [d] <> hud def asquare (range [pos])
+    hudSvg one [] [pos]
   where
-    d = addGrad (costScan xs) pos step
-    pos = locs0 rx ry grain
+    -- d = addGrad (costScan xs) pos step
+    pos = undefined -- locs0 rx ry grain
 
 extrap :: [Double] -> (Double, [Double]) -> (Double, [Double])
 extrap xs (eta0, x0) = expand eta0 x0

@@ -1,0 +1,62 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.1.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: a27388a16ce3b5f125ed9c619e1558b653abe6cd619a85d12c70e5ef65ac5fb8
+
+name:           online-market
+version:        0.1.0.0
+synopsis:       online market daily statistics
+description:    Applying the online library to daily market returns.
+category:       statistics
+homepage:       https://github.com/tonyday567/online-dev#readme
+bug-reports:    https://github.com/tonyday567/online-dev/issues
+author:         Tony Day
+maintainer:     tonyday567@gmail.com
+copyright:      Tony Day
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/tonyday567/online-dev
+
+executable online-market-examples
+  main-is: examples.hs
+  hs-source-dirs:
+      ./examples
+  default-extensions: NoImplicitPrelude UnicodeSyntax BangPatterns BinaryLiterals DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DisambiguateRecordFields EmptyCase FlexibleContexts FlexibleInstances FunctionalDependencies GADTSyntax InstanceSigs KindSignatures LambdaCase MonadComprehensions MultiParamTypeClasses MultiWayIf NegativeLiterals OverloadedStrings ParallelListComp PartialTypeSignatures PatternSynonyms RankNTypes RecordWildCards RecursiveDo ScopedTypeVariables TupleSections TypeFamilies TypeOperators
+  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      ListLike
+    , ad
+    , attoparsec
+    , base >=4.7 && <5
+    , binary
+    , bytestring
+    , cassava
+    , chart-svg
+    , data-default
+    , foldl
+    , formatting
+    , generic-lens
+    , lens
+    , numhask
+    , numhask-histogram
+    , JuicyPixels
+    , numhask-prelude
+    , numhask-space
+    , online
+    , optparse-generic
+    , protolude
+    , reflection
+    , tdigest
+    , text
+    , time
+    , vector
+  other-modules:
+      Paths_online_market
+  default-language: Haskell2010

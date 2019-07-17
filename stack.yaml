@@ -1,21 +1,24 @@
-resolver: lts-11.3
+resolver: lts-13.21
 
 packages:
   - .
+  - ../chart-svg
+  - ../online/online
+  - ../numhask/numhask
+  - ../numhask/numhask-prelude
+  - ../numhask/numhask-space
+  - ../numhask-histogram
 
 extra-deps:
-  - chart-unit-0.6.2.0
-  - online-0.2.3.0
-  - generic-lens-labels-0.1.0.2
-  - numhask-histogram-0.1.1.0
-  - numhask-0.2.0.0
-  - numhask-prelude-0.0.3.0
-  - numhask-range-0.2.1.0
-  - SVGFonts-1.6.0.3
-  - diagrams-lib-1.4.2
-  - diagrams-svg-1.4.1.1
-  - diagrams-core-1.4.0.1
-  - diagrams-solve-0.1.1
-  - dual-tree-0.2.1.1
+  #- numhask-0.3.0.0
+  #- numhask-prelude-0.3.1
+  #- numhask-space-0.1.1
+  - lucid-svg-0.7.1
+  - git: https://github.com/ku-fpg/javascript-bridge.git
+    commit: bb72dbb7d2f6376353f67aec6c251271ffb055d5
+  - box-0.0.1.1
+  - git: https://github.com/tonyday567/web-rep.git
+    commit: 88ccf754aee018cd3355aa44ce65e111cfe31a4b
+  - tdigest-0.2
 
 allow-newer: true
