@@ -1,13 +1,13 @@
-resolver: lts-13.21
+resolver: lts-13.29
 
 packages:
   - .
-  - ../chart-svg
-  - ../online/online
-  - ../numhask/numhask
-  - ../numhask/numhask-prelude
-  - ../numhask/numhask-space
-  - ../numhask-histogram
+  #- ../chart-svg
+  #- ../online/online
+  #- ../numhask/numhask
+  #- ../numhask/numhask-prelude
+  #- ../numhask/numhask-space
+  #- ../numhask-histogram
 
 extra-deps:
   #- numhask-0.3.0.0
@@ -18,7 +18,21 @@ extra-deps:
     commit: bb72dbb7d2f6376353f67aec6c251271ffb055d5
   - box-0.0.1.1
   - git: https://github.com/tonyday567/web-rep.git
-    commit: 88ccf754aee018cd3355aa44ce65e111cfe31a4b
+    commit: 9538993b3ec3f484d9fa6e4dcba1b89862010979
   - tdigest-0.2
+  - git: https://github.com/tonyday567/numhask.git
+    commit: 7d0d7333b63494069f3338530cd8530ad158400f
+    subdirs:
+      - numhask
+      - numhask-prelude
+      - numhask-space
+  - git: https://github.com/tonyday567/online.git
+    commit: 0442de631ac03ce6d71d92751162000e7f4b718e
+    subdirs:
+      - online
+  - git: https://github.com/tonyday567/chart-svg.git
+    commit: c822581787727e691cd37d2ff0f1738fe23ff9fb
+  - git: https://github.com/tonyday567/numhask-histogram.git
+    commit: 11f30db2b3121e313c112b6edd620e6ccac06740
 
 allow-newer: true
