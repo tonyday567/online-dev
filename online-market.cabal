@@ -1,6 +1,6 @@
 cabal-version: 2.0
 name:           online-market
-version:        0.1.0.0
+version:        0.2.0.0
 synopsis:       online market daily statistics
 description:    Applying the online library to daily market returns.
 category:       statistics
@@ -21,30 +21,23 @@ executable online-market-examples
   main-is: examples.hs
   hs-source-dirs:
       ./examples
-  default-extensions: NoImplicitPrelude UnicodeSyntax BangPatterns BinaryLiterals DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DisambiguateRecordFields EmptyCase FlexibleContexts FlexibleInstances FunctionalDependencies GADTSyntax InstanceSigs KindSignatures LambdaCase MonadComprehensions MultiParamTypeClasses MultiWayIf NegativeLiterals OverloadedStrings ParallelListComp PartialTypeSignatures PatternSynonyms RankNTypes RecordWildCards RecursiveDo ScopedTypeVariables TupleSections TypeFamilies TypeOperators
   ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       ListLike
     , ad
-    , attoparsec
     , base >=4.7 && <5
     , binary
     , bytestring
     , cassava
     , chart-svg
-    , data-default
     , foldl
-    , formatting
     , generic-lens
     , lens
-    , numhask
     , numhask-histogram
     , JuicyPixels
-    , numhask-prelude
     , numhask-space
     , online
     , optparse-generic
-    , protolude
     , reflection
     , tdigest
     , text

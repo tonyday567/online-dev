@@ -12,7 +12,6 @@ import qualified Data.ByteString.Lazy as B
 import qualified Data.Vector as V
 import Data.Quandl
 import Data.Reflection
-import Formatting
 import Numeric.AD
 import Numeric.AD.Internal.Reverse
 import Options.Generic

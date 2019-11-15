@@ -1,39 +1,36 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-import Chart.Core
-import Chart.Svg
-import Chart.Hud
-import Chart.Spot
-import Chart.Data.Time
-import qualified Control.Lens as Lens
+import Prelude
+import Chart
+import NumHask.Space.Time
 import Data.Binary
 import Data.Csv hiding (Field)
 import Data.Generics.Labels()
-import Data.List
-import Data.List.NonEmpty (NonEmpty, last)
+import Data.List.NonEmpty (NonEmpty, last, toList)
 import Data.Reflection
-import Data.TDigest
 import Data.Time
 import GHC.Base (String)
-import NumHask.Histogram
-import NumHask.Prelude hiding ((<&>))
-import NumHask.Data.Rect
+import NumHask.Space
 import Numeric.AD
 import Numeric.AD.Internal.Reverse
 import Online
 import Options.Generic
-import Data.TDigest.Postprocess (HistBin(..), histogram)
-import Codec.Picture.Types
+import Data.TDigest.Postprocess (HistBin(..))
 import qualified Control.Foldl as L
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ListLike as List
 import qualified Data.Vector as V
-import qualified Protolude as P
-import Control.Lens hiding (Wrapped, (&), (<&>), (:>), Unwrapped)
+import Control.Lens hiding (Wrapped, (<&>), (:>), Unwrapped)
+import Data.Maybe
 
 data Opts
   = FromCsvFile String
@@ -83,7 +80,7 @@ main = do
       case d of
         Left e -> putStrLn $ "something happened" <> e
         Right xs -> do
-          putStrLn $ "data points: " <> (show $ length xs :: Text)
+          putStrLn $ "data points: " <> show (length xs)
           encodeFile "other/data.bin" xs
 
     Run x -> do
@@ -111,7 +108,7 @@ run1 dates vs n rs putes = sequence_ $ run' vs n rs <$> putes
   where
     run' vs n rs (f, title, sc) = do
         let res = scanData vs n rs sc
-        write ("other/"<>f<>".svg") (Point 600 300) (ch1 title rs dates res)
+        writeChartSvg ("other/"<>f<>".svg") (Point 600 300) (ch1 title rs dates res)
 
 fromFile :: FilePath -> IO (Either String [(Text, Float)])
 fromFile f = do
@@ -165,7 +162,7 @@ scanData xs n rs sc =
 
 lopts :: [LineStyle]
 lopts =
-  P.zipWith (\w c -> defaultLineStyle & #color .~ c & #width .~ w)
+  zipWith (\w c -> defaultLineStyle & #color .~ c & #width .~ w)
   [0.001 :: Double, 0.001, 0.001]
   [ PixelRGB8 197 140 75
   , PixelRGB8 60 127 43
@@ -174,16 +171,16 @@ lopts =
 
 ch1 :: Text -> [Double] -> [(Int,Text)] -> [[Point Double]] -> ChartSvg Double
 ch1 title rs ticks' chartd =
-  hudSvg one [] chart'
+  hudChartSvg unitRect [] chart'
   where
-    chart' = zipWith (\l c -> Chart (LineA l) mempty c) lopts (zeroLine : (fmap SpotPoint <$> chartd))
+    chart' = zipWith (\l c -> Chart (LineA l) c) lopts (zeroLine : (fmap SpotPoint <$> chartd))
     zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
     (Ranges rx@(Range lx ux) _) = undefined -- getRect $ mconcat $ fmap toArea <$> fmap SpotPoint <$> chartd
 
-fore2 :: (Field a, Floating a, Multiplicative a, Subtractive a, Additive a) => a -> a -> [a] -> [Pair a]
+fore2 :: (Floating a) => a -> a -> [a] -> [Point a]
 fore2 r1 r0 xs =
   L.scan
-    ((\b o a r -> (Pair (a + b * o) r)) <$> beta (ma r1) <*>
+    ((\b o a r -> Point (a + b * o) r) <$> beta (ma r1) <*>
      L.premap snd (ma 0.00001) <*>
      alpha (ma r1) <*>
      L.premap fst (ma 0.00001)) $
@@ -199,17 +196,17 @@ costAbs ::
   -> a
 costAbs ms c ys xss = av
   where
-    av = (P./ (P.fromIntegral $ length ys)) (L.fold L.sum $ P.abs <$> es)
+    av = (/ (fromIntegral $ length ys)) (L.fold L.sum $ abs <$> es)
     es = ys ~-~ (L.fold L.sum <$> (c ~+ (ms ~* xss)))
 
 (~*) :: (Num a, Applicative f) => f a -> f (f a) -> f (f a)
-(~*) ms xss = ((<$>) . (P.*)) <$> ms <*> xss
+(~*) ms xss = (<$>) . (*) <$> ms <*> xss
 
 (~+) :: (Num a, Applicative f) => f a -> f (f a) -> f (f a)
-(~+) ms xss = ((<$>) . (P.+)) <$> ms <*> xss
+(~+) ms xss = (<$>) . (+) <$> ms <*> xss
 
 (~-~) :: (List.ListLike (f a) a, Num a) => f a -> f a -> f a
-(~-~) = List.zipWith (P.-)
+(~-~) = List.zipWith (-)
 
 costScan ::
      (Reifies s Tape) => [Double] -> [Reverse s Double] -> Reverse s Double
@@ -233,26 +230,26 @@ costScan xs [m] =
     [fmap auto <$> drop 1 $ L.scan (ma 0.99) xs]
 
 grid ::
-     (NumHask.Prelude.Field b, Subtractive b, FromInteger b, Fractional b)
+     (Fractional b)
   => Range b
   -> Int
   -> [b]
 grid (Range l u) steps =
   (\a -> l + (u - l) / fromIntegral steps * a) . fromIntegral <$> [0 .. steps]
 
-locs0 :: Range Double -> Range Double -> Int -> [Pair Double]
+locs0 :: Range Double -> Range Double -> Int -> [Point Double]
 locs0 rx ry steps =
-  [Pair x y | x <- Main.grid rx steps, y <- Main.grid ry steps]
+  [Point x y | x <- Main.grid rx steps, y <- Main.grid ry steps]
 
 gradF ::
      (forall s. (Reifies s Tape) =>
                   [Reverse s Double] -> Reverse s Double)
   -> Double
-  -> Pair Double
-  -> Pair Double
-gradF f step (Pair x y) =
-  -1 *.
-  (\[x', y'] -> Pair x' y')
+  -> Point Double
+  -> Point Double
+gradF f step (Point x y) =
+  fmap ((-1) *)
+  (\[x', y'] -> Point x' y')
     (gradWith (\x0 x1 -> x0 + (x1 - x0) * step) f [x, y])
 
 {-
@@ -270,7 +267,7 @@ addGrad f xys step =
 
 chartGrad :: Rect Double -> Int -> Double -> [Double] -> ChartSvg Double
 chartGrad (Ranges rx ry) grain step xs =
-    hudSvg one [] [pos]
+    hud defaultHudConfig unitRect [pos]
   where
     -- d = addGrad (costScan xs) pos step
     pos = undefined -- locs0 rx ry grain
@@ -383,7 +380,7 @@ toHistogramWithCuts cuts (Just bins) =
   L.fold (L.Fold step0 (Histogram cuts mempty) done0) bins
   where
     step0 _ HistBin {} = undefined -- insertW h ((l+u)/2) v
-    done0 = identity
+    done0 = id
 
 toHistogram :: Maybe (NonEmpty HistBin) -> Histogram
 toHistogram Nothing = Histogram mempty mempty
