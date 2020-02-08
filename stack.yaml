@@ -5,12 +5,18 @@ packages:
   - ../chart-svg
   - ../online/online
   - ../numhask-space
+  - ../pmlb
+  - ../web-rep
+  - ../readme-lhs
 
 extra-deps:
   - lucid-svg-0.7.1
   - javascript-bridge-0.2.0
   # - numhask-space-0.2.0
-  - web-rep-0.1.2
-  - box-0.0.1.5
+  # - web-rep-0.2.0
+  - box-0.1.0
+  # - readme-lhs-0.3.0
+  - streaming-utils-0.2.0.0
+  - json-stream-0.4.2.4
 
 allow-newer: true

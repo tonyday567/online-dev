@@ -17,28 +17,33 @@ source-repository head
   type: git
   location: https://github.com/tonyday567/online-dev
 
-executable online-market-examples
-  main-is: examples.hs
+executable online-market
+  main-is: app.hs
   hs-source-dirs:
-      ./examples
+      app
   ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       ListLike
     , ad
+    , attoparsec
+    , backprop
     , base >=4.7 && <5
     , binary
     , bytestring
     , cassava
     , chart-svg
+    , containers
     , foldl
     , generic-lens
     , lens
-    , numhask-histogram
     , JuicyPixels
     , numhask-space
     , online
     , optparse-generic
+    , pmlb
+    , readme-lhs
     , reflection
+    , scientific
     , tdigest
     , text
     , time
