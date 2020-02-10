@@ -37,6 +37,20 @@ digitalise
 
 <img style="border:2px solid grey" src="other/digitcheck.svg">
 
+<img style="border:2px solid grey" src="other/digitpixel.svg">
+
+forecasting
+---
+
+```{.output .forecast}
+```
+
+<img style="border:2px solid grey" src="other/histogramf.svg">
+
+<img style="border:2px solid grey" src="other/scatterf.svg">
+
+<img style="border:2px solid grey" src="other/digitf.svg">
+
 status
 ---
 

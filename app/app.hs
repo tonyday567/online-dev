@@ -18,7 +18,7 @@ import Data.Bifunctor
 import Data.Bool
 import Data.Csv hiding (Field)
 import Data.Generics.Labels ()
-import Data.List (transpose)
+import Data.List (transpose, foldl')
 import Data.Maybe
 import Data.Text.Encoding (decodeUtf8)
 import Data.Time
@@ -32,6 +32,7 @@ import qualified Data.Attoparsec.ByteString.Char8 as AC
 import qualified Data.Text as Text
 import Readme.Lhs
 import Data.Scientific
+import qualified Data.Map.Strict as Map
 -- import Data.Reflection
 -- import Data.TDigest.Postprocess (HistBin (..))
 -- import Numeric.Backprop as B
@@ -192,6 +193,16 @@ relChart (title, xt, yt) rels =
   where
     chart' = Chart (GlyphA (defaultGlyphStyle & #borderOpacity .~ 0 & #opacity .~ 0.3 & #size .~ 0.02)) (SpotPoint <$> rels)
 
+sqChart :: (Text, Text, Text) -> [Chart Double] ->
+  ChartSvg Double
+sqChart (title, xt, yt) cs =
+  hud
+    ( defaultHudConfig
+        & #hudTitles .~ [defaultTitle title, (defaultTitle xt :: Title Double) & #place .~ PlaceBottom & #style . #size .~ 0.06, (defaultTitle yt :: Title Double) & #place .~ PlaceLeft & #style . #size .~ 0.06]
+    )
+    (aspect 1)
+    cs
+
 histChart :: Text -> [Rect Double] ->
   ChartSvg Double
 histChart title xs =
@@ -227,8 +238,6 @@ digitChart title ticks' chartd =
     chart' = Chart (GlyphA (defaultGlyphStyle & #size .~ 0.02)) (zipWith SP [0..] chartd)
     chartma = Chart (LineA defaultLineStyle) (zipWith SP [0..] (drop 1 $ L.scan (ma 0.99) chartd))
 
-
-
 computeCharts :: [(Int, Text)] -> [Double] -> Int -> [Double] -> [(FilePath, Text, Double -> [Double] -> [Double])] -> IO ()
 computeCharts dates xs n rs putes = sequence_ $ makeChart <$> putes
   where
@@ -247,6 +256,16 @@ expt x n = Text.pack $ formatScientific Exponent (Just x) (fromFloatDigits n)
 fixed :: Int -> Double -> Text
 fixed x n = Text.pack $ formatScientific Fixed (Just x) (fromFloatDigits n)
 
+fore :: (Floating a) => a -> a -> [a] -> [(a,a)]
+fore r1 r0 xs =
+  L.scan
+    ( (\b o a r -> (a + b * o, r)) <$> beta (ma r1)
+        <*> L.premap snd (ma 0.00001)
+        <*> alpha (ma r1)
+        <*> L.premap fst (ma 0.00001)
+    )
+    $ drop 2
+    $ zip xs (L.scan (ma r0) xs)
 
 -- xs <- taker 500 . fmap snd . getdc <$> getYahoo 1000
 main :: IO ()
@@ -303,16 +322,28 @@ main = do
   -- digitize ma vs std
   let dma = taker n $ L.scan (onlineDigitize 0.996 $ (0.1*) <$> [0..10]) (drop 2 $ L.scan (ma 0.99) xs')
   let dstd = taker n $ L.scan (onlineDigitize 0.996 $ (0.1*) <$> [0..10]) (drop 2 $ L.scan (std 0.95) xs')
-  writeChartSvg "other/digitpixel.svg" (Point 600 400) (digitChart "digitalised return" (first fromIntegral <$> dates) (fromIntegral <$> d))
-  let hqs = regular 11 (fromIntegral <$> d)
-  let hrqs = makeRects IgnoreOvers hqs
-  writeChartSvg "other/digitcheck.svg" (Point 600 400) (histChart "digit count" hrqs)
+  let d2 = foldl' (\m x -> Map.insertWith (+) x 1.0 m) Map.empty (zip dma dstd)
+  let ps = (\(r, c) -> Chart (RectA (RectStyle 0 black 0 c 1)) [SpotRect r]) <$> pixelate (\(Point x y) -> fromMaybe 0 $ Map.lookup (floor x,floor y) d2) (Rect 0 10 0 10) (Point 10 10) white black
+  writeChartSvg "other/digitpixel.svg" (Point 600 400) (sqChart ("digitalised scatter of ma 0.99 vs std 0.95", "std 0.95", "ma 0.99") ps)
 
+  -- forecast
+  let fa' = fore 0.95 0.95 xs'
+  let fa = taker n fa'
+  let h = fill ((-0.03+) . (0.003*) <$> [0..20]) $ fmap (\(f,a) -> a - f) fa
+  let hr = makeRects (IncludeOvers 0.003) h
+  writeChartSvg "other/histogramf.svg" (Point 600 400) (histChart "forecast error" hr)
+  writeChartSvg "other/scatterf.svg" (Point 600 600) $ relChart ("forecast versus actual", "forecast", "actual") (uncurry Point <$> fa)
+  -- digitize ma vs std
+  let df = taker n $ L.scan (onlineDigitize 0.996 $ (0.1*) <$> [0..10]) (fst <$> fa')
+  let da = taker n $ L.scan (onlineDigitize 0.996 $ (0.1*) <$> [0..10]) (fst <$> fa')
+  let d2 = foldl' (\m x -> Map.insertWith (+) x 1.0 m) Map.empty (zip dma dstd)
+  let ps = (\(r, c) -> Chart (RectA (RectStyle 0 black 0 c 1)) [SpotRect r]) <$> pixelate (\(Point x y) -> fromMaybe 0 $ Map.lookup (floor x,floor y) d2) (Rect 0 10 0 10) (Point 10 10) white black
+  writeChartSvg "other/digitf.svg" (Point 600 400) (sqChart ("digital actual v forecast", "forecast", "actual") ps)
 
   void $ runOutput
       ("readme.md", GitHubMarkdown)
       ("index.html", Html)
-    $
+    $ do
       output "stats" $ Native $ (: [])
           (table mempty [] [AlignLeft, AlignRight] [] [
               ["Start Date", snd $ head dates],
@@ -323,6 +354,13 @@ main = do
               ["daily average sd return", expt 2 (L.fold (std 1) xs)],
               ["average sd return pa", expt 2 ((250.0**0.5) * L.fold (std 1) xs)]
               ])
+
+      output "forecast" $ Native $ (: [])
+          (table mempty [] [AlignLeft, AlignRight] [] [
+              ["daily average forecast", expt 2 (L.fold (ma 1) (fst <$> fa))],
+              ["daily average sd forecast", expt 2 (L.fold (std 1) (fst <$> fa))]
+              ])
+
 
 {-
 fore2 :: (Floating a) => a -> a -> [a] -> [Point a]

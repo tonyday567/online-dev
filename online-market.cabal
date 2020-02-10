@@ -23,13 +23,9 @@ executable online-market
       app
   ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      ListLike
-    , ad
-    , attoparsec
+      attoparsec
     , backprop
     , base >=4.7 && <5
-    , binary
-    , bytestring
     , cassava
     , chart-svg
     , containers
@@ -42,10 +38,7 @@ executable online-market
     , optparse-generic
     , pmlb
     , readme-lhs
-    , reflection
     , scientific
-    , tdigest
     , text
     , time
-    , vector
   default-language: Haskell2010
