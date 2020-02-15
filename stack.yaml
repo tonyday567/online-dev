@@ -15,5 +15,7 @@ extra-deps:
   - box-0.1.0
   - streaming-utils-0.2.0.0
   - json-stream-0.4.2.4
+  - git: https://github.com/adscib/monad-bayes
+    commit: fb87bf039bab35dcc82de8ccf8963a7a576af355
 
 allow-newer: true
