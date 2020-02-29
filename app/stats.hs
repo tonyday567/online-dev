@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedLabels #-}
@@ -29,7 +30,6 @@ import Readme.Lhs
 import Data.Scientific
 import qualified Data.Map.Strict as Map
 
-
 -- charting tech
 lopts :: [LineStyle]
 lopts =
@@ -42,17 +42,17 @@ lopts =
       PixelRGB8 2 200 20
     ]
 
-lastOnes :: (Eq a) => (a -> a -> Bool) -> [a] -> [a]
-lastOnes _ [] = []
-lastOnes _ [x] = [x]
-lastOnes f (x : xs) = L.fold (L.Fold step (x, []) (\(x0, x1) -> reverse $ x0 : x1)) xs
-  where
-    step (a0, rs) a1 = if f a0 a1 then (a1, rs) else (a1, a0 : rs)
-
 makeChartDates :: [UTCTime] -> [(Int, Text)]
 makeChartDates dates =
   lastOnes (\(_, x0) (_, x1) -> x0 == x1) $
   fst $ placedTimeLabelDiscontinuous PosIncludeBoundaries Nothing 8 dates
+  where
+    lastOnes :: (a -> a -> Bool) -> [a] -> [a]
+    lastOnes _ [] = []
+    lastOnes _ [x] = [x]
+    lastOnes f (x : xs) = L.fold (L.Fold step (x, []) (\(x0, x1) -> reverse $ x0 : x1)) xs
+      where
+        step (a0, rs) a1 = if f a0 a1 then (a1, rs) else (a1, a0 : rs)
 
 onlineChart :: Text -> [Double] -> [(Double, Text)] -> [[Point Double]] ->
   ChartSvg Double
@@ -81,6 +81,15 @@ onlineChart title rs ticks' chartd =
     chart' = zipWith (\l c -> Chart (LineA l) c) lopts (zeroLine : (fmap SpotPoint <$> chartd))
     zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
     (Rect lx ux _ _) = space1 $ mconcat chartd
+
+onlineChart' :: [(UTCTime, Double)] -> RunConfig -> Text -> (Double -> [Double] -> [Double]) -> [ChartSvg Double]
+onlineChart' xs c title f =
+  onlineChart title (c ^. #rates) (first fromIntegral . makeChartDates . fst <$> xs)
+    (zipWith Point [0 ..] .
+     taker (c ^. #n) .
+     drop 1 .
+     (\f -> f xs) <$>
+     (f <$> (c ^ #rates)))
 
 quantileChart :: Text -> [Text] -> [(Double, Text)] -> [[Double]] ->
   ChartSvg Double
@@ -166,18 +175,6 @@ digitChart title ticks' chartd =
     chart' = Chart (GlyphA (defaultGlyphStyle & #size .~ 0.02)) (zipWith SP [0..] chartd)
     chartma = Chart (LineA defaultLineStyle) (zipWith SP [0..] (drop 1 $ L.scan (ma 0.99) chartd))
 
-computeCharts :: [(Int, Text)] -> [Double] -> Int -> [Double] -> [(FilePath, Text, Double -> [Double] -> [Double])] -> IO ()
-computeCharts dates xs n rs putes = sequence_ $ makeChart <$> putes
-  where
-    makeChart (f, title, sc) =
-      writeChartSvg ("other/" <> f <> ".svg") (Point 600 300)
-      (onlineChart title rs (first fromIntegral <$> dates)
-       (zipWith Point [0 ..] .
-        taker n .
-        drop 1 .
-        (\f -> f xs) <$>
-        (sc <$> rs)))
-
 expt :: Int -> Double -> Text
 expt x n = Text.pack $ formatScientific Exponent (Just x) (fromFloatDigits n)
 
@@ -195,12 +192,29 @@ fore r1 r0 xs =
     $ drop 2
     $ zip xs (L.scan (ma r0) xs)
 
--- xs <- taker 500 . fmap snd . getdc <$> getYahoo 1000
+data RunConfig = RunConfig { nAll :: Int, n :: Int, rates :: [Double] } deriving (Eq, Show, Generic)
+
+defaultRunConfig :: RunConfig
+defaultRunConfig = RunConfig 1000 500 [0.95, 0.99]
+
+getRets :: RunConfig -> IO [Double]
+getRets c =
+  taker (c ^. #n) . fmap snd . getdc <$> getYahoo (c ^. #nAll)
+
+data RunStyleConfig = RunStyleConfig { chartSize :: Point Double } deriving (Eq, Show, Generic)
+
+defaultRunStyleConfig :: RunStyleConfig
+defaultRunStyleConfig = RunStyleConfig (Point 600 400)
+
 main :: IO ()
-main = do
-  let nall = 1000
-  let n = 500
-  let rs = [0.95, 0.99, 0.996]
+main = run defaultRunConfig
+
+run :: RunConfig -> RunStyleConfig -> IO ()
+run c sc = do
+  let cs = sc ^. #chartSize
+  let n = c ^. #n
+  let nall = c ^. #nAll
+  let rs = c ^. #rates
   ydata <- getYahoo nall
   let dcs = getdc ydata
   let xs' = snd <$> dcs
@@ -227,7 +241,7 @@ main = do
             \r xs -> L.scan (alpha (ma r)) $ drop 2 $ zip xs (L.scan (std r) xs)
           )
         ]
-  computeCharts dates xs' n rs putes
+  writeChartSvg ("other/ma.svg") cs computeCharts dates xs' n rs putes
   writeChartSvg "other/scatter.svg" (Point 600 600) $ relChart ("std 0.95 vs ma 0.99", "std 0.95", "ma 0.99") (taker n $ drop 2 $ L.scan (Point <$> std 0.95 <*> ma 0.99) xs)
   -- quantile calcs
   let qsCuts = (0.1*) <$> [1..9]
