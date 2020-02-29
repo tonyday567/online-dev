@@ -67,11 +67,11 @@ pYahoo c = do
   _ <- AC.endOfLine
   pure (YahooData (decodeUtf8 d) (realToFrac o) (realToFrac h) (realToFrac l) (realToFrac close) (realToFrac ac) (realToFrac v))
 
-csvConfig :: Config
-csvConfig = defaultConfig & #dataSet .~ "^GSPC" & #csep .~ ','
+yahooConfig :: CsvConfig
+yahooConfig = defaultCsvConfig & #dataSet .~ "^GSPC" & #csep .~ ','
 
 getYahoo :: Int -> IO [YahooData]
-getYahoo n = taker n . snd <$> runBS csvConfig (parseCsv PMLB.Csv.HasHeader 10000000 ',' pYahoo)
+getYahoo n = taker n . snd <$> runBS yahooConfig (parseCsv PMLB.Csv.HasHeader 10000000 ',' pYahoo)
 
 taker :: Int -> [a] -> [a]
 taker n = reverse . take n . reverse

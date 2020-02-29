@@ -69,11 +69,11 @@ model4 = do
 pixelChart :: (Text, Text, Text) -> Rect Double -> [Chart Double] ->
   ChartSvg Double
 pixelChart (title, xt, yt) r cs =
-  hud
+  makeHudChartSvg
+  r
     ( defaultHudConfig
-        & #hudTitles .~ [defaultTitle title, (defaultTitle xt :: Title Double) & #place .~ PlaceBottom & #style . #size .~ 0.06, (defaultTitle yt :: Title Double) & #place .~ PlaceLeft & #style . #size .~ 0.06]
+        & #hudTitles .~ [defaultTitle title, defaultTitle xt & #place .~ PlaceBottom & #style . #size .~ 0.06, defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06]
     )
-    r
     cs
 
 -- pairModel :: MonadInfer m => (Text, Text, Text) -> Int -> m (Double, Double) -> IO ()
@@ -84,16 +84,25 @@ pairModel fn ts nsamples r p model = do
   let gy = grid OuterPos (Range y w) p
   let c = foldl' (\x a -> Map.insertWith (+) (bimap (cutI gx) (cutI gy) a) 1 x) Map.empty
           modelsamples
-  let ps = (\(r', c') -> Chart (RectA (RectStyle 0 black 0 c' 1)) [SpotRect r']) <$> pixelate (\(Point x y) -> fromMaybe 0 $ Map.lookup (bimap (cutI gx) (cutI gy) (x,y)) c) r (Point 20 20) white blue
-  writeChartSvgWith fn defaultChartSvgStyle (\x -> pixelChart ts x ps)
+  let (cs', hs') =
+        pixelfl
+        (\(Point x y) -> fromMaybe 0 $ Map.lookup (bimap (cutI gx) (cutI gy) (x,y)) c)
+        (PixelOptions defaultPixelStyle (Point 20 20) (Rect 0 10 0 10))
+        (defaultPixelLegendOptions "pair model")
+  writeChart fn $ fst $ runHud (aspect 1.5) hs' cs'
 
 pairModel' fn ts r p f = do
   let (Rect x z y w) = r
   let gx = grid OuterPos (Range x z) p
   let gy = grid OuterPos (Range y w) p
-  let ps = (\(r', c') -> Chart (RectA (RectStyle 0 black 0 c' 1)) [SpotRect r']) <$> pixelate f r (Point p p) white blue
-  writeChartSvgWith fn defaultChartSvgStyle (\x -> pixelChart ts x ps)
+  let (cs', hs') =
+        pixelfl
+        f
+        (PixelOptions defaultPixelStyle (Point 20 20) (Rect 0 10 0 10))
+        (defaultPixelLegendOptions "pair model")
+  writeChart fn $ fst $ runHud (aspect 1.5) hs' cs'
 
+{-
 paramsModel fn (t1, t2, t3) r p f params = do
   let (Rect x z y w) = r
   let gx = grid OuterPos (Range x z) p
@@ -107,6 +116,9 @@ paramsModel fn (t1, t2, t3) r p f params = do
         )
         r
         (stack 3 0.05 $ (ps <$> params)))
+
+-}
+
 
 data Params
   = Params
@@ -142,11 +154,11 @@ likelihoodDist params r = do
 scatterChart :: Text -> [Point Double] -> Rect Double ->
   ChartSvg Double
 scatterChart title xs r =
-  hud
+  makeHudChartSvg
+  r
     ( defaultHudConfig
         & #hudTitles .~ [defaultTitle title]
     )
-    r
     [chart']
   where
     chart' = Chart (GlyphA defaultGlyphStyle) (SpotPoint <$> xs)
@@ -186,8 +198,8 @@ main = do
   -- part 2
   pairModel' "other/model5.svg" ("z", "x", "y") (Rect (-10) 10 (-10) 10) 20 (samplingDistribution' params0)
   params <- sampleIOfixed $ replicateM 9 priorParams
-  paramsModel "other/ps.svg" ("z", "x", "y") (Rect (-10) 10 (-10) 10) 20
-    samplingDistribution' params
+  -- paramsModel "other/ps.svg" ("z", "x", "y") (Rect (-10) 10 (-10) 10) 20
+  --   samplingDistribution' params
 
   pointsMCMC <- sampleIOfixed $ prior . mh 1000 $ likelihoodDist params0 (Rect (-10) 10 (-10) 10)
   writeChartSvgWith "other/mcmc1.svg" defaultChartSvgStyle $ scatterChart "mcmc" pointsMCMC
