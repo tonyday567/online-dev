@@ -38,16 +38,16 @@ import Run.Types
 import NumHask.Space
 
 -- | A chart showing a time-series of a statistic at different online rates.
-onlineChart :: [(UTCTime, Double)] -> RunConfig -> Text -> (Double -> [Double] -> [Double]) -> ChartSvg Double
-onlineChart xs c title f =
-  makeHudChartSvg
-    (aspect 2)
-    ( defaultHudConfig
+onlineChart :: [(UTCTime, Double)] -> RunConfig -> Text -> (Double -> [Double] -> [Double]) -> [Chart Double]
+onlineChart xs c title f = runHud (aspect 2) hs' (cs'<>chart')
+  where
+    (hs',cs') = makeHud (aspect 2)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title & #style . #size .~ 0.08]
         & #hudLegend
           .~ Just
             ( defaultLegendOptions
-                & #scale .~ 0.2
+                -- & #scale .~ 0.2
                 & #ltext . #size .~ 0.2
                 & #lplace .~ PlaceRight
             ,   zipWith
@@ -56,18 +56,16 @@ onlineChart xs c title f =
                     (c ^. #rates)
             )
         & #hudAxes
-          .~ [ defaultAxisConfig
+          .~ [ defaultAxisOptions
                  & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
                  & #place .~ PlaceLeft,
-               defaultAxisConfig & #atick . #tstyle
+               defaultAxisOptions & #atick . #tstyle
                  .~ TickPlaced
                    ( first fromIntegral
                        <$> makeTickDates PosIncludeBoundaries Nothing 8 (fst <$> taker (c ^. #n) xs)
                    )
              ]
-    )
-    chart'
-  where
+      )
     lopts :: [LineStyle]
     lopts = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) (drop 3 d3Palette1) (0.002 : repeat 0.007)
     chartd =
@@ -85,16 +83,16 @@ quantileChart ::
   Text ->
   [Text] ->
   [(UTCTime, [Double])] ->
-  ChartSvg Double
-quantileChart title names xs =
-  makeHudChartSvg
-    (aspect 2)
-    ( defaultHudConfig
+  [Chart Double]
+quantileChart title names xs = runHud (aspect 2) hs' (cs'<>chart')
+  where
+    (hs',cs') = makeHud (aspect 2)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & ( #hudLegend
               .~ Just
                 ( defaultLegendOptions
-                    & #scale .~ 0.3
+--                    & #scale .~ 0.3
                     & #ltext . #size .~ 0.1
                     & #vgap .~ 0.05
                     & #innerPad .~ 0.2
@@ -103,14 +101,12 @@ quantileChart title names xs =
                 )
           )
         & #hudAxes
-          .~ [ defaultAxisConfig
+          .~ [ defaultAxisOptions
                  & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
                  & #place .~ PlaceLeft,
-               defaultAxisConfig & #atick . #tstyle .~ TickPlaced dateTicks
+               defaultAxisOptions & #atick . #tstyle .~ TickPlaced dateTicks
              ]
-    )
-    chart'
-  where
+      )
     qss = transpose $ snd <$> xs
     dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 (fst <$> xs)
     chart' =
@@ -126,21 +122,19 @@ digitChart ::
   Text ->
   [Text] ->
   [(UTCTime, Int)] ->
-  ChartSvg Double
-digitChart title names xs =
-  makeHudChartSvg
-    (aspect 2)
-    ( defaultHudConfig
+  [Chart Double]
+digitChart title names xs = runHud (aspect 2) hs' (cs'<>[chart', chartma, chartstd])
+  where
+    (hs',cs') = makeHud (aspect 2) 
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & #hudAxes
-          .~ [ defaultAxisConfig
+          .~ [ defaultAxisOptions
                  & #atick . #tstyle .~ TickPlaced (zip ((0.5 +) <$> [0 ..]) names)
                  & #place .~ PlaceLeft,
-               defaultAxisConfig & #atick . #tstyle .~ TickPlaced dateTicks
+               defaultAxisOptions & #atick . #tstyle .~ TickPlaced dateTicks
              ]
-    )
-    [chart', chartma, chartstd]
-  where
+      )
     xs' = fromIntegral . snd <$> xs
     dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 (fst <$> xs)
     chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ blue & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
@@ -151,13 +145,10 @@ digitChart title names xs =
 scatterChart ::
   (Text, Text, Text) ->
   [Point Double] ->
-  ChartSvg Double
-scatterChart ts rels =
-  makeHudChartSvg
-    (aspect 1)
-    (returnHud ts)
-    [chart']
+  [Chart Double]
+scatterChart ts rels = runHud (aspect 2) hs' (cs'<>[chart'])
   where
+    (hs',cs') = makeHud (aspect 1) (defaultHudOptions)
     chart' =
       Chart
         ( GlyphA
@@ -177,24 +168,22 @@ histChart ::
   Range Double ->
   Int ->
   [Double] ->
-  ChartSvg Double
-histChart title names r g xs =
-  makeHudChartSvg
-    (aspect 2)
-    ( defaultHudConfig
+  [Chart Double]
+histChart title names r g xs = runHud (aspect 2) hs' (cs'<>[chart'])
+  where
+    (hs',cs') = makeHud (aspect 2)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & #hudAxes
           .~ [ maybe
-                 (defaultAxisConfig & #atick . #tstyle .~ TickRound (FormatPercent 0) 8 TickExtend)
+                 (defaultAxisOptions & #atick . #tstyle .~ TickRound (FormatPercent 0) 8 TickExtend)
                  ( \x ->
-                     defaultAxisConfig & #atick . #tstyle
+                     defaultAxisOptions & #atick . #tstyle
                        .~ TickPlaced (zip [0 ..] x)
                  )
                  names
              ]
-    )
-    [chart']
-  where
+      )
     chart' = Chart (RectA defaultRectStyle) (SpotRect <$> hr)
     hcuts = grid OuterPos r g
     h = fill hcuts xs
@@ -208,24 +197,22 @@ quantileHistChart ::
   [Double] ->
   -- | quantile values
   [Double] ->
-  ChartSvg Double
-quantileHistChart title names qs vs =
-  makeHudChartSvg
-  (aspect 2)
-    ( defaultHudConfig
+  [Chart Double]
+quantileHistChart title names qs vs = runHud (aspect 2) hs' (cs'<>[chart'])
+  where
+    (hs',cs') = makeHud (aspect 2)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & #hudAxes
-          .~ [ maybe
-                 (defaultAxisConfig & #atick . #tstyle .~ TickRound (FormatPercent 0) 8 TickExtend)
+        .~ [ maybe
+             (defaultAxisOptions & #atick . #tstyle .~ TickRound (FormatPercent 0) 8 TickExtend)
                  ( \x ->
-                     defaultAxisConfig & #atick . #tstyle
+                     defaultAxisOptions & #atick . #tstyle
                        .~ TickPlaced (zip vs x)
                  )
                  names
              ]
-    )
-    [chart']
-  where
+      )
     chart' = Chart (RectA defaultRectStyle) (SpotRect <$> hr)
     hr = zipWith (\(y,w) (x,z) -> Rect x z 0 ((w-y)/(z-x))) (zip qs (drop 1 qs)) (zip vs (drop 1 vs))
 
@@ -236,9 +223,9 @@ digitPixelChart ::
   (Text, Text, Text) ->
   [Text] ->
   [(Int, Int)] ->
-  ChartSvg Double
+  [Chart Double]
 digitPixelChart pixelStyle plo ts names ps =
-  runHudSvg (aspect 1) (hs0 <> hs1) (cs0 <> cs1)
+  runHud (aspect 1) (hs0 <> hs1) (cs0 <> cs1)
   where
     l = length names
     pts = Point l l
@@ -254,28 +241,28 @@ digitPixelChart pixelStyle plo ts names ps =
         (PixelOptions pixelStyle pts gr)
         plo
 
-returnHud :: (Text, Text, Text) -> HudConfig
+returnHud :: (Text, Text, Text) -> HudOptions
 returnHud ts =
-  defaultHudConfig
+  defaultHudOptions
     & #hudTitles .~ makeTitles ts
     & #hudAxes
-      .~ [ defaultAxisConfig
+      .~ [ defaultAxisOptions
              & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
              & #place .~ PlaceLeft,
-           defaultAxisConfig
+           defaultAxisOptions
              & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
              & #place .~ PlaceBottom
          ]
 
-qvqHud :: (Text, Text, Text) -> [Text] -> HudConfig
+qvqHud :: (Text, Text, Text) -> [Text] -> HudOptions
 qvqHud ts labels =
-  defaultHudConfig
+  defaultHudOptions
     & #hudTitles .~ makeTitles ts
     & #hudAxes
-      .~ [ defaultAxisConfig
+      .~ [ defaultAxisOptions
              & #atick . #tstyle .~ TickPlaced (zip ((0.5 +) <$> [0 ..]) labels)
              & #place .~ PlaceLeft,
-           defaultAxisConfig
+           defaultAxisOptions
              & #atick . #tstyle .~ TickPlaced (zip ((0.5 +) <$> [0 ..]) labels)
              & #place .~ PlaceBottom
          ]

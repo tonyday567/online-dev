@@ -67,14 +67,13 @@ model4 = do
     return (b, m)
 
 pixelChart :: (Text, Text, Text) -> Rect Double -> [Chart Double] ->
-  ChartSvg Double
-pixelChart (title, xt, yt) r cs =
-  makeHudChartSvg
-  r
-    ( defaultHudConfig
+  [Chart Double]
+pixelChart (title, xt, yt) r cs = runHud (aspect 1.5) hs' (cs'<>cs)
+  where
+    (hs',cs') = makeHud (aspect 1.5)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title, defaultTitle xt & #place .~ PlaceBottom & #style . #size .~ 0.06, defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06]
-    )
-    cs
+      )
 
 -- pairModel :: MonadInfer m => (Text, Text, Text) -> Int -> m (Double, Double) -> IO ()
 pairModel fn ts nsamples r p model = do
@@ -89,7 +88,7 @@ pairModel fn ts nsamples r p model = do
         (\(Point x y) -> fromMaybe 0 $ Map.lookup (bimap (cutI gx) (cutI gy) (x,y)) c)
         (PixelOptions defaultPixelStyle (Point 20 20) (Rect 0 10 0 10))
         (defaultPixelLegendOptions "pair model")
-  writeChart fn $ fst $ runHud (aspect 1.5) hs' cs'
+  writeCharts fn $ runHud (aspect 1.5) hs' cs'
 
 pairModel' fn ts r p f = do
   let (Rect x z y w) = r
@@ -100,7 +99,7 @@ pairModel' fn ts r p f = do
         f
         (PixelOptions defaultPixelStyle (Point 20 20) (Rect 0 10 0 10))
         (defaultPixelLegendOptions "pair model")
-  writeChart fn $ fst $ runHud (aspect 1.5) hs' cs'
+  writeCharts fn $ runHud (aspect 1.5) hs' cs'
 
 {-
 paramsModel fn (t1, t2, t3) r p f params = do
@@ -152,15 +151,13 @@ likelihoodDist params r = do
   return $ Point x y
 
 scatterChart :: Text -> [Point Double] -> Rect Double ->
-  ChartSvg Double
-scatterChart title xs r =
-  makeHudChartSvg
-  r
-    ( defaultHudConfig
-        & #hudTitles .~ [defaultTitle title]
-    )
-    [chart']
+  [Chart Double]
+scatterChart title xs r = runHud r hs' (cs' <> [chart'])
   where
+    (hs',cs') = makeHud r 
+      ( defaultHudOptions
+        & #hudTitles .~ [defaultTitle title]
+      )
     chart' = Chart (GlyphA defaultGlyphStyle) (SpotPoint <$> xs)
 
 -- uniform2D :: MonadSample m => m Data
@@ -188,11 +185,11 @@ main = do
   pure ()
   let d = Map.toList $ fillD samples
   let b = BarData [snd <$> d] (Just $ show . fst <$> d) Nothing
-  writeChartSvgWith "other/model1.svg" defaultChartSvgStyle $ (\x -> barChart x (defaultBarOptions []) b)
+  writeCharts "other/model1.svg" $ snd $ barChart defaultBarOptions b
   samples <- sampleIOfixed $ prior $ mh nsamples model2
   let d = Map.toList $ fillD samples
-  let b = BarData [snd <$> d] (Just $ show . fst <$> d) Nothing
-  writeChartSvgWith "other/model2.svg" defaultChartSvgStyle $ (\x -> barChart x (defaultBarOptions []) b)
+  let b' = BarData [snd <$> d] (Just $ show . fst <$> d) Nothing
+  writeCharts "other/model2.svg" $ snd $ barChart defaultBarOptions b'
   pairModel "other/model3.svg" ("model3", "b", "m") nsamples (Rect (-1) 1 (-1) 1) 20 model3
   pairModel "other/model4.svg" ("model4", "b", "m") nsamples (Rect (-1) 1 (-1) 1) 20 model4
   -- part 2
@@ -202,20 +199,20 @@ main = do
   --   samplingDistribution' params
 
   pointsMCMC <- sampleIOfixed $ prior . mh 1000 $ likelihoodDist params0 (Rect (-10) 10 (-10) 10)
-  writeChartSvgWith "other/mcmc1.svg" defaultChartSvgStyle $ scatterChart "mcmc" pointsMCMC
+  writeCharts "other/mcmc1.svg" $ scatterChart "mcmc" pointsMCMC (aspect 1.5)
 
   uniformSamples <- sampleIOfixed $ replicateM 2000 $ uniform2D (Rect (-10) 10 (-10) 10)
   let desiredProb = (samplingDistribution' params0) <$> uniformSamples
 
   uniform0max <- sampleIOfixed $ replicateM 2000 $ uniform 0 (maximum desiredProb)
   let points3 = [p | (p, u, l) <- zip3 uniformSamples uniform0max desiredProb, u<l]
-  writeChartSvgWith "other/mcmc3.svg" defaultChartSvgStyle $ scatterChart "mcmc3" points3
+  writeCharts "other/mcmc3.svg" $ scatterChart "mcmc3" points3 (aspect 1.5)
 
   modelsamples <- sampleIOfixed $ prior . mh 1000 $ postParams priorParams points3
-  writeChartSvgWith "other/modelsamples.svg" defaultChartSvgStyle $ scatterChart "modelsamples" ((\(Params a b _) -> Point a b) <$> modelsamples)
+  writeCharts "other/modelsamples.svg" $ scatterChart "modelsamples" ((\(Params a b _) -> Point a b) <$> modelsamples) (aspect 1.5)
 
   pts <- sampleIOfixed $ prior . mh 40000 $ predDist (postParams priorParams points3) (Rect (-10) 10 (-10) 10)
   let predPoints = take (length pts - 100) pts
-  writeChartSvgWith "other/pred.svg" defaultChartSvgStyle $ scatterChart "predPoints" predPoints
+  writeCharts "other/pred.svg" $ scatterChart "predPoints" predPoints (aspect 1.5)
 
   pure ()

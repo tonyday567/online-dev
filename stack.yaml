@@ -1,25 +1,27 @@
-resolver: lts-14.13
+resolver: lts-15.6
 
 packages:
   - .
-  - ../chart-svg
 
 extra-deps:
+  - readme-lhs-0.5.0
+  - palette-0.3.0.2
+  - backprop-0.2.6.3
+  - vinyl-0.12.1
   - lucid-svg-0.7.1
   - javascript-bridge-0.2.0
   - streaming-utils-0.2.0.0
   - json-stream-0.4.2.4
   - online-0.4.0.0
+  - chart-svg-0.0.1
+  - box-0.2.0
+  - numhask-space-0.3.1
+  - web-rep-0.3.1
+  - text-format-0.3.2
+  - interpolatedstring-perl6-1.0.2
   - git: https://github.com/adscib/monad-bayes
     commit: fb87bf039bab35dcc82de8ccf8963a7a576af355
   - git: https://github.com/tonyday567/pmlb
     commit: 5b1d7fe0a6ed6451aea844f74d543e67cdc2eb11
-  - git: https://github.com/tonyday567/box.git
-    commit: 507d3a80d924bb16b870837dd19afb96539e50e0
-  - git: https://github.com/tonyday567/web-rep.git
-    commit: 8565351cd3498d5ba89624a634652218d4e67b1f
-  - git: https://github.com/tonyday567/numhask-space.git
-    commit: 05a21479e75004e678cad2e8b89766e7a3df50e2
-  - git: https://github.com/tonyday567/readme-lhs.git
-    commit: cd2d8119c988e65c792da38e370c9976d6faa74d
+
 allow-newer: true
