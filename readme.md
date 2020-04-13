@@ -1,8 +1,6 @@
 [online-market](https://tonyday567.github.io/online-market/index.html)
 ===
 
-See [default run](runs/default/index.html) for example output.
-
 status
 ---
 

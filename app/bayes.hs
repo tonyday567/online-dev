@@ -20,7 +20,7 @@ https://github.com/adscib/monad-bayes/tree/master/models | monad-bayes/models at
 module Main where
 
 import Data.Yahoo
-import Protolude
+import NumHask.Prelude
 import Control.Lens
 import Control.Monad.Bayes.Class
 import Control.Monad.Bayes.Sampler

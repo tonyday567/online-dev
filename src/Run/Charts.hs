@@ -33,7 +33,7 @@ import Data.Time
 import Data.Yahoo
 import Online
 import Options.Generic
-import Protolude
+import NumHask.Prelude
 import Run.Types
 import NumHask.Space
 
@@ -143,10 +143,9 @@ digitChart title names xs = runHud (aspect 2) hs' (cs'<>[chart', chartma, charts
 
 -- | scatter chart
 scatterChart ::
-  (Text, Text, Text) ->
   [Point Double] ->
   [Chart Double]
-scatterChart ts rels = runHud (aspect 2) hs' (cs'<>[chart'])
+scatterChart rels = runHud (aspect 2) hs' (cs'<>[chart'])
   where
     (hs',cs') = makeHud (aspect 1) (defaultHudOptions)
     chart' =
@@ -233,7 +232,7 @@ digitPixelChart pixelStyle plo ts names ps =
     gr = fromIntegral <$> Rect 0 l 0 l
     mapCount = foldl' (\m x -> Map.insertWith (+) x 1.0 m) Map.empty ps
     f :: Point Double -> Double
-    f (Point x y) = fromMaybe 0 $ Map.lookup (floor x, floor y) mapCount
+    f (Point x y) = fromMaybe 0 $ Map.lookup (fromIntegral (floor x :: Integer), fromIntegral (floor y :: Integer)) mapCount
     (hs0, cs0) = makeHud gr (qvqHud ts names)
     (cs1, hs1) =
       pixelfl

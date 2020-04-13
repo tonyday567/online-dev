@@ -47,20 +47,6 @@ packages:
   original:
     hackage: javascript-bridge-0.2.0
 - completed:
-    hackage: streaming-utils-0.2.0.0@sha256:a2bd9144b336393122ffed2d3a1c747c186b8fdb9734c54d8b5874ed6166a85b,4114
-    pantry-tree:
-      size: 571
-      sha256: e0e6ffb4ff9437644e66765d7de6a1f8784e926fcc6edb28aa66e297e119f111
-  original:
-    hackage: streaming-utils-0.2.0.0
-- completed:
-    hackage: json-stream-0.4.2.4@sha256:8b7f17d54a6e1e6311756270f8bcf51e91bab4300945400de66118470dcf51b9,4716
-    pantry-tree:
-      size: 2055
-      sha256: 3ad81d47097db52223576d79ff441f04682358cd3057de4acb604409772641ca
-  original:
-    hackage: json-stream-0.4.2.4
-- completed:
     hackage: online-0.4.0.0@sha256:bffa0f36cffb3b4cc360ffb9c07efdd6d8ce89557c14c2a55687b922f9c9806b,1121
     pantry-tree:
       size: 444
@@ -81,6 +67,13 @@ packages:
       sha256: 8a40a3dbb215bad57ef0b859b93dff593bbe8e9cdee9fa41e0d21fa43e8ad946
   original:
     hackage: box-0.2.0
+- completed:
+    hackage: numhask-prelude-0.3.3@sha256:3046b6940da79846166e89ed2ffdb6acf37c6d318ee2f2953ebc24a066f599ab,1349
+    pantry-tree:
+      size: 398
+      sha256: 61cf28fcfeca6216e71872915dcf14530d23f3c344c4f49ccf3367f54e3cd5aa
+  original:
+    hackage: numhask-prelude-0.3.3
 - completed:
     hackage: numhask-space-0.3.1@sha256:6a3c13d04b940fcf2e6823136a8041c4ad30f85edbd623ee42cadd5128c91b1c,1537
     pantry-tree:
@@ -110,33 +103,26 @@ packages:
   original:
     hackage: interpolatedstring-perl6-1.0.2
 - completed:
-    cabal-file:
-      size: 8877
-      sha256: 01b99eaa047b40f9382ae8d839265cb51c8226211ac146be680dd095ce9348fe
-    name: monad-bayes
-    version: 0.1.0.0
-    git: https://github.com/adscib/monad-bayes
+    hackage: monad-bayes-0.1.1.0@sha256:57d96f530a37a1c8efed0830c7f2bcf86da05d0d53324aebdd5b5aa165d72829,5132
     pantry-tree:
-      size: 3137
-      sha256: 35b0c1ad0052a49ebd65d9d2544391c9578627300eda4b16642a238ca2378fe5
-    commit: fb87bf039bab35dcc82de8ccf8963a7a576af355
+      size: 2419
+      sha256: 39c3c264da0b75b717909693f5ecaf8342761e4da62d6c273ae4fdc5d2011afb
   original:
-    git: https://github.com/adscib/monad-bayes
-    commit: fb87bf039bab35dcc82de8ccf8963a7a576af355
+    hackage: monad-bayes-0.1.1.0
 - completed:
     cabal-file:
-      size: 2005
-      sha256: ef4dfed1fe16698965ec134b3b1d5b0993593df5a8f771416580873452ca0a6c
-    name: pmlb
+      size: 1966
+      sha256: a4c37debc75e725950ad4cb44d3a95a55101cf3b27db34838088d2c5837c5f80
+    name: online-csv
     version: 0.0.0.1
-    git: https://github.com/tonyday567/pmlb
+    git: https://github.com/tonyday567/online-csv
     pantry-tree:
-      size: 1306
-      sha256: 9259703def8fe99342dbc22ffce60c06bb4c3112aff4a8661593823fa837055f
-    commit: 5b1d7fe0a6ed6451aea844f74d543e67cdc2eb11
+      size: 829
+      sha256: f43138d9fa9afe569dcd1709d5b3fbc3b4cbcc7427240bcf35ea50dff43b10a9
+    commit: 67844ac0a80d2082b805554c79bd061c2fa85750
   original:
-    git: https://github.com/tonyday567/pmlb
-    commit: 5b1d7fe0a6ed6451aea844f74d543e67cdc2eb11
+    git: https://github.com/tonyday567/online-csv
+    commit: 67844ac0a80d2082b805554c79bd061c2fa85750
 snapshots:
 - completed:
     size: 491387

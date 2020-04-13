@@ -30,7 +30,6 @@ library
     , attoparsec
     , backprop
     , base >=4.7 && <5
-    , cassava
     , chart-svg
     , containers
     , turtle
@@ -38,11 +37,11 @@ library
     , generic-lens
     , lens
     , JuicyPixels
+    , numhask-prelude
     , numhask-space
     , online
     , optparse-generic
-    , pmlb
-    , protolude
+    , online-csv
     , readme-lhs
     , scientific
     , text
@@ -59,7 +58,6 @@ executable online-market-stats
     , attoparsec
     , backprop
     , base >=4.7 && <5
-    , cassava
     , chart-svg
     , containers
     , foldl
@@ -69,8 +67,8 @@ executable online-market-stats
     , numhask-space
     , online
     , optparse-generic
-    , pmlb
-    , protolude
+    , online-csv
+    , numhask-prelude
     , readme-lhs
     , scientific
     , text
@@ -88,7 +86,6 @@ executable online-market-bayes
     , attoparsec
     , backprop
     , base >=4.7 && <5
-    , cassava
     , chart-svg
     , containers
     , foldl
@@ -100,8 +97,8 @@ executable online-market-bayes
     , numhask-space
     , online
     , optparse-generic
-    , pmlb
-    , protolude
+    , online-csv
+    , numhask-prelude
     , readme-lhs
     , scientific
     , text
