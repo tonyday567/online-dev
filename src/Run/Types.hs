@@ -29,9 +29,5 @@ data RunConfig =
   } deriving (Eq, Show, Generic)
 
 defaultRunConfig :: RunConfig
-defaultRunConfig = RunConfig 1000 500 [0.95, 0.99] (0.95,0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99,0.99) 20 (Range (-0.03) 0.03)
+defaultRunConfig = RunConfig 12000 10000 [0.95, 0.99] (0.95,0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99,0.99) 20 (Range (-0.03) 0.03)
 
-data RunStyleConfig = RunStyleConfig {runName :: Text, chartSize :: Point Double} deriving (Eq, Show, Generic)
-
-defaultRunStyleConfig :: RunStyleConfig
-defaultRunStyleConfig = RunStyleConfig "default" (Point 300 200)

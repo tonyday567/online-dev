@@ -110,19 +110,12 @@ packages:
   original:
     hackage: monad-bayes-0.1.1.0
 - completed:
-    cabal-file:
-      size: 1966
-      sha256: a4c37debc75e725950ad4cb44d3a95a55101cf3b27db34838088d2c5837c5f80
-    name: online-csv
-    version: 0.0.0.1
-    git: https://github.com/tonyday567/online-csv
+    hackage: online-csv-0.0.1@sha256:487e2b32a0ba0267e37253e53e345c9a1f8fafa8fb3038ea33b075762205c2a9,1427
     pantry-tree:
-      size: 829
-      sha256: f43138d9fa9afe569dcd1709d5b3fbc3b4cbcc7427240bcf35ea50dff43b10a9
-    commit: 67844ac0a80d2082b805554c79bd061c2fa85750
+      size: 169
+      sha256: 7331b4b995ff906a57f2c1d29b36f76e96403b133df1d3a695657b1919620451
   original:
-    git: https://github.com/tonyday567/online-csv
-    commit: 67844ac0a80d2082b805554c79bd061c2fa85750
+    hackage: online-csv-0.0.1
 snapshots:
 - completed:
     size: 491387

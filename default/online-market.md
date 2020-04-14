@@ -2,8 +2,7 @@ Run Configuration
 -----------------
 
 ``` {.output .run}
-RunStyleConfig {runName = "stats", chartSize = Point 300.0 200.0}
-RunConfig {nAll = 10000, n = 500, rates = [0.95,0.99], versus = (0.95,0.95), qs = [0.1,0.2,0.30000000000000004,0.4,0.5,0.6000000000000001,0.7000000000000001,0.8,0.9], qsRate = 0.99, foreRate = (0.99,0.99), histGrain = 20, histRange = Range -3.0e-2 3.0e-2}
+RunConfig {nAll = 12000, n = 10000, rates = [0.95,0.99], versus = (0.95,0.95), qs = [0.1,0.2,0.30000000000000004,0.4,0.5,0.6000000000000001,0.7000000000000001,0.8,0.9], qsRate = 0.99, foreRate = (0.99,0.99), histGrain = 20, histRange = Range -3.0e-2 3.0e-2}
 ```
 
 Basic Statistics
@@ -11,13 +10,13 @@ Basic Statistics
 
 |                         |            |
 |:------------------------|-----------:|
-| Start Date              |  2018-02-28|
+| Start Date              |  1980-06-26|
 | End Date                |  2020-02-24|
-| n                       |         500|
-| daily average return    |      0.032%|
-| average return pa       |      8.085%|
-| daily average sd return |      0.912%|
-| average sd return pa    |     14.426%|
+| n                       |       10000|
+| daily average return    |      0.033%|
+| average return pa       |      8.298%|
+| daily average sd return |      1.098%|
+| average sd return pa    |     17.366%|
 
 Time Series Statistics
 ----------------------
@@ -69,5 +68,5 @@ forecasting
 
 |                           |        |
 |:--------------------------|-------:|
-| daily average forecast    |  0.036%|
-| daily average sd forecast |  0.038%|
+| daily average forecast    |  0.034%|
+| daily average sd forecast |  0.069%|

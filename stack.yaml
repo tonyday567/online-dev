@@ -19,7 +19,6 @@ extra-deps:
   - text-format-0.3.2
   - interpolatedstring-perl6-1.0.2
   - monad-bayes-0.1.1.0
-  - git: https://github.com/tonyday567/online-csv
-    commit: 67844ac0a80d2082b805554c79bd061c2fa85750
+  - online-csv-0.0.1
 
 allow-newer: true

@@ -38,7 +38,7 @@ import Run.Types
 import NumHask.Space
 
 -- | A chart showing a time-series of a statistic at different online rates.
-onlineChart :: [(UTCTime, Double)] -> RunConfig -> Text -> (Double -> [Double] -> [Double]) -> [Chart Double]
+onlineChart :: [(Day, Double)] -> RunConfig -> Text -> (Double -> [Double] -> [Double]) -> [Chart Double]
 onlineChart xs c title f = runHud (aspect 2) hs' (cs'<>chart')
   where
     (hs',cs') = makeHud (aspect 2)
@@ -62,7 +62,7 @@ onlineChart xs c title f = runHud (aspect 2) hs' (cs'<>chart')
                defaultAxisOptions & #atick . #tstyle
                  .~ TickPlaced
                    ( first fromIntegral
-                       <$> makeTickDates PosIncludeBoundaries Nothing 8 (fst <$> taker (c ^. #n) xs)
+                       <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) . fst <$> taker (c ^. #n) xs)
                    )
              ]
       )
@@ -82,7 +82,7 @@ onlineChart xs c title f = runHud (aspect 2) hs' (cs'<>chart')
 quantileChart ::
   Text ->
   [Text] ->
-  [(UTCTime, [Double])] ->
+  [(Day, [Double])] ->
   [Chart Double]
 quantileChart title names xs = runHud (aspect 2) hs' (cs'<>chart')
   where
@@ -108,7 +108,7 @@ quantileChart title names xs = runHud (aspect 2) hs' (cs'<>chart')
              ]
       )
     qss = transpose $ snd <$> xs
-    dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 (fst <$> xs)
+    dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) . fst <$> xs)
     chart' =
       zipWith (\l c -> Chart (LineA l) c) lo (zipWith SP [0 ..] <$> qss)
     l = length names
@@ -121,7 +121,7 @@ quantileChart title names xs = runHud (aspect 2) hs' (cs'<>chart')
 digitChart ::
   Text ->
   [Text] ->
-  [(UTCTime, Int)] ->
+  [(Day, Int)] ->
   [Chart Double]
 digitChart title names xs = runHud (aspect 2) hs' (cs'<>[chart', chartma, chartstd])
   where
@@ -136,7 +136,7 @@ digitChart title names xs = runHud (aspect 2) hs' (cs'<>[chart', chartma, charts
              ]
       )
     xs' = fromIntegral . snd <$> xs
-    dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 (fst <$> xs)
+    dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) . fst <$> xs)
     chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ blue & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
     chartma = Chart (LineA defaultLineStyle) (zipWith SP [0 ..] (drop 1 $ L.scan (ma 0.95) xs'))
     chartstd = Chart (LineA (defaultLineStyle & #color .~ red)) (zipWith SP [0 ..] (drop 1 $ L.scan (std 0.95) xs'))
