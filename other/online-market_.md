@@ -49,16 +49,3 @@ digitalized relationship
 
 <img src="digitpixel.svg">
 
-<img src="histogramf.svg">
-
-<img src="scatterf.svg">
-
-<img src="digitf.svg">
-
-forecasting
----
-
-```{.output .forecast}
-```
-
-

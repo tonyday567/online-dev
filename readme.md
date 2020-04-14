@@ -1,6 +1,8 @@
 [online-market](https://tonyday567.github.io/online-market/index.html)
 ===
 
+An example of the output can be found [here](http://tonyday567.github.io/posts/default)
+
 status
 ---
 
