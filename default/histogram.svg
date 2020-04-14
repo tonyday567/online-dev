@@ -1,0 +1,149 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" height="300.0" viewBox="-0.8075 -0.7250768799102133 1.6025 1.2713268799102133" width="450.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g transform="translate(-6.249999999999978e-3, -0.5475)" fill-opacity="1.0" font-size="0.12" stroke="none" stroke-width="0.0" fill="#000000" text-anchor="middle">
+    <text transform="rotate(0.0, 0.0, -4.657687991021331e-2)" x="0.0" y="-4.657687991021331e-2">daily return (all series)
+    </text>
+  </g>
+  <g stroke-opacity="0.0" fill-opacity="3.0e-2" stroke="#000000" stroke-width="0.0" fill="#666666">
+    <rect height="0.8978675645342313" width="1.5" x="-0.75" y="-0.495510662177329"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.75,0.4068462401795735
+-0.75,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6,0.4068462401795735
+-0.6,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.45,0.4068462401795735
+-0.45,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.3000000000000001,0.4068462401795735
+-0.3000000000000001,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.15000000000000002,0.4068462401795735
+-0.15000000000000002,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.0,0.4068462401795735
+0.0,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.1499999999999998,0.4068462401795735
+0.1499999999999998,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.2999999999999998,0.4068462401795735
+0.2999999999999998,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.44999999999999996,0.4068462401795735
+0.44999999999999996,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.5999999999999999,0.4068462401795735
+0.5999999999999999,-0.5"/>
+  </g>
+  <g stroke-opacity="0.3" stroke="#a8e5ee" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.75,0.4068462401795735
+0.75,-0.5"/>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="-0.75" y="0.5">-5%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="-0.6" y="0.5">-4%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="-0.45" y="0.5">-3%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="-0.3000000000000001" y="0.5">-2%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="-0.15000000000000002" y="0.5">-1%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="0.0" y="0.5">0%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="0.1499999999999998" y="0.5">1%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="0.2999999999999998" y="0.5">2%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="0.44999999999999996" y="0.5">3%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="0.5999999999999999" y="0.5">4%
+    </text>
+  </g>
+  <g fill-opacity="1.0" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#666666" text-anchor="middle">
+    <text x="0.75" y="0.5">5%
+    </text>
+  </g>
+  <g stroke-opacity="0.4" fill-opacity="1.0" stroke="#2c429d" stroke-width="5.0e-3" fill="#5f0391">
+    <polyline points="-0.75,0.43980359147025816
+-0.75,0.40980359147025813"/>
+    <polyline points="-0.6,0.43980359147025816
+-0.6,0.40980359147025813"/>
+    <polyline points="-0.45,0.43980359147025816
+-0.45,0.40980359147025813"/>
+    <polyline points="-0.3000000000000001,0.43980359147025816
+-0.3000000000000001,0.40980359147025813"/>
+    <polyline points="-0.15000000000000002,0.43980359147025816
+-0.15000000000000002,0.40980359147025813"/>
+    <polyline points="0.0,0.43980359147025816
+0.0,0.40980359147025813"/>
+    <polyline points="0.1499999999999998,0.43980359147025816
+0.1499999999999998,0.40980359147025813"/>
+    <polyline points="0.2999999999999998,0.43980359147025816
+0.2999999999999998,0.40980359147025813"/>
+    <polyline points="0.44999999999999996,0.43980359147025816
+0.44999999999999996,0.40980359147025813"/>
+    <polyline points="0.5999999999999999,0.43980359147025816
+0.5999999999999999,0.40980359147025813"/>
+    <polyline points="0.75,0.43980359147025816
+0.75,0.40980359147025813"/>
+  </g>
+  <g stroke-opacity="0.0" fill-opacity="0.5" stroke="#666666" stroke-width="0.0" fill="#5f0391">
+    <rect height="4.489337822671191e-3" width="1.5" x="-0.75" y="0.41133557800224463"/>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#026062" stroke-width="2.0e-2" fill="#9d1102">
+    <rect height="4.637991392958285e-2" width="4.500000000000004e-2" x="-0.495" y="0.3084078459354397"/>
+    <rect height="1.664919987215796e-2" width="4.500000000000004e-2" x="-0.44999999999999996" y="0.3381385599928646"/>
+    <rect height="2.3388161725174328e-2" width="4.499999999999993e-2" x="-0.4049999999999999" y="0.3313995981398482"/>
+    <rect height="4.043377111809787e-2" width="4.500000000000004e-2" x="-0.36" y="0.31435398874692466"/>
+    <rect height="6.144347571867814e-2" width="4.499999999999987e-2" x="-0.31499999999999995" y="0.2933442841463444"/>
+    <rect height="9.949878971218207e-2" width="4.4999999999999984e-2" x="-0.2700000000000001" y="0.25528897015284047"/>
+    <rect height="0.13636487514338874" width="4.500000000000015e-2" x="-0.2250000000000001" y="0.2184228847216338"/>
+    <rect height="0.22040369354571" width="4.499999999999993e-2" x="-0.17999999999999994" y="0.13438406631931255"/>
+    <rect height="0.34091218785847216" width="4.500000000000015e-2" x="-0.135" y="1.3875572006550374e-2"/>
+    <rect height="0.4986831771232071" width="4.499999999999982e-2" x="-8.999999999999986e-2" y="-0.14389541725818455"/>
+    <rect height="0.7603134608285463" width="4.500000000000004e-2" x="-4.500000000000004e-2" y="-0.4055257009635238"/>
+    <rect height="0.8027292795504715" width="4.500000000000004e-2" x="0.0" y="-0.44794151968544893"/>
+    <rect height="0.6029388810845765" width="4.500000000000004e-2" x="4.500000000000004e-2" y="-0.24815112121955396"/>
+    <rect height="0.4122659015962925" width="4.500000000000004e-2" x="9.000000000000008e-2" y="-5.747814173126997e-2"/>
+    <rect height="0.2588554170599792" width="4.500000000000004e-2" x="0.13500000000000012" y="9.593234280504331e-2"/>
+    <rect height="0.16332072255545438" width="4.499999999999993e-2" x="0.18000000000000016" y="0.19146703730956816"/>
+    <rect height="9.98951992329476e-2" width="4.499999999999993e-2" x="0.2250000000000001" y="0.25489256063207494"/>
+    <rect height="5.272246626183341e-2" width="4.500000000000015e-2" x="0.27" y="0.3020652936031891"/>
+    <rect height="4.3208637763457625e-2" width="4.499999999999971e-2" x="0.31500000000000017" y="0.3115791221015649"/>
+    <rect height="2.1406114121345965e-2" width="4.500000000000037e-2" x="0.3599999999999999" y="0.33338164574367657"/>
+    <rect height="1.347792370603268e-2" width="4.499999999999993e-2" x="0.40500000000000025" y="0.34130983615898985"/>
+    <rect height="4.1622999680394845e-2" width="4.499999999999993e-2" x="0.4500000000000002" y="0.3131647601846277"/>
+  </g>
+</svg>

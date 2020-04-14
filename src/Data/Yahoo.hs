@@ -13,6 +13,7 @@
 module Data.Yahoo
   ( runReturn
   , taker
+  , YahooData(..)
   , pYahoo
   , yahooCsvConfig
   ) where
@@ -25,8 +26,9 @@ import Data.Time
 import qualified Data.Attoparsec.Text as A
 import qualified Control.Foldl as L
 
--- yahoo formatted data
+-- | yahoo csv data
 -- See: https://finance.yahoo.com/quote/%5EGSPC/history?period1=-631015200&period2=1497103200&interval=1d&filter=history&frequency=1d
+
 data YahooData
   = YahooData
       { yDate :: Day,
@@ -69,7 +71,7 @@ pYahoo c = do
   pure (YahooData d (realToFrac o) (realToFrac h) (realToFrac l) (realToFrac close) (realToFrac ac) (realToFrac v))
 
 yahooCsvConfig :: CsvConfig
-yahooCsvConfig = defaultCsvConfig & #name .~ "^GSPC" & #csep .~ ',' & #dir .~ "./other"
+yahooCsvConfig = defaultCsvConfig & #name .~ "data" & #csep .~ ',' & #dir .~ "./other"
 
 -- compute the log return from a price series
 -- returns are geometric by nature, and using log(1+daily return) as the base unit of the time series leads to all sorts of benefits, not least of which is you can then add up the variates to get the cumulative return, without having to go through log and exp chicanery.  Ditto for distributional assumptions.
