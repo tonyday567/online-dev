@@ -1,7 +1,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
@@ -10,11 +9,8 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-module Stats
-  ( RunConfig(..),
-    defaultRunConfig,
-    onlineRs,
-    onlineChart,
+module Run.Charts
+  ( onlineChart,
     histChart,
     scatterChart,
     quantileChart,
@@ -38,40 +34,27 @@ import Data.Yahoo
 import Online
 import Options.Generic
 import NumHask.Prelude
+import Run.Types
 import NumHask.Space
 
-data RunConfig =
-  RunConfig
-  { nAll :: Int
-  , n :: Int
-  , rates :: [Double]
-  , versus :: (Double, Double)
-  , qs :: [Double]
-  , qsRate :: Double
-  , foreRate :: (Double, Double)
-  , histGrain :: Int
-  , histRange :: Range Double
-  , name :: FilePath
-  , dir :: FilePath
-  } deriving (Eq, Show, Generic)
 
-defaultRunConfig :: RunConfig
-defaultRunConfig = RunConfig 12000 10000 [0.95, 0.99] (0.95,0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99,0.99) 20 (Range (-0.03) 0.03) "default" "other/default"
-
-onlineRs :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [[Point Double]]
-onlineRs c f xs =
+-- | a time series decayed by a list of rates
+ts :: 
+ts =
       zipWith Point [0 ..]
         . taker (c ^. #n)
         . drop 1
-        . (\r -> f r xs)
+        . (\r -> f r (snd <$> xs))
         <$> (c ^. #rates)
 
+
+
 -- | A chart showing a time-series of a statistic at different online rates.
-onlineChart :: [(Day, Double)] -> RunConfig -> FilePath -> Text -> (Double -> [Double] -> [Double]) -> IO ()
-onlineChart xs c fp title f =
-  writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] cs
+onlineChart :: [(Day, Double)] -> RunConfig -> Text -> (Double -> [Double] -> [Double]) -> [Chart Double]
+onlineChart xs c title f = runHud (aspect 2) hs' (cs'<>chart')
   where
-    hudOptions = defaultHudOptions
+    (hs',cs') = makeHud (aspect 2)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title & #style . #size .~ 0.08]
         & #hudLegend
           .~ Just
@@ -94,6 +77,7 @@ onlineChart xs c fp title f =
                        <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) . fst <$> taker (c ^. #n) xs)
                    )
              ]
+      )
     lopts :: [LineStyle]
     lopts = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) (drop 3 d3Palette1) (0.002 : repeat 0.007)
     chartd =
@@ -102,7 +86,7 @@ onlineChart xs c fp title f =
         . drop 1
         . (\r -> f r (snd <$> xs))
         <$> (c ^. #rates)
-    cs = zipWith (\l c -> Chart (LineA l) c) lopts (zeroLine : (fmap SpotPoint <$> chartd))
+    chart' = zipWith (\l c -> Chart (LineA l) c) lopts (zeroLine : (fmap SpotPoint <$> chartd))
     zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
     (Rect lx ux _ _) = space1 $ mconcat chartd
 
@@ -111,12 +95,11 @@ quantileChart ::
   Text ->
   [Text] ->
   [(Day, [Double])] ->
-  FilePath ->
-  IO ()
-quantileChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] chart'
+  [Chart Double]
+quantileChart title names xs = runHud (aspect 2) hs' (cs'<>chart')
   where
-    hudOptions = 
-      defaultHudOptions
+    (hs',cs') = makeHud (aspect 2)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & ( #hudLegend
               .~ Just
@@ -135,6 +118,7 @@ quantileChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSv
                  & #place .~ PlaceLeft,
                defaultAxisOptions & #atick . #tstyle .~ TickPlaced dateTicks
              ]
+      )
     qss = transpose $ snd <$> xs
     dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) . fst <$> xs)
     chart' =
@@ -150,12 +134,11 @@ digitChart ::
   Text ->
   [Text] ->
   [(Day, Int)] ->
-  FilePath -> 
-  IO ()
-digitChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart', chartma, chartstd]
+  [Chart Double]
+digitChart title names xs = runHud (aspect 2) hs' (cs'<>[chart', chartma, chartstd])
   where
-    hudOptions =
-      defaultHudOptions
+    (hs',cs') = makeHud (aspect 2) 
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & #hudAxes
           .~ [ defaultAxisOptions
@@ -163,6 +146,7 @@ digitChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOp
                  & #place .~ PlaceLeft,
                defaultAxisOptions & #atick . #tstyle .~ TickPlaced dateTicks
              ]
+      )
     xs' = fromIntegral . snd <$> xs
     dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) . fst <$> xs)
     chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ blue & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
@@ -172,10 +156,10 @@ digitChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOp
 -- | scatter chart
 scatterChart ::
   [Point Double] ->
-  FilePath ->
-  IO ()
-scatterChart rels fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions defaultHudOptions [] [chart']
+  [Chart Double]
+scatterChart rels = runHud (aspect 2) hs' (cs'<>[chart'])
   where
+    (hs',cs') = makeHud (aspect 1) (defaultHudOptions)
     chart' =
       Chart
         ( GlyphA
@@ -195,11 +179,11 @@ histChart ::
   Range Double ->
   Int ->
   [Double] ->
-  FilePath ->
-  IO ()
-histChart title names r g xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart']
+  [Chart Double]
+histChart title names r g xs = runHud (aspect 2) hs' (cs'<>[chart'])
   where
-    hudOptions = defaultHudOptions
+    (hs',cs') = makeHud (aspect 2)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & #hudAxes
           .~ [ maybe
@@ -210,6 +194,7 @@ histChart title names r g xs fp = writeFile fp $ renderHudOptionsChart defaultSv
                  )
                  names
              ]
+      )
     chart' = Chart (RectA defaultRectStyle) (SpotRect <$> hr)
     hcuts = grid OuterPos r g
     h = fill hcuts xs
@@ -223,12 +208,11 @@ quantileHistChart ::
   [Double] ->
   -- | quantile values
   [Double] ->
-  FilePath ->
-  IO ()
-quantileHistChart title names qs vs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart']
+  [Chart Double]
+quantileHistChart title names qs vs = runHud (aspect 2) hs' (cs'<>[chart'])
   where
-    hudOptions =
-      defaultHudOptions
+    (hs',cs') = makeHud (aspect 2)
+      ( defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & #hudAxes
         .~ [ maybe
@@ -239,6 +223,7 @@ quantileHistChart title names qs vs fp = writeFile fp $ renderHudOptionsChart de
                  )
                  names
              ]
+      )
     chart' = Chart (RectA defaultRectStyle) (SpotRect <$> hr)
     hr = zipWith (\(y,w) (x,z) -> Rect x z 0 ((w-y)/(z-x))) (zip qs (drop 1 qs)) (zip vs (drop 1 vs))
 
@@ -267,7 +252,6 @@ digitPixelChart pixelStyle plo ts names ps =
         (PixelOptions pixelStyle pts gr)
         plo
 
--- style helpers
 returnHud :: (Text, Text, Text) -> HudOptions
 returnHud ts =
   defaultHudOptions

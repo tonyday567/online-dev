@@ -1,3 +1,6 @@
+```{.output .header}
+```
+
 Run Configuration
 ---
 
@@ -15,7 +18,9 @@ Time Series Statistics
 
 <img src="ma.svg">
 
-<img src="std.svg">
+<img src="maabs.svg">
+
+<img src="madbeta.svg">
 
 <img src="mabeta.svg">
 
