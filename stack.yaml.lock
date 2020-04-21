@@ -123,6 +123,20 @@ packages:
       sha256: 7331b4b995ff906a57f2c1d29b36f76e96403b133df1d3a695657b1919620451
   original:
     hackage: online-csv-0.0.1
+- completed:
+    cabal-file:
+      size: 1757
+      sha256: 6411968fd0ae59e7a26043c2006a730f2a22ec1d5c64624b3810a0e6815beffe
+    name: numhask-array
+    version: 0.5.1
+    git: https://github.com/tonyday567/numhask-array
+    pantry-tree:
+      size: 1051
+      sha256: 4b0e2d0693afddc16324e93e51d96632468802e37281cebcdf10515a18ccc5c5
+    commit: 08ca2b79d3d97c662dffbe4960183378e156b25a
+  original:
+    git: https://github.com/tonyday567/numhask-array
+    commit: 08ca2b79d3d97c662dffbe4960183378e156b25a
 snapshots:
 - completed:
     size: 491387

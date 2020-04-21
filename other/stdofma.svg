@@ -1,0 +1,263 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" height="300.0" viewBox="-1.056603951867382 -0.750342385218365 1.829103951867382 1.5809499006544654" width="450.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g transform="translate(-1.0199017946421716, 8.772495032723271e-2)" fill-opacity="1.0" font-size="8.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="middle">
+    <text transform="rotate(-90.0, 5.7297842774789665e-2, -4.759238521836506e-2)" x="5.7297842774789665e-2" y="-4.759238521836506e-2">sqrt (1/r) * std of ma
+    </text>
+  </g>
+  <g transform="translate(-0.11120089732108579, 0.8161999006544653)" fill-opacity="1.0" font-size="8.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="middle">
+    <text transform="rotate(0.0, 5.7297842774789665e-2, -4.759238521836506e-2)" x="5.7297842774789665e-2" y="-4.759238521836506e-2">rate
+    </text>
+  </g>
+  <g transform="translate(-0.11120089732108579, -0.57175)" fill-opacity="1.0" font-size="0.12" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="middle">
+    <text transform="rotate(0.0, 5.7297842774789665e-2, -4.759238521836506e-2)" x="5.7297842774789665e-2" y="-4.759238521836506e-2">std of ma
+    </text>
+  </g>
+  <g stroke-opacity="0.0" fill-opacity="0.1" stroke="#000000" stroke-width="0.0" fill="#cccccc">
+    <rect height="0.8958566629339307" width="1.3762294514408149" x="-0.6308168829456179" y="-0.4955207166853305"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,0.40033594624860025
+0.75,0.40033594624860025"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,0.2723564229723243
+0.75,0.2723564229723243"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,0.14437689969604844
+0.75,0.14437689969604844"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,1.6397376419773124e-2
+0.75,1.6397376419773124e-2"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,-0.1115821468565027
+0.75,-0.1115821468565027"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,-0.23956167013277863
+0.75,-0.23956167013277863"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,-0.36754119340905456
+0.75,-0.36754119340905456"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,-0.4955207166853305
+0.75,-0.4955207166853305"/>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="0.4133258678611422">1.10
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="0.28534634458486635">1.15
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="0.15736682130859048">1.20
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="2.9387298032315157e-2">1.25
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="-9.859222524396083e-2">1.30
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="-0.22657174852023665">1.35
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="-0.3545512717965126">1.40
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="-0.4825307950727883">1.45
+    </text>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#570d66" stroke-width="5.0e-3" fill="#570d66">
+    <g transform="rotate(-90.0, -0.7201128837462103, 0.40033594624860025)">
+      <polyline points="-0.7201128837462103,0.41533594624860026
+-0.7201128837462103,0.38533594624860024"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, 0.2723564229723243)">
+      <polyline points="-0.7201128837462103,0.28735642297232433
+-0.7201128837462103,0.2573564229723243"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, 0.14437689969604844)">
+      <polyline points="-0.7201128837462103,0.15937689969604846
+-0.7201128837462103,0.12937689969604843"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, 1.6397376419773124e-2)">
+      <polyline points="-0.7201128837462103,3.1397376419773124e-2
+-0.7201128837462103,1.3973764197731248e-3"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, -0.1115821468565027)">
+      <polyline points="-0.7201128837462103,-9.65821468565027e-2
+-0.7201128837462103,-0.1265821468565027"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, -0.23956167013277863)">
+      <polyline points="-0.7201128837462103,-0.2245616701327786
+-0.7201128837462103,-0.25456167013277864"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, -0.36754119340905456)">
+      <polyline points="-0.7201128837462103,-0.35254119340905454
+-0.7201128837462103,-0.38254119340905457"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, -0.4955207166853305)">
+      <polyline points="-0.7201128837462103,-0.4805207166853305
+-0.7201128837462103,-0.5105207166853305"/>
+    </g>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#570d66" stroke-width="0.0" fill="#570d66">
+    <rect height="0.8958566629339307" width="4.587431504802675e-3" x="-0.7086443049842035" y="-0.4955207166853305"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6308168829456179,0.40481522956326993
+-0.6308168829456179,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.51613109532555,0.40481522956326993
+-0.51613109532555,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.40144530770548204,0.40481522956326993
+-0.40144530770548204,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.28675952008541417,0.40481522956326993
+-0.28675952008541417,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.17207373246534619,0.40481522956326993
+-0.17207373246534619,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-5.7387944845278316e-2,0.40481522956326993
+-5.7387944845278316e-2,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="5.7297842774789665e-2,0.40481522956326993
+5.7297842774789665e-2,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.17198363039485742,0.40481522956326993
+0.17198363039485742,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.2866694180149254,0.40481522956326993
+0.2866694180149254,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.4013552056349934,0.40481522956326993
+0.4013552056349934,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.5160409932550611,0.40481522956326993
+0.5160409932550611,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.6307267808751291,0.40481522956326993
+0.6307267808751291,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.7454125684951971,0.40481522956326993
+0.7454125684951971,-0.5"/>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.6308168829456179, 0.5)" x="-0.6308168829456179" y="0.5">-0.02
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.51613109532555, 0.5)" x="-0.51613109532555" y="0.5">0.00
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.40144530770548204, 0.5)" x="-0.40144530770548204" y="0.5">0.02
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.28675952008541417, 0.5)" x="-0.28675952008541417" y="0.5">0.04
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.17207373246534619, 0.5)" x="-0.17207373246534619" y="0.5">0.06
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -5.7387944845278316e-2, 0.5)" x="-5.7387944845278316e-2" y="0.5">0.08
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 5.7297842774789665e-2, 0.5)" x="5.7297842774789665e-2" y="0.5">0.10
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.17198363039485742, 0.5)" x="0.17198363039485742" y="0.5">0.12
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.2866694180149254, 0.5)" x="0.2866694180149254" y="0.5">0.14
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.4013552056349934, 0.5)" x="0.4013552056349934" y="0.5">0.16
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.5160409932550611, 0.5)" x="0.5160409932550611" y="0.5">0.18
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.6307267808751291, 0.5)" x="0.6307267808751291" y="0.5">0.20
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.7454125684951971, 0.5)" x="0.7454125684951971" y="0.5">0.22
+    </text>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#570d66" stroke-width="5.0e-3" fill="#570d66">
+    <polyline points="-0.6308168829456179,0.4399720044792833
+-0.6308168829456179,0.4099720044792833"/>
+    <polyline points="-0.51613109532555,0.4399720044792833
+-0.51613109532555,0.4099720044792833"/>
+    <polyline points="-0.40144530770548204,0.4399720044792833
+-0.40144530770548204,0.4099720044792833"/>
+    <polyline points="-0.28675952008541417,0.4399720044792833
+-0.28675952008541417,0.4099720044792833"/>
+    <polyline points="-0.17207373246534619,0.4399720044792833
+-0.17207373246534619,0.4099720044792833"/>
+    <polyline points="-5.7387944845278316e-2,0.4399720044792833
+-5.7387944845278316e-2,0.4099720044792833"/>
+    <polyline points="5.7297842774789665e-2,0.4399720044792833
+5.7297842774789665e-2,0.4099720044792833"/>
+    <polyline points="0.17198363039485742,0.4399720044792833
+0.17198363039485742,0.4099720044792833"/>
+    <polyline points="0.2866694180149254,0.4399720044792833
+0.2866694180149254,0.4099720044792833"/>
+    <polyline points="0.4013552056349934,0.4399720044792833
+0.4013552056349934,0.4099720044792833"/>
+    <polyline points="0.5160409932550611,0.4399720044792833
+0.5160409932550611,0.4099720044792833"/>
+    <polyline points="0.6307267808751291,0.4399720044792833
+0.6307267808751291,0.4099720044792833"/>
+    <polyline points="0.7454125684951971,0.4399720044792833
+0.7454125684951971,0.4099720044792833"/>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#570d66" stroke-width="0.0" fill="#570d66">
+    <rect height="4.47928331466968e-3" width="1.3762294514408149" x="-0.6308168829456179" y="0.40929451287793955"/>
+  </g>
+  <g stroke-opacity="1.0" stroke="#026062" stroke-width="1.2e-2" fill="none">
+    <polyline points="-0.5103968059445465,0.31628834613104895
+-0.48745964842053296,-0.41961877125325886
+-0.45878820151551597,-0.2816406519072022
+-0.40144530770548204,-0.26928574205963807
+-0.22941662627538006,-0.33978250321370995
+5.729784277478989e-2,-0.3173935961158999
+0.6307267808751291,-0.21803137304309106"/>
+  </g>
+</svg>

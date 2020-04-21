@@ -23,5 +23,7 @@ extra-deps:
   - interpolatedstring-perl6-1.0.2
   - monad-bayes-0.1.1.0
   - online-csv-0.0.1
-
+  # - numhask-array-0.5.1
+  - git: https://github.com/tonyday567/numhask-array
+    commit: 08ca2b79d3d97c662dffbe4960183378e156b25a
 allow-newer: true
