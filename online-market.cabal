@@ -47,8 +47,8 @@ library
     , time
   default-language: Haskell2010
 
-executable online-market
-  main-is: clean.hs
+executable regression
+  main-is: regression.hs
   hs-source-dirs:
       app
   ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
@@ -74,34 +74,5 @@ executable online-market
     , time
     , interpolatedstring-perl6
     , pretty-simple
-  default-language: Haskell2010
-
-executable online-market-bayes
-  main-is: bayes.hs
-  hs-source-dirs:
-      app
-  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      online-market
-    , attoparsec
-    , backprop
-    , base >=4.7 && <5
-    , chart-svg
-    , containers
-    , foldl
-    , generic-lens
-    , lens
-    , log-domain
-    , JuicyPixels
-    , monad-bayes
-    , numhask-space
-    , online
-    , optparse-generic
-    , online-csv
-    , numhask-prelude
-    , readme-lhs
-    , scientific
-    , text
-    , time
   default-language: Haskell2010
 

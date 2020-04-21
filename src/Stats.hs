@@ -14,7 +14,10 @@ module Stats
   ( RunConfig(..),
     defaultRunConfig,
     onlineRs,
-    onlineChart,
+    writeChartOnline,
+    chartOnline,
+    svgName,
+    writeOnline,
     histChart,
     scatterChart,
     quantileChart,
@@ -45,6 +48,7 @@ data RunConfig =
   { nAll :: Int
   , n :: Int
   , rates :: [Double]
+  , betaRate :: Double
   , versus :: (Double, Double)
   , qs :: [Double]
   , qsRate :: Double
@@ -56,7 +60,7 @@ data RunConfig =
   } deriving (Eq, Show, Generic)
 
 defaultRunConfig :: RunConfig
-defaultRunConfig = RunConfig 12000 10000 [0.95, 0.99] (0.95,0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99,0.99) 20 (Range (-0.03) 0.03) "default" "other/default"
+defaultRunConfig = RunConfig 12000 10000 [0.95, 0.99] 0.99 (0.95,0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99,0.99) 20 (Range (-0.03) 0.03) "default" "other/default"
 
 onlineRs :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [[Point Double]]
 onlineRs c f xs =
@@ -66,54 +70,57 @@ onlineRs c f xs =
         . (\r -> f r xs)
         <$> (c ^. #rates)
 
--- | A chart showing a time-series of a statistic at different online rates.
-onlineChart :: [(Day, Double)] -> RunConfig -> FilePath -> Text -> (Double -> [Double] -> [Double]) -> IO ()
-onlineChart xs c fp title f =
-  writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] cs
+chartOnline :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [Chart Double]
+chartOnline c f xs = zipWith (\l c -> Chart (LineA l) c) lineStyles (zeroLine : (fmap SpotPoint <$> (onlineRs c f xs)))
   where
-    hudOptions = defaultHudOptions
-        & #hudTitles .~ [defaultTitle title & #style . #size .~ 0.08]
-        & #hudLegend
-          .~ Just
-            ( defaultLegendOptions
-                -- & #scale .~ 0.2
-                & #ltext . #size .~ 0.2
-                & #lplace .~ PlaceRight
-            ,   zipWith
-                    (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
-                    (drop 1 lopts)
-                    (c ^. #rates)
-            )
-        & #hudAxes
-          .~ [ defaultAxisOptions
-                 & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
-                 & #place .~ PlaceLeft,
-               defaultAxisOptions & #atick . #tstyle
-                 .~ TickPlaced
-                   ( first fromIntegral
-                       <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) . fst <$> taker (c ^. #n) xs)
-                   )
-             ]
-    lopts :: [LineStyle]
-    lopts = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) (drop 3 d3Palette1) (0.002 : repeat 0.007)
-    chartd =
-      zipWith Point [0 ..]
-        . taker (c ^. #n)
-        . drop 1
-        . (\r -> f r (snd <$> xs))
-        <$> (c ^. #rates)
-    cs = zipWith (\l c -> Chart (LineA l) c) lopts (zeroLine : (fmap SpotPoint <$> chartd))
     zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
-    (Rect lx ux _ _) = space1 $ mconcat chartd
+    (Rect lx ux _ _) = space1 $ mconcat (onlineRs c f xs)
 
--- | a chart showing a time-series of quantile boundary values
+lineStyles :: [LineStyle]
+lineStyles = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) palette (0.001 : repeat 0.003)
+
+hudOptionsOnline :: RunConfig -> Text -> [Day] -> HudOptions
+hudOptionsOnline c title ds =
+  defaultHudOptions
+  & #hudTitles .~ [defaultTitle title & #style . #size .~ 0.08]
+  & #hudLegend
+  .~ Just
+  ( defaultLegendOptions
+    & #ltext . #size .~ 0.3
+    & #lplace .~ PlaceBottom
+  ,   zipWith
+      (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
+      (drop 1 lineStyles)
+      (c ^. #rates)
+  )
+  & #hudAxes
+  .~ [ defaultAxisOptions
+       & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
+       & #place .~ PlaceLeft,
+       defaultAxisOptions & #atick . #tstyle
+       .~ TickPlaced
+       ( first fromIntegral
+         <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) <$> taker (c ^. #n) ds)
+       )
+     ]
+
+writeChartOnline :: FilePath -> RunConfig -> Text -> [Day] -> [Chart Double] -> IO ()
+writeChartOnline fp c title ds cs = writeFile fp $ renderHudOptionsChart defaultSvgOptions (hudOptionsOnline c title ds) [] cs
+
+svgName :: RunConfig -> FilePath -> FilePath
+svgName c f = view #dir c <> view #name c <> "/" <> f
+
+writeOnline :: FilePath -> RunConfig -> (Double -> [Double] -> [Double]) -> [(Day, Double)] -> IO ()
+writeOnline fp c f rs = writeChartOnline (svgName c fp) c "" (taker (c ^. #n) $ fst <$> rs)
+  (chartOnline c f (taker (c ^. #n) $ snd <$> rs))
+
 quantileChart ::
+  FilePath ->
   Text ->
   [Text] ->
   [(Day, [Double])] ->
-  FilePath ->
   IO ()
-quantileChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] chart'
+quantileChart fp title names xs = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] chart'
   where
     hudOptions = 
       defaultHudOptions
@@ -121,7 +128,6 @@ quantileChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSv
         & ( #hudLegend
               .~ Just
                 ( defaultLegendOptions
---                    & #scale .~ 0.3
                     & #ltext . #size .~ 0.1
                     & #vgap .~ 0.05
                     & #innerPad .~ 0.2
@@ -142,17 +148,17 @@ quantileChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSv
     l = length names
     m = (fromIntegral l - 1) / 2 :: Double
     cs = (\x -> 1 - abs (fromIntegral x - m) / m) <$> [0 .. (l - 1)]
-    bs = (\x -> blend' x (grey, 0.2) (red, 1)) <$> cs
-    lo = (\(c, o) -> defaultLineStyle & #width .~ 0.01 & #color .~ c & #opacity .~ o) <$> bs
+    bs = (\x -> blend x (Colour 0.7 0.1 0.3 0.2) (Colour 0.1 0.4 0.8 1)) <$> cs
+    lo = (\c -> defaultLineStyle & #width .~ 0.001 & #color .~ c) <$> bs
 
 -- | a chart showing a time series of digitized values (eg this return was a 30th percentile)
 digitChart ::
+  FilePath -> 
   Text ->
   [Text] ->
   [(Day, Int)] ->
-  FilePath -> 
   IO ()
-digitChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart', chartma, chartstd]
+digitChart fp title names xs = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart', chartma, chartstd]
   where
     hudOptions =
       defaultHudOptions
@@ -165,24 +171,22 @@ digitChart title names xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOp
              ]
     xs' = fromIntegral . snd <$> xs
     dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) . fst <$> xs)
-    chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ blue & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
+    chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ Colour 0 0 1 1 & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
     chartma = Chart (LineA defaultLineStyle) (zipWith SP [0 ..] (drop 1 $ L.scan (ma 0.95) xs'))
-    chartstd = Chart (LineA (defaultLineStyle & #color .~ red)) (zipWith SP [0 ..] (drop 1 $ L.scan (std 0.95) xs'))
+    chartstd = Chart (LineA (defaultLineStyle & #color .~ Colour 1 0 0 1)) (zipWith SP [0 ..] (drop 1 $ L.scan (std 0.95) xs'))
 
 -- | scatter chart
 scatterChart ::
-  [Point Double] ->
   FilePath ->
+  [Point Double] ->
   IO ()
-scatterChart rels fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions defaultHudOptions [] [chart']
+scatterChart fp rels = writeFile fp $ renderHudOptionsChart defaultSvgOptions defaultHudOptions [] [chart']
   where
     chart' =
       Chart
         ( GlyphA
             ( defaultGlyphStyle
-                & #color .~ red
-                & #borderOpacity .~ 0
-                & #opacity .~ 0.3
+                & #color .~ Colour 1 0 0 0.3
                 & #size .~ 0.02
             )
         )

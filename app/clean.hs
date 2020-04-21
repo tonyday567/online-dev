@@ -40,7 +40,7 @@ svgName c f = view #dir c <> view #name c <> "/" <> f
 run :: RunConfig -> IO ()
 run c = do
   rs' <- runReturn (c ^. #nAll)
-  let nAll = min (c ^. #nAll) (length rs')
+  let nAll = min (c ^. #inAll) (length rs')
   let rs = take nAll rs'
   let n = min (c ^. #n) (length rs)
   onlineChart rs c (svgName c "ma.svg") "moving average return" (L.scan . ma)
