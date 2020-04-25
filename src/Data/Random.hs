@@ -1,21 +1,21 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ExtendedDefaultRules #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ExtendedDefaultRules #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Data.Random where
 
+import qualified Control.Foldl as L
+import Control.Monad.Primitive (PrimState)
 import NumHask.Prelude
 import Online
-import Control.Monad.Primitive (PrimState)
 import System.Random.MWC
 import System.Random.MWC.Probability hiding (beta)
-import qualified Control.Foldl as L
 
 -- $setup
 -- >>> :set -XFlexibleContexts
@@ -23,7 +23,6 @@ import qualified Control.Foldl as L
 -- >>> let n = 3
 -- >>> let eq' a b = all nearZero $ zipWith (-) a b
 -- >>> let eq'p a b = all (\x -> x) $ zipWith (\(x0,x1) (y0,y1) -> nearZero (x0-y0) && nearZero (x1-y1)) a b
---
 
 -- | rvs creates a list of standard normal random variates.
 -- >>> t <- rvs gen n
@@ -35,13 +34,11 @@ import qualified Control.Foldl as L
 -- 1.986088417850516e-3
 -- L.fold (std 1) rs
 -- 0.9923523681261158
---
 rvs :: Gen (PrimState IO) -> Int -> IO [Double]
 rvs gen n = samples n standardNormal gen
 
-
 -- | rvsPair generates a list of correlated random variate tuples
--- | 
+-- |
 -- >>> t <- rvsp gen 3 0.8
 -- >>> t `eq'p` [(-0.8077385934202513,-1.4591410449385904),(-1.3423948150518445,-0.6046212701237168),(-0.4900206084002882,0.923007518547542)]
 -- True
@@ -53,8 +50,7 @@ rvs gen n = samples n standardNormal gen
 --
 -- > L.fold (corr (ma 1) (std 1)) ps
 -- 0.7990745094807482
---
-rvsp :: Gen (PrimState IO) -> Int -> Double -> IO [(Double,Double)]
+rvsp :: Gen (PrimState IO) -> Int -> Double -> IO [(Double, Double)]
 rvsp gen n c = do
   s0 <- rvs gen n
   s1 <- rvs gen n
@@ -76,20 +72,13 @@ let rsc = (\r -> ((\r -> drop 1 $ zipWith (\o m -> o + 0.1 * (r ** -1) * m) rs (
 
 -}
 
-
-
 -- > rs <- rvs gen 10000
 -- > let xma = zip rs (L.scan (ma 0.95) rs)
 
-
 -- | with an online fold for the central tendency, return an (alpha, beta) regression values tuple.
-reg :: (Fractional a) => L.Fold a a -> L.Fold (a,a) (a,a)
+reg :: (Fractional a) => L.Fold a a -> L.Fold (a, a) (a, a)
 reg m = (,) <$> alpha m <*> beta m
-
-
 -- y = b * x + a
-
-
 
 {-
 -- | traverse the same fold over a list
@@ -111,7 +100,6 @@ foldList :: [L.Fold a b] -> L.Fold a [b]
 foldList = foldr (\f -> (<*>) ((:) <$> f)) (fconst [])
 
 -}
-
 
 {-
 -- | the classical abstract historio-dependent model of a stream
@@ -148,5 +136,3 @@ depMo d =
     (betas d)
 
 -}
-
-

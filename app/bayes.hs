@@ -1,10 +1,30 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC  #-}
 
+module Main where
+
+import Chart
+import Chart.Bar
+import Control.Lens
+import Control.Monad.Bayes.Class
+import Control.Monad.Bayes.Inference.RMSMC as RMSMC
+import Control.Monad.Bayes.Inference.SMC as SMC
+import Control.Monad.Bayes.Population
+import Control.Monad.Bayes.Sampler
+import Control.Monad.Bayes.Sequential
+import Control.Monad.Bayes.Traced
+import Control.Monad.Bayes.Traced.Static (Traced)
+import Control.Monad.Bayes.Weighted
+import Data.List
+import qualified Data.Map.Strict as Map
+import Data.Yahoo
+import NumHask.Prelude
+import Numeric.Log
 
 {-
 
@@ -17,63 +37,45 @@ https://github.com/adscib/monad-bayes/tree/master/models | monad-bayes/models at
 
 -}
 
-module Main where
-
-import Data.Yahoo
-import NumHask.Prelude
-import Control.Lens
-import Control.Monad.Bayes.Class
-import Control.Monad.Bayes.Sampler
-import Control.Monad.Bayes.Traced
-import Control.Monad.Bayes.Weighted
-import Control.Monad.Bayes.Inference.SMC as SMC
-import Control.Monad.Bayes.Inference.RMSMC as RMSMC
-import Control.Monad.Bayes.Sequential
-import Control.Monad.Bayes.Population
-import Control.Monad.Bayes.Traced.Static (Traced)
-import Control.Monad.Bayes.Inference.SMC
-import Control.Monad.Bayes.Class
-import Data.List
-import qualified Data.Map.Strict as Map
-import Chart
-import Chart.Bar
-import Numeric.Log
-
 model1 :: MonadSample m => m Bool
 model1 = uniformD [False, True]
 
 fillD xs = foldl' (\m k -> Map.insertWith (+) k 1 m) Map.empty xs
 
-
 model2 :: MonadInfer m => m Bool
 model2 = do
-    b <- uniformD [False, True]
-    score (if b then 1.0 else 0.0)
-    return b
+  b <- uniformD [False, True]
+  score (if b then 1.0 else 0.0)
+  return b
 
 model3 :: MonadInfer m => m (Double, Double)
 model3 = do
-    b <- uniform (-1) 1
-    m <- uniform (-1) 1
-    condition $ (b-m) > 0
-    return (b, m)
+  b <- uniform (-1) 1
+  m <- uniform (-1) 1
+  condition $ (b - m) > 0
+  return (b, m)
 
 model4 :: MonadInfer m => m (Double, Double)
 model4 = do
-    b <- uniform (-1) 1
-    m <- uniform (-1) 1
-    condition $ (b-m) > 0
-    condition $ (b+m) > 0
-    return (b, m)
+  b <- uniform (-1) 1
+  m <- uniform (-1) 1
+  condition $ (b - m) > 0
+  condition $ (b + m) > 0
+  return (b, m)
 
-pixelChart :: (Text, Text, Text) -> Rect Double -> [Chart Double] ->
+pixelChart ::
+  (Text, Text, Text) ->
+  Rect Double ->
+  [Chart Double] ->
   [Chart Double]
-pixelChart (title, xt, yt) r cs = runHud (aspect 1.5) hs' (cs'<>cs)
+pixelChart (title, xt, yt) r cs = runHud (aspect 1.5) hs' (cs' <> cs)
   where
-    (hs',cs') = makeHud (aspect 1.5)
-      ( defaultHudOptions
-        & #hudTitles .~ [defaultTitle title, defaultTitle xt & #place .~ PlaceBottom & #style . #size .~ 0.06, defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06]
-      )
+    (hs', cs') =
+      makeHud
+        (aspect 1.5)
+        ( defaultHudOptions
+            & #hudTitles .~ [defaultTitle title, defaultTitle xt & #place .~ PlaceBottom & #style . #size .~ 0.06, defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06]
+        )
 
 -- pairModel :: MonadInfer m => (Text, Text, Text) -> Int -> m (Double, Double) -> IO ()
 pairModel fn ts nsamples r p model = do
@@ -81,13 +83,16 @@ pairModel fn ts nsamples r p model = do
   let (Rect x z y w) = r
   let gx = grid OuterPos (Range x z) p
   let gy = grid OuterPos (Range y w) p
-  let c = foldl' (\x a -> Map.insertWith (+) (bimap (cutI gx) (cutI gy) a) 1 x) Map.empty
+  let c =
+        foldl'
+          (\x a -> Map.insertWith (+) (bimap (cutI gx) (cutI gy) a) 1 x)
+          Map.empty
           modelsamples
   let (cs', hs') =
         pixelfl
-        (\(Point x y) -> fromMaybe 0 $ Map.lookup (bimap (cutI gx) (cutI gy) (x,y)) c)
-        (PixelOptions defaultPixelStyle (Point 20 20) (Rect 0 10 0 10))
-        (defaultPixelLegendOptions "pair model")
+          (\(Point x y) -> fromMaybe 0 $ Map.lookup (bimap (cutI gx) (cutI gy) (x, y)) c)
+          (PixelOptions defaultPixelStyle (Point 20 20) (Rect 0 10 0 10))
+          (defaultPixelLegendOptions "pair model")
   writeCharts fn $ runHud (aspect 1.5) hs' cs'
 
 pairModel' fn ts r p f = do
@@ -96,9 +101,9 @@ pairModel' fn ts r p f = do
   let gy = grid OuterPos (Range y w) p
   let (cs', hs') =
         pixelfl
-        f
-        (PixelOptions defaultPixelStyle (Point 20 20) (Rect 0 10 0 10))
-        (defaultPixelLegendOptions "pair model")
+          f
+          (PixelOptions defaultPixelStyle (Point 20 20) (Rect 0 10 0 10))
+          (defaultPixelLegendOptions "pair model")
   writeCharts fn $ runHud (aspect 1.5) hs' cs'
 
 {-
@@ -118,7 +123,6 @@ paramsModel fn (t1, t2, t3) r p f params = do
 
 -}
 
-
 data Params
   = Params
       { slope :: Double,
@@ -128,7 +132,7 @@ data Params
   deriving (Eq, Show)
 
 likelihood :: Params -> Point Double -> Log Double
-likelihood (Params m b nStd) (Point x y) = normalPdf (m*x + b) nStd y
+likelihood (Params m b nStd) (Point x y) = normalPdf (m * x + b) nStd y
 
 params0 = Params 2.3 (-1.2) 2.0
 
@@ -150,14 +154,19 @@ likelihoodDist params r = do
   score $ likelihood params (Point x y)
   return $ Point x y
 
-scatterChart :: Text -> [Point Double] -> Rect Double ->
+scatterChart ::
+  Text ->
+  [Point Double] ->
+  Rect Double ->
   [Chart Double]
 scatterChart title xs r = runHud r hs' (cs' <> [chart'])
   where
-    (hs',cs') = makeHud r 
-      ( defaultHudOptions
-        & #hudTitles .~ [defaultTitle title]
-      )
+    (hs', cs') =
+      makeHud
+        r
+        ( defaultHudOptions
+            & #hudTitles .~ [defaultTitle title]
+        )
     chart' = Chart (GlyphA defaultGlyphStyle) (SpotPoint <$> xs)
 
 -- uniform2D :: MonadSample m => m Data
@@ -169,20 +178,18 @@ uniform2D (Rect x' z y' w) = do
 -- postParams :: MonadInfer m => m Params -> [Data] -> m Params
 postParams pr obs = do
   param <- pr
-  forM_ obs (\point -> score (likelihood param point))
+  forM_ obs (score . likelihood param)
   return param
 
 -- predDist :: MonadInfer m => m Params -> m Data
 predDist paramDist r = do
   params <- paramDist
-  point <- likelihoodDist params r
-  return point
+  likelihoodDist params r
 
 main :: IO ()
 main = do
   let nsamples = 1000
   samples <- sampleIOfixed $ replicateM nsamples model1
-  pure ()
   let d = Map.toList $ fillD samples
   let b = BarData [snd <$> d] (Just $ show . fst <$> d) Nothing
   writeCharts "other/model1.svg" $ snd $ barChart defaultBarOptions b
@@ -200,19 +207,14 @@ main = do
 
   pointsMCMC <- sampleIOfixed $ prior . mh 1000 $ likelihoodDist params0 (Rect (-10) 10 (-10) 10)
   writeCharts "other/mcmc1.svg" $ scatterChart "mcmc" pointsMCMC (aspect 1.5)
-
   uniformSamples <- sampleIOfixed $ replicateM 2000 $ uniform2D (Rect (-10) 10 (-10) 10)
-  let desiredProb = (samplingDistribution' params0) <$> uniformSamples
-
+  let desiredProb = samplingDistribution' params0 <$> uniformSamples
   uniform0max <- sampleIOfixed $ replicateM 2000 $ uniform 0 (maximum desiredProb)
-  let points3 = [p | (p, u, l) <- zip3 uniformSamples uniform0max desiredProb, u<l]
+  let points3 = [p | (p, u, l) <- zip3 uniformSamples uniform0max desiredProb, u < l]
   writeCharts "other/mcmc3.svg" $ scatterChart "mcmc3" points3 (aspect 1.5)
-
   modelsamples <- sampleIOfixed $ prior . mh 1000 $ postParams priorParams points3
   writeCharts "other/modelsamples.svg" $ scatterChart "modelsamples" ((\(Params a b _) -> Point a b) <$> modelsamples) (aspect 1.5)
-
   pts <- sampleIOfixed $ prior . mh 40000 $ predDist (postParams priorParams points3) (Rect (-10) 10 (-10) 10)
   let predPoints = take (length pts - 100) pts
   writeCharts "other/pred.svg" $ scatterChart "predPoints" predPoints (aspect 1.5)
-
   pure ()

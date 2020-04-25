@@ -54,6 +54,7 @@
 - ignore: {name: Use camelCase}
 - ignore: {name: Use if}
 - ignore: {name: Use first}
+- ignore: {name: Use last}
 # Define some custom infix operators
 # - fixity: infixr 3 ~^#^~
 

@@ -83,3 +83,101 @@ executable regression
     , numhask-array
   default-language: Haskell2010
 
+executable random
+  main-is: random.hs
+  hs-source-dirs:
+      app
+  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      online-market
+    , attoparsec
+    , backprop
+    , base >=4.7 && <5
+    , chart-svg
+    , containers
+    , foldl
+    , generic-lens
+    , lens
+    , mwc-probability
+    , mwc-random
+    , numhask-space
+    , online
+    , optparse-generic
+    , online-csv
+    , numhask-prelude
+    , primitive
+    , readme-lhs
+    , scientific
+    , text
+    , time
+    , interpolatedstring-perl6
+    , pretty-simple
+    , numhask-array
+  default-language: Haskell2010
+
+executable clean
+  main-is: clean.hs
+  hs-source-dirs:
+      app
+  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      online-market
+    , attoparsec
+    , backprop
+    , base >=4.7 && <5
+    , chart-svg
+    , containers
+    , foldl
+    , generic-lens
+    , lens
+    , mwc-probability
+    , mwc-random
+    , numhask-space
+    , online
+    , optparse-generic
+    , online-csv
+    , numhask-prelude
+    , primitive
+    , readme-lhs
+    , scientific
+    , text
+    , time
+    , interpolatedstring-perl6
+    , pretty-simple
+    , numhask-array
+  default-language: Haskell2010
+
+executable bayes
+  main-is: bayes.hs
+  hs-source-dirs:
+      app
+  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      online-market
+    , attoparsec
+    , backprop
+    , base >=4.7 && <5
+    , chart-svg
+    , containers
+    , foldl
+    , generic-lens
+    , lens
+    , log-domain
+    , monad-bayes
+    , mwc-probability
+    , mwc-random
+    , numhask-space
+    , online
+    , optparse-generic
+    , online-csv
+    , numhask-prelude
+    , primitive
+    , readme-lhs
+    , scientific
+    , text
+    , time
+    , interpolatedstring-perl6
+    , pretty-simple
+    , numhask-array
+  default-language: Haskell2010
+

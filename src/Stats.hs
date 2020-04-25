@@ -1,17 +1,17 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Stats
-  ( RunConfig(..),
+  ( RunConfig (..),
     defaultRunConfig,
     onlineRs,
     writeChartOnline,
@@ -38,37 +38,38 @@ import Data.Maybe
 import qualified Data.Text as Text
 import Data.Time
 import Data.Yahoo
-import Online
-import Options.Generic
 import NumHask.Prelude
 import NumHask.Space
+import Online
+import Options.Generic
 
-data RunConfig =
-  RunConfig
-  { nAll :: Int
-  , n :: Int
-  , rates :: [Double]
-  , betaRate :: Double
-  , versus :: (Double, Double)
-  , qs :: [Double]
-  , qsRate :: Double
-  , foreRate :: (Double, Double)
-  , histGrain :: Int
-  , histRange :: Range Double
-  , name :: FilePath
-  , dir :: FilePath
-  } deriving (Eq, Show, Generic)
+data RunConfig
+  = RunConfig
+      { nAll :: Int,
+        n :: Int,
+        rates :: [Double],
+        betaRate :: Double,
+        versus :: (Double, Double),
+        qs :: [Double],
+        qsRate :: Double,
+        foreRate :: (Double, Double),
+        histGrain :: Int,
+        histRange :: Range Double,
+        name :: FilePath,
+        dir :: FilePath
+      }
+  deriving (Eq, Show, Generic)
 
 defaultRunConfig :: RunConfig
-defaultRunConfig = RunConfig 12000 10000 [0.95, 0.99] 0.99 (0.95,0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99,0.99) 20 (Range (-0.03) 0.03) "default" "other/default"
+defaultRunConfig = RunConfig 12000 10000 [0.95, 0.99] 0.99 (0.95, 0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99, 0.99) 20 (Range (-0.03) 0.03) "default" "other/default"
 
 onlineRs :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [[Point Double]]
 onlineRs c f xs =
-      zipWith Point [0 ..]
-        . taker (c ^. #n)
-        . drop 1
-        . (\r -> f r xs)
-        <$> (c ^. #rates)
+  zipWith Point [0 ..]
+    . taker (c ^. #n)
+    . drop 1
+    . (\r -> f r xs)
+    <$> (c ^. #rates)
 
 chartOnline :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [Chart Double]
 chartOnline c f xs = zipWith (\l c -> Chart (LineA l) c) lineStyles (zeroLine : (fmap SpotPoint <$> (onlineRs c f xs)))
@@ -82,27 +83,28 @@ lineStyles = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) pale
 hudOptionsOnline :: RunConfig -> Text -> [Day] -> HudOptions
 hudOptionsOnline c title ds =
   defaultHudOptions
-  & #hudTitles .~ [defaultTitle title & #style . #size .~ 0.08]
-  & #hudLegend
-  .~ Just
-  ( defaultLegendOptions
-    & #ltext . #size .~ 0.3
-    & #lplace .~ PlaceBottom
-  ,   zipWith
-      (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
-      (drop 1 lineStyles)
-      (c ^. #rates)
-  )
-  & #hudAxes
-  .~ [ defaultAxisOptions
-       & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
-       & #place .~ PlaceLeft,
-       defaultAxisOptions & #atick . #tstyle
-       .~ TickPlaced
-       ( first fromIntegral
-         <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) <$> taker (c ^. #n) ds)
-       )
-     ]
+    & #hudTitles
+    .~ [defaultTitle title & #style . #size .~ 0.08]
+    & #hudLegend
+    .~ Just
+      ( defaultLegendOptions
+          & #ltext . #size .~ 0.3
+          & #lplace .~ PlaceBottom,
+        zipWith
+          (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
+          (drop 1 lineStyles)
+          (c ^. #rates)
+      )
+    & #hudAxes
+    .~ [ defaultAxisOptions
+           & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
+           & #place .~ PlaceLeft,
+         defaultAxisOptions & #atick . #tstyle
+           .~ TickPlaced
+             ( first fromIntegral
+                 <$> makeTickDates PosIncludeBoundaries Nothing 8 ((\x -> UTCTime x 0) <$> taker (c ^. #n) ds)
+             )
+       ]
 
 writeChartOnline :: FilePath -> RunConfig -> Text -> [Day] -> [Chart Double] -> IO ()
 writeChartOnline fp c title ds cs = writeFile fp $ renderHudOptionsChart defaultSvgOptions (hudOptionsOnline c title ds) [] cs
@@ -111,8 +113,13 @@ svgName :: RunConfig -> FilePath -> FilePath
 svgName c f = view #dir c <> view #name c <> "/" <> f
 
 writeOnline :: FilePath -> RunConfig -> (Double -> [Double] -> [Double]) -> [(Day, Double)] -> IO ()
-writeOnline fp c f rs = writeChartOnline (svgName c fp) c "" (taker (c ^. #n) $ fst <$> rs)
-  (chartOnline c f (taker (c ^. #n) $ snd <$> rs))
+writeOnline fp c f rs =
+  writeChartOnline
+    (svgName c fp)
+    c
+    ""
+    (taker (c ^. #n) $ fst <$> rs)
+    (chartOnline c f (taker (c ^. #n) $ snd <$> rs))
 
 quantileChart ::
   FilePath ->
@@ -122,7 +129,7 @@ quantileChart ::
   IO ()
 quantileChart fp title names xs = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] chart'
   where
-    hudOptions = 
+    hudOptions =
       defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & ( #hudLegend
@@ -131,8 +138,8 @@ quantileChart fp title names xs = writeFile fp $ renderHudOptionsChart defaultSv
                     & #ltext . #size .~ 0.1
                     & #vgap .~ 0.05
                     & #innerPad .~ 0.2
-                    & #lplace .~ PlaceRight
-                , legendFromChart names chart'
+                    & #lplace .~ PlaceRight,
+                  legendFromChart names chart'
                 )
           )
         & #hudAxes
@@ -153,7 +160,7 @@ quantileChart fp title names xs = writeFile fp $ renderHudOptionsChart defaultSv
 
 -- | a chart showing a time series of digitized values (eg this return was a 30th percentile)
 digitChart ::
-  FilePath -> 
+  FilePath ->
   Text ->
   [Text] ->
   [(Day, Int)] ->
@@ -203,7 +210,8 @@ histChart ::
   IO ()
 histChart title names r g xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart']
   where
-    hudOptions = defaultHudOptions
+    hudOptions =
+      defaultHudOptions
         & #hudTitles .~ [defaultTitle title]
         & #hudAxes
           .~ [ maybe
@@ -233,18 +241,19 @@ quantileHistChart title names qs vs fp = writeFile fp $ renderHudOptionsChart de
   where
     hudOptions =
       defaultHudOptions
-        & #hudTitles .~ [defaultTitle title]
+        & #hudTitles
+        .~ [defaultTitle title]
         & #hudAxes
         .~ [ maybe
-             (defaultAxisOptions & #atick . #tstyle .~ TickRound (FormatPercent 0) 8 TickExtend)
-                 ( \x ->
-                     defaultAxisOptions & #atick . #tstyle
-                       .~ TickPlaced (zip vs x)
-                 )
-                 names
-             ]
+               (defaultAxisOptions & #atick . #tstyle .~ TickRound (FormatPercent 0) 8 TickExtend)
+               ( \x ->
+                   defaultAxisOptions & #atick . #tstyle
+                     .~ TickPlaced (zip vs x)
+               )
+               names
+           ]
     chart' = Chart (RectA defaultRectStyle) (SpotRect <$> hr)
-    hr = zipWith (\(y,w) (x,z) -> Rect x z 0 ((w-y)/(z-x))) (zip qs (drop 1 qs)) (zip vs (drop 1 vs))
+    hr = zipWith (\(y, w) (x, z) -> Rect x z 0 ((w - y) / (z - x))) (zip qs (drop 1 qs)) (zip vs (drop 1 vs))
 
 -- | pixel chart of digitized vs digitzed counts
 digitPixelChart ::
@@ -299,8 +308,9 @@ qvqHud ts labels =
          ]
 
 makeTitles :: (Text, Text, Text) -> [Title]
-makeTitles (t, xt, yt) = reverse
-  [ defaultTitle t,
-    defaultTitle xt & #place .~ PlaceBottom & #style . #size .~ 0.06,
-    defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06
-  ]
+makeTitles (t, xt, yt) =
+  reverse
+    [ defaultTitle t,
+      defaultTitle xt & #place .~ PlaceBottom & #style . #size .~ 0.06,
+      defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06
+    ]

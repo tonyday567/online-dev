@@ -1,34 +1,34 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Data.Yahoo
-  ( runReturn
-  , taker
-  , YahooData(..)
-  , pYahoo
-  , yahooCsvConfig
-  ) where
+  ( runReturn,
+    taker,
+    YahooData (..),
+    pYahoo,
+    yahooCsvConfig,
+  )
+where
 
-import NumHask.Prelude
+import qualified Control.Foldl as L
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
+import qualified Data.Attoparsec.Text as A
 import Data.Csv
 import Data.Generics.Labels ()
 import Data.Time
-import qualified Data.Attoparsec.Text as A
-import qualified Control.Foldl as L
+import NumHask.Prelude
 
 -- | yahoo csv data
 -- See: https://finance.yahoo.com/quote/%5EGSPC/history?period1=-631015200&period2=1497103200&interval=1d&filter=history&frequency=1d
-
 data YahooData
   = YahooData
       { yDate :: Day,
@@ -61,7 +61,7 @@ pYahoo c = do
   _ <- A.char c
   h <- A.double
   _ <- A.char c
-  l <- A.double 
+  l <- A.double
   _ <- A.char c
   close <- A.double
   _ <- A.char c
@@ -78,7 +78,7 @@ yahooCsvConfig = defaultCsvConfig & #name .~ "data" & #csep .~ ',' & #dir .~ "./
 lret :: [Double] -> [Double]
 lret [] = []
 lret [_] = []
-lret (x:xs) = L.fold (L.Fold step ([], x) (reverse . fst)) xs
+lret (x : xs) = L.fold (L.Fold step ([], x) (reverse . fst)) xs
   where
     step (acc, v) v' = (log (v' / v) : acc, v')
 
