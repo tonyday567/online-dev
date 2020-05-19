@@ -46,6 +46,19 @@ stdOfMaChart fp rates rs =
           (zipWith SP rates ((\r -> sqrt r * stdOfMa rs r) <$> rates))
     )
 
+stdOfMaChart' :: [Double] -> [Double] -> Text
+stdOfMaChart' rates rs =
+  renderHudOptionsChart
+    defaultSvgOptions
+    (titlesHud "std of ma" "rate" "sqrt (1/r) * std of ma")
+    []
+    ( (: []) $
+        Chart
+          (LineA defaultLineStyle)
+          (zipWith SP rates ((\r -> sqrt r * stdOfMa rs r) <$> rates))
+    )
+
+
 -- | the average beta measure given an autocorrelation of the form r = a + b * ma.
 -- The random variance in the beta measure (ie assuming beta = 0) is removed.
 avBetaMeasure :: (Subtractive b, Fractional b, Multiplicative b) => [b] -> b -> b -> b
@@ -107,6 +120,16 @@ betaErrorScatter fp rs rates bs =
                & #place .~ PlaceLeft
                & #atick . #tstyle .~ TickLabels (show <$> bs)
            ]
+
+
+
+
+doctype :: Text
+doctype = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"\n    \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">"
+
+
+defaultRenderList :: [Double] -> Text
+defaultRenderList = renderHudOptionsChart defaultSvgOptions mempty [] . (:[]) . Chart (LineA defaultLineStyle) . zipWith SP [0..]
 
 main :: IO ()
 main = do
