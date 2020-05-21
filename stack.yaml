@@ -1,29 +1,42 @@
-resolver: lts-15.6
+resolver: lts-15.13
 
 packages:
   - .
 
 extra-deps:
-  - readme-lhs-0.5.0
-  - backprop-0.2.6.3
-  - vinyl-0.12.1
-  - lucid-svg-0.7.1
-  - javascript-bridge-0.2.0
-  - online-0.4.0.0
-  # - chart-svg-0.0.1
+  - protolude-0.3.0
+  # - chart-svg-0.0.3
   - git: https://github.com/tonyday567/chart-svg
-    commit: 436afe6d9f49782200d5d851fc8a36e330ddef8e
-  - box-0.2.0
-  - numhask-prelude-0.3.3
-  - numhask-space-0.3.1
-  # - web-rep-0.3.1
-  - git: https://github.com/tonyday567/web-rep
-    commit: 0863a2974af30ece6cb46fb8a1198cb9b053c5e2
-  - text-format-0.3.2
+    commit: 48d6de4538afa0591bccb37da73a89f3d1163cd7
+  - box-0.4.0
+  - git: https://github.com/tonyday567/online-csv
+    commit: 05b5a327158e2b5b07719710c9f9d9cba3915155
+  - numhask-array-0.6.0
+  - numhask-prelude-0.5.0
+  - numhask-space-0.4.0
+  # - online-0.5.0
+  - git: https://github.com/tonyday567/online
+    commit: f8b70e057e8ed356758f47f16ec461853d5dc785
+    subdir: online
+  # - perf-0.6.0
+  - git: https://github.com/tonyday567/perf
+    commit: c949dba2816feac90ccd06c9359e7a1af24621ef
+    subdir: perf
+  # - perf-analysis-0.3.0
+  - git: https://github.com/tonyday567/perf
+    commit: c949dba2816feac90ccd06c9359e7a1af24621ef
+    subdir: perf-analysis
+  - readme-lhs-0.6.0
+  - web-rep-0.5.0
+  # external non-stack libraries
+  - Color-0.1.4
+  - backprop-0.2.6.3
+  - generic-lens-1.2.0.1
   - interpolatedstring-perl6-1.0.2
+  - javascript-bridge-0.2.0
+  - lucid-svg-0.7.1
+  - text-format-0.3.2
+  - vinyl-0.12.2
   - monad-bayes-0.1.1.0
-  - online-csv-0.0.1
-  # - numhask-array-0.5.1
-  - git: https://github.com/tonyday567/numhask-array
-    commit: 08ca2b79d3d97c662dffbe4960183378e156b25a
+
 allow-newer: true

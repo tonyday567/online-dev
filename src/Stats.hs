@@ -41,7 +41,6 @@ import Data.Yahoo
 import NumHask.Prelude
 import NumHask.Space
 import Online
-import Options.Generic
 
 data RunConfig
   = RunConfig
@@ -72,7 +71,8 @@ onlineRs c f xs =
     <$> (c ^. #rates)
 
 chartOnline :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [Chart Double]
-chartOnline c f xs = zipWith (\l c -> Chart (LineA l) c) lineStyles (zeroLine : (fmap SpotPoint <$> (onlineRs c f xs)))
+chartOnline c f xs = zipWith (\l c -> Chart (LineA l) c)
+  lineStyles (zeroLine : (fmap SpotPoint <$> onlineRs c f xs))
   where
     zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
     (Rect lx ux _ _) = space1 $ mconcat (onlineRs c f xs)

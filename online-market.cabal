@@ -1,6 +1,6 @@
-cabal-version: 2.0
+cabal-version: 3.0
 name:           online-market
-version:        0.2.0.0
+version:        0.0.1
 synopsis:       online market daily statistics
 description:    Applying the online library to daily market returns.
 category:       statistics
@@ -9,7 +9,7 @@ bug-reports:    https://github.com/tonyday567/online-market/issues
 author:         Tony Day
 maintainer:     tonyday567@gmail.com
 copyright:      Tony Day
-license:        BSD3
+license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
 
@@ -29,26 +29,25 @@ library
       base >=4.7 && <5
     , attoparsec
     , backprop
-    , base >=4.7 && <5
-    , chart-svg
+    , chart-svg >= 0.0.3 && < 0.1
     , containers
     , turtle
     , foldl
-    , generic-lens
+    , generic-lens >= 1.2 && < 2.0
     , lens
     , mwc-probability
     , mwc-random
-    , numhask-prelude
-    , numhask-space
-    , online
+    , numhask-prelude >= 0.5 && < 0.6
+    , numhask-space >= 0.4 && < 0.5
+    , online >= 0.5 && < 0.6
     , optparse-generic
-    , online-csv
+    , online-csv == 0.0.1
     , primitive
-    , readme-lhs
+    , readme-lhs >= 0.6 && < 0.7
     , scientific
     , text
     , time
-    , numhask-array
+    , numhask-array >= 0.6 && < 0.7
   default-language: Haskell2010
 
 executable regression
@@ -61,26 +60,26 @@ executable regression
     , attoparsec
     , backprop
     , base >=4.7 && <5
-    , chart-svg
+    , chart-svg >= 0.0.3 && < 0.1
     , containers
     , foldl
-    , generic-lens
+    , generic-lens >= 1.2 && < 2.0
     , lens
     , mwc-probability
     , mwc-random
-    , numhask-space
-    , online
+    , numhask-space >= 0.4 && < 0.5
+    , online >= 0.5 && < 0.6
     , optparse-generic
-    , online-csv
-    , numhask-prelude
+    , online-csv == 0.0.1
+    , numhask-prelude >= 0.5 && < 0.6
     , primitive
-    , readme-lhs
+    , readme-lhs >= 0.6 && < 0.7
     , scientific
     , text
     , time
     , interpolatedstring-perl6
     , pretty-simple
-    , numhask-array
+    , numhask-array >= 0.6 && < 0.7
   default-language: Haskell2010
 
 executable random
@@ -93,26 +92,26 @@ executable random
     , attoparsec
     , backprop
     , base >=4.7 && <5
-    , chart-svg
+    , chart-svg >= 0.0.3 && < 0.1
     , containers
     , foldl
-    , generic-lens
+    , generic-lens >= 1.2 && < 2.0
     , lens
     , mwc-probability
     , mwc-random
-    , numhask-space
-    , online
+    , numhask-space >= 0.4 && < 0.5
+    , online >= 0.5 && < 0.6
     , optparse-generic
-    , online-csv
-    , numhask-prelude
+    , online-csv == 0.0.1
+    , numhask-prelude >= 0.5 && < 0.6
     , primitive
-    , readme-lhs
+    , readme-lhs >= 0.6 && < 0.7
     , scientific
     , text
     , time
     , interpolatedstring-perl6
     , pretty-simple
-    , numhask-array
+    , numhask-array >= 0.6 && < 0.7
   default-language: Haskell2010
 
 executable clean
@@ -125,26 +124,26 @@ executable clean
     , attoparsec
     , backprop
     , base >=4.7 && <5
-    , chart-svg
+    , chart-svg >= 0.0.3 && < 0.1
     , containers
     , foldl
-    , generic-lens
+    , generic-lens >= 1.2 && < 2.0
     , lens
     , mwc-probability
     , mwc-random
-    , numhask-space
-    , online
+    , numhask-space >= 0.4 && < 0.5
+    , online >= 0.5 && < 0.6
     , optparse-generic
-    , online-csv
-    , numhask-prelude
+    , online-csv == 0.0.1
+    , numhask-prelude >= 0.5 && < 0.6
     , primitive
-    , readme-lhs
+    , readme-lhs >= 0.6 && < 0.7
     , scientific
     , text
     , time
     , interpolatedstring-perl6
     , pretty-simple
-    , numhask-array
+    , numhask-array >= 0.6 && < 0.7
   default-language: Haskell2010
 
 executable bayes
@@ -157,27 +156,27 @@ executable bayes
     , attoparsec
     , backprop
     , base >=4.7 && <5
-    , chart-svg
+    , chart-svg >= 0.0.3 && < 0.1
     , containers
     , foldl
-    , generic-lens
+    , generic-lens >= 1.2 && < 2.0
     , lens
-    , log-domain
-    , monad-bayes
     , mwc-probability
     , mwc-random
-    , numhask-space
-    , online
+    , numhask-space >= 0.4 && < 0.5
+    , online >= 0.5 && < 0.6
     , optparse-generic
-    , online-csv
-    , numhask-prelude
+    , online-csv == 0.0.1
+    , numhask-prelude >= 0.5 && < 0.6
     , primitive
-    , readme-lhs
+    , readme-lhs >= 0.6 && < 0.7
     , scientific
     , text
     , time
     , interpolatedstring-perl6
     , pretty-simple
-    , numhask-array
+    , numhask-array >= 0.6 && < 0.7
+    , monad-bayes
+    , log-domain
   default-language: Haskell2010
 
