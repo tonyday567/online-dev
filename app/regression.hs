@@ -22,9 +22,9 @@ import qualified Data.Text as Text
 import Data.Time.Format
 import Data.Yahoo
 import NumHask.Prelude
-import Online
-import Readme.Lhs
 import Stats
+import Readme.Lhs
+import Run
 import Text.InterpolatedString.Perl6
 import Text.Pretty.Simple
 

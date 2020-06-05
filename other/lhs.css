@@ -1,0 +1,138 @@
+* {
+  background: transparent;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+  vertical-align: baseline; }
+
+body {
+  background-color: #fafafa;
+  color: #3c3c3c;
+  font-family: "Lora", "Seravek", sans-serif;
+  line-height: 1.5;
+  word-wrap: break-word;
+  min-width: 200px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3em; }
+  body h1, body h2 {
+    font-family: "Raleway", serif;
+    color: #222222; }
+  body blockquote {
+    border-left: 0.25rem solid #c8c8c8;
+    font-style: italic;
+    margin: 0.5rem 0 1rem 0;
+    padding: 0 0 0 1rem;
+    color: #646464; }
+  body .footer {
+    color: #888888;
+    font-size: 0.75em;
+    text-align: right; }
+  body hr {
+    height: 0;
+    margin: 1em 0;
+    overflow: hidden;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid #c8c8c8; }
+  body pre {
+    #color: #ab1f27;
+    background-color: #f5f0f0;
+    padding: 0.75em;
+    overflow: auto; }
+  body ul {
+    margin: 0.5rem 0;
+    padding-left: 0; }
+    body ul li {
+      counter-increment: this;
+      line-height: 1.313em;
+      list-style: none;
+      position: relative; }
+      body ul li:after {
+        color: #646464;
+        content: "-";
+        left: -1em;
+        position: absolute;
+        top: 0; }
+
+.sourceCode {
+  background-color: whitesmoke;
+  color: #284628;
+  font-family: "Inconsolata", mono;
+  font-size: 1em; }
+  .sourceCode .ot, .sourceCode .kw {
+    color: #284628; }
+  .sourceCode .dt {
+    color: #ab1f27; }
+  .sourceCode .dv, .sourceCode .st {
+    color: #2536d6; }
+  .sourceCode .co {
+    color: #646464;
+    font-style: italic; }
+  .sourceCode .fu {
+    color: #e347e4; }
+
+[type="checkbox"] {
+  margin-right: 0.5rem; }
+
+.todo{
+  background-color: #bd67c9;
+  opacity: 0.7;
+  padding: 0px 4px;
+  color: #fff;
+}
+
+.WAIT, .nilWAIT{
+  background-color: #6AB097;
+}
+
+.done{
+  background-color: #6ab0de;
+  opacity: 0.7;
+  padding: 0px 4px;
+  color: #fff;
+}
+
+.navigation .navigation-title, .navigation-item, .navigation-link {
+  text-transform: none;
+}
+
+.navigation:after, .navigation-item:after {
+  content: none;
+}
+
+.about ul li:after {
+  content: none;
+}
+
+.list ul li:after {
+  content: none;
+}
+
+.list ul li .date {
+  display: inline-block;
+}
+
+body ul ul li {
+  margin-left: 1em;
+}
+
+code {
+  background-color: #eed;
+  padding: 0.2rem;
+  border-radius: 0.4rem;
+}
+
+.list ul li .date {
+  width: 15.0rem;
+}
+
+header ul li:after {
+  content: none
+}
+
+.tags {
+  margin-right: 1.5em;
+  margin-left: 1.5em;
+}

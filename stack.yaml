@@ -5,18 +5,24 @@ packages:
 
 extra-deps:
   - protolude-0.3.0
-  - chart-svg-0.0.3
+  # - chart-svg-0.0.3
+  - git: https://github.com/tonyday567/chart-svg
+    commit: 2d2ac1ec2a8723ab6712775f575355242f443404
   - box-0.4.0
   - git: https://github.com/tonyday567/online-csv
     commit: 05b5a327158e2b5b07719710c9f9d9cba3915155
   - numhask-array-0.6.0
   - numhask-prelude-0.5.0
   - numhask-space-0.4.0
-  - online-0.5.0
+  # - online-0.5.0
   - perf-0.6.0
   - perf-analysis-0.3.0
-  - readme-lhs-0.6.0
-  - web-rep-0.5.0
+  # - readme-lhs-0.6.0
+  - git: https://github.com/tonyday567/readme-lhs
+    commit: 9769d847520b28d7fb8a669cef3aa333068cb09a
+  # - web-rep-0.5.0
+  - git: https://github.com/tonyday567/web-rep
+    commit: 723b72b9b23d78bfd34cb082cf8676ea19847b63
   # external non-stack libraries
   - Color-0.1.4
   - backprop-0.2.6.3

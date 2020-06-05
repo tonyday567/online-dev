@@ -3,3 +3,4 @@
 /.DS_Store
 /dist-newstyle
 */.DS_Store
+/stack.yaml.lock

@@ -1,0 +1,711 @@
+<link rel="stylesheet" type="text/css" href="./lhs.css"  /><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
+<p>Testing Stats module</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE ConstraintKinds #-}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="ot">{-# LANGUAGE DataKinds #-}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="ot">{-# LANGUAGE DeriveGeneric #-}</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="ot">{-# LANGUAGE DuplicateRecordFields #-}</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="ot">{-# LANGUAGE FlexibleContexts #-}</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="ot">{-# LANGUAGE FlexibleInstances #-}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="ot">{-# LANGUAGE MonoLocalBinds #-}</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="ot">{-# LANGUAGE OverloadedLabels #-}</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="ot">{-# LANGUAGE OverloadedStrings #-}</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="ot">{-# LANGUAGE RankNTypes #-}</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="ot">{-# LANGUAGE ScopedTypeVariables #-}</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a><span class="ot">{-# LANGUAGE TypeOperators #-}</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a><span class="ot">{-# LANGUAGE NoImplicitPrelude #-}</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a><span class="ot">{-# LANGUAGE GADTs #-}</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a><span class="ot">{-# OPTIONS_GHC -Wall #-}</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a><span class="ot">{-# OPTIONS_GHC -Wno-name-shadowing #-}</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a><span class="ot">{-# OPTIONS_GHC -Wno-type-defaults #-}</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a><span class="ot">{-# OPTIONS_GHC -Wno-unused-imports #-}</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a><span class="ot">{-# OPTIONS_GHC -Wno-orphans #-}</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Chart</span> <span class="kw">hiding</span> (one, zero)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Category</span> ((&gt;&gt;&gt;))</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Control.Foldl</span> <span class="kw">as</span> <span class="dt">L</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Control.Scanl</span> <span class="kw">as</span> <span class="dt">SL</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Lens</span> <span class="kw">hiding</span> ((:&gt;), <span class="dt">Unwrapped</span>, <span class="dt">Wrapped</span>, <span class="dt">Empty</span>)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Generics.Labels</span> ()</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Random</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">NumHask.Array.Dynamic</span> <span class="kw">hiding</span> (append)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">NumHask.Prelude</span> <span class="kw">hiding</span> ((&lt;&lt;*&gt;&gt;), replace, state, <span class="dt">StateT</span>, <span class="dt">State</span>, get, runStateT, runState, <span class="dt">L1</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Readme.Lhs</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.Random.MWC</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Lens</span> <span class="kw">hiding</span> (<span class="dt">Wrapped</span>, <span class="dt">Unwrapped</span>, <span class="dt">Empty</span>)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Attoparsec.Text</span> (parseOnly, decimal)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Lucid</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Network.Wai</span> (rawPathInfo)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Network.Wai.Middleware.RequestLogger</span> (logStdoutDev)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Network.Wai.Middleware.Static</span> (addBase, noDots, staticPolicy, (&gt;-&gt;))</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Options.Generic</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Web.Page</span> <span class="kw">hiding</span> (<span class="dt">StateT</span>(..), <span class="dt">State</span>, state, get, bool, runState)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Web.Page.Examples</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Web.Scotty</span> (scotty, middleware)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Box</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">Text</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Monad</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Maybe</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Monad.Trans.State.Strict</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Control.Monad.Trans.State.Lazy</span> <span class="kw">as</span> <span class="dt">StateL</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Sequence</span> (<span class="dt">ViewR</span>(..), <span class="dt">Seq</span>(..))</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Profunctor.Strong</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Fold</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Foldable</span> (foldl1)</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.List</span> (scanl1)</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Stats</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true"></a><span class="co">-- * experiments</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true"></a><span class="ot">ls ::</span> [<span class="dt">LineStyle</span>]</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true"></a>ls <span class="ot">=</span> <span class="fu">fmap</span> (\c <span class="ot">-&gt;</span> defaultLineStyle <span class="op">&amp;</span> <span class="op">#</span>color <span class="op">.~</span> c <span class="op">&amp;</span> <span class="op">#</span>width <span class="op">.~</span> <span class="fl">0.003</span>) palette</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true"></a></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true"></a><span class="ot">sChart ::</span> (<span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">L1</span> a <span class="dt">Double</span>) <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true"></a>sChart m rates d title xs <span class="ot">=</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true"></a>  renderHudOptionsChart</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true"></a>    defaultSvgOptions</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true"></a>    (titlesHud title <span class="st">&quot;n&quot;</span> <span class="st">&quot;measure&quot;</span> <span class="op">&amp;</span> <span class="op">#</span>hudLegend</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true"></a>    <span class="op">.~</span> <span class="dt">Just</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true"></a>      ( defaultLegendOptions</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true"></a>          <span class="op">&amp;</span> <span class="op">#</span>ltext <span class="op">.</span> <span class="op">#</span>size <span class="op">.~</span> <span class="fl">0.3</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true"></a>          <span class="op">&amp;</span> <span class="op">#</span>lplace <span class="op">.~</span> <span class="dt">PlaceBottom</span>,</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true"></a>        <span class="fu">zipWith</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true"></a>          (\a r <span class="ot">-&gt;</span> (<span class="dt">LineA</span> a, (<span class="st">&quot;rate = &quot;</span> <span class="op">&lt;&gt;</span>) <span class="op">.</span> Text.pack <span class="op">.</span> <span class="fu">show</span> <span class="op">$</span> r))</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true"></a>          (<span class="fu">drop</span> <span class="dv">1</span> ls)</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true"></a>          rates</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true"></a>      ))</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true"></a>    []</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true"></a>    ( <span class="fu">zipWith</span> (\s xs&#39; <span class="ot">-&gt;</span> <span class="dt">Chart</span> (<span class="dt">LineA</span> s) xs&#39;) ls <span class="op">$</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true"></a>      (<span class="fu">zipWith</span> <span class="dt">SP</span> (<span class="fu">fromIntegral</span> <span class="op">&lt;$&gt;</span> [d<span class="op">..</span>]) <span class="op">&lt;$&gt;</span> ((\r <span class="ot">-&gt;</span> <span class="fu">drop</span> d <span class="op">$</span> scanL1 (m r) xs) <span class="op">&lt;$&gt;</span> rates))</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true"></a>    )</span></code></pre></div>
+<p>The standard deviation of the moving average seems to be proprtional to r**0.5, and equal to around (0.5*r)**0.5.</p>
+<p>This seems to break down for low r (below 0.01 say), probably due to startup issues.</p>
+
+<svg xmlns="http://www.w3.org/2000/svg" height="300.0" viewBox="-1.056603951867382 -0.750342385218365 1.829103951867382 1.5809499006544654" width="450.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g transform="translate(-1.0199017946421716, 8.772495032723271e-2)" fill-opacity="1.0" font-size="8.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="middle">
+    <text transform="rotate(-90.0, 5.7297842774789665e-2, -4.759238521836506e-2)" x="5.7297842774789665e-2" y="-4.759238521836506e-2">std of ma / (0.5*r)**0.5
+    </text>
+  </g>
+  <g transform="translate(-0.11120089732108579, 0.8161999006544653)" fill-opacity="1.0" font-size="8.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="middle">
+    <text transform="rotate(0.0, 5.7297842774789665e-2, -4.759238521836506e-2)" x="5.7297842774789665e-2" y="-4.759238521836506e-2">rate
+    </text>
+  </g>
+  <g transform="translate(-0.11120089732108579, -0.57175)" fill-opacity="1.0" font-size="0.12" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="middle">
+    <text transform="rotate(0.0, 5.7297842774789665e-2, -4.759238521836506e-2)" x="5.7297842774789665e-2" y="-4.759238521836506e-2">std of ma
+    </text>
+  </g>
+  <g stroke-opacity="0.0" fill-opacity="0.1" stroke="#000000" stroke-width="0.0" fill="#cccccc">
+    <rect height="0.8958566629339307" width="1.3762294514408149" x="-0.6308168829456179" y="-0.4955207166853305"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,0.40033594624860025
+0.75,0.40033594624860025"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,0.2723564229723246
+0.75,0.2723564229723246"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,0.14437689969604872
+0.75,0.14437689969604872"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,1.6397376419772736e-2
+0.75,1.6397376419772736e-2"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,-0.11158214685650314
+0.75,-0.11158214685650314"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,-0.23956167013277907
+0.75,-0.23956167013277907"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,-0.36754119340905445
+0.75,-0.36754119340905445"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6354043144504206,-0.4955207166853305
+0.75,-0.4955207166853305"/>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="0.4133258678611422">0.95
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="0.28534634458486663">1.00
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="0.1573668213085907">1.05
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="2.9387298032314768e-2">1.10
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="-9.859222524396116e-2">1.15
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="-0.22657174852023698">1.20
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="-0.35455127179651236">1.25
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text x="-0.75" y="-0.4825307950727883">1.30
+    </text>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#570d66" stroke-width="5.0e-3" fill="#570d66">
+    <g transform="rotate(-90.0, -0.7201128837462103, 0.40033594624860025)">
+      <polyline points="-0.7201128837462103,0.41533594624860026
+-0.7201128837462103,0.38533594624860024"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, 0.2723564229723246)">
+      <polyline points="-0.7201128837462103,0.2873564229723246
+-0.7201128837462103,0.2573564229723246"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, 0.14437689969604872)">
+      <polyline points="-0.7201128837462103,0.15937689969604873
+-0.7201128837462103,0.1293768996960487"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, 1.6397376419772736e-2)">
+      <polyline points="-0.7201128837462103,3.1397376419772735e-2
+-0.7201128837462103,1.3973764197727362e-3"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, -0.11158214685650314)">
+      <polyline points="-0.7201128837462103,-9.658214685650314e-2
+-0.7201128837462103,-0.12658214685650315"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, -0.23956167013277907)">
+      <polyline points="-0.7201128837462103,-0.22456167013277906
+-0.7201128837462103,-0.2545616701327791"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, -0.36754119340905445)">
+      <polyline points="-0.7201128837462103,-0.35254119340905443
+-0.7201128837462103,-0.38254119340905446"/>
+    </g>
+    <g transform="rotate(-90.0, -0.7201128837462103, -0.4955207166853305)">
+      <polyline points="-0.7201128837462103,-0.4805207166853305
+-0.7201128837462103,-0.5105207166853305"/>
+    </g>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#570d66" stroke-width="0.0" fill="#570d66">
+    <rect height="0.8958566629339307" width="4.587431504802675e-3" x="-0.7086443049842035" y="-0.4955207166853305"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.6308168829456179,0.40481522956326993
+-0.6308168829456179,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.51613109532555,0.40481522956326993
+-0.51613109532555,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.40144530770548204,0.40481522956326993
+-0.40144530770548204,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.28675952008541417,0.40481522956326993
+-0.28675952008541417,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-0.17207373246534619,0.40481522956326993
+-0.17207373246534619,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="-5.7387944845278316e-2,0.40481522956326993
+-5.7387944845278316e-2,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="5.7297842774789665e-2,0.40481522956326993
+5.7297842774789665e-2,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.17198363039485742,0.40481522956326993
+0.17198363039485742,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.2866694180149254,0.40481522956326993
+0.2866694180149254,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.4013552056349934,0.40481522956326993
+0.4013552056349934,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.5160409932550611,0.40481522956326993
+0.5160409932550611,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.6307267808751291,0.40481522956326993
+0.6307267808751291,-0.5"/>
+  </g>
+  <g stroke-opacity="0.1" stroke="#808080" stroke-width="5.0e-3" fill="none">
+    <polyline points="0.7454125684951971,0.40481522956326993
+0.7454125684951971,-0.5"/>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.6308168829456179, 0.5)" x="-0.6308168829456179" y="0.5">-0.02
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.51613109532555, 0.5)" x="-0.51613109532555" y="0.5">0.00
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.40144530770548204, 0.5)" x="-0.40144530770548204" y="0.5">0.02
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.28675952008541417, 0.5)" x="-0.28675952008541417" y="0.5">0.04
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -0.17207373246534619, 0.5)" x="-0.17207373246534619" y="0.5">0.06
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, -5.7387944845278316e-2, 0.5)" x="-5.7387944845278316e-2" y="0.5">0.08
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 5.7297842774789665e-2, 0.5)" x="5.7297842774789665e-2" y="0.5">0.10
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.17198363039485742, 0.5)" x="0.17198363039485742" y="0.5">0.12
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.2866694180149254, 0.5)" x="0.2866694180149254" y="0.5">0.14
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.4013552056349934, 0.5)" x="0.4013552056349934" y="0.5">0.16
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.5160409932550611, 0.5)" x="0.5160409932550611" y="0.5">0.18
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.6307267808751291, 0.5)" x="0.6307267808751291" y="0.5">0.20
+    </text>
+  </g>
+  <g fill-opacity="0.8" font-size="5.0e-2" stroke="none" stroke-width="0.0" fill="#333333" text-anchor="end">
+    <text transform="rotate(-45.0, 0.7454125684951971, 0.5)" x="0.7454125684951971" y="0.5">0.22
+    </text>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#570d66" stroke-width="5.0e-3" fill="#570d66">
+    <polyline points="-0.6308168829456179,0.4399720044792833
+-0.6308168829456179,0.4099720044792833"/>
+    <polyline points="-0.51613109532555,0.4399720044792833
+-0.51613109532555,0.4099720044792833"/>
+    <polyline points="-0.40144530770548204,0.4399720044792833
+-0.40144530770548204,0.4099720044792833"/>
+    <polyline points="-0.28675952008541417,0.4399720044792833
+-0.28675952008541417,0.4099720044792833"/>
+    <polyline points="-0.17207373246534619,0.4399720044792833
+-0.17207373246534619,0.4099720044792833"/>
+    <polyline points="-5.7387944845278316e-2,0.4399720044792833
+-5.7387944845278316e-2,0.4099720044792833"/>
+    <polyline points="5.7297842774789665e-2,0.4399720044792833
+5.7297842774789665e-2,0.4099720044792833"/>
+    <polyline points="0.17198363039485742,0.4399720044792833
+0.17198363039485742,0.4099720044792833"/>
+    <polyline points="0.2866694180149254,0.4399720044792833
+0.2866694180149254,0.4099720044792833"/>
+    <polyline points="0.4013552056349934,0.4399720044792833
+0.4013552056349934,0.4099720044792833"/>
+    <polyline points="0.5160409932550611,0.4399720044792833
+0.5160409932550611,0.4099720044792833"/>
+    <polyline points="0.6307267808751291,0.4399720044792833
+0.6307267808751291,0.4099720044792833"/>
+    <polyline points="0.7454125684951971,0.4399720044792833
+0.7454125684951971,0.4099720044792833"/>
+  </g>
+  <g stroke-opacity="0.5" fill-opacity="0.5" stroke="#570d66" stroke-width="0.0" fill="#570d66">
+    <rect height="4.47928331466968e-3" width="1.3762294514408149" x="-0.6308168829456179" y="0.40929451287793955"/>
+  </g>
+  <g stroke-opacity="1.0" stroke="#026062" stroke-width="1.2e-2" fill="none">
+    <polyline points="-0.5103968059445465,-0.36340216680486714
+-0.48745964842053296,0.2834077291077539
+-0.45878820151551597,0.1828673387834311
+-0.40144530770548204,0.17347636854583803
+-0.22941662627538006,0.22618476632294804
+5.729784277478989e-2,0.2096731449159115
+0.6307267808751291,0.13379624938730894"/>
+  </g>
+</svg>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="co">-- &gt;&gt;&gt; xs &lt;- rs 10000</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="co">-- &gt;&gt;&gt; stdOfMa 1 0.01 xs</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="co">-- 7.318309056744661e-2</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="co">--</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="ot">stdOfMa ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>stdOfMa stdr r xs <span class="ot">=</span> foldL1 (std stdr) (fromList <span class="op">$</span> scanL1 (ma (<span class="dv">1</span> <span class="op">-</span> r)) xs)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="ot">stdOfMaChart ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>stdOfMaChart stdr rates xs <span class="ot">=</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>  renderHudOptionsChart</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    defaultSvgOptions</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>    (titlesHud <span class="st">&quot;std of ma&quot;</span> <span class="st">&quot;rate&quot;</span> <span class="st">&quot;std of ma / (0.5*r)**0.5&quot;</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    []</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>    ( (<span class="op">:</span> []) <span class="op">$</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>        <span class="dt">Chart</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>          (<span class="dt">LineA</span> defaultLineStyle)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>          (<span class="fu">zipWith</span> <span class="dt">SP</span> rates ((\r <span class="ot">-&gt;</span> stdOfMa stdr r xs <span class="op">/</span> ((<span class="fl">0.5</span> <span class="op">*</span> r)<span class="op">**</span><span class="fl">0.5</span>)) <span class="op">&lt;$&gt;</span> rates))</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>    )</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a><span class="co">-- | common pattern of chart title, x-axis title and y-axis title</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a><span class="ot">titlesHud ::</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">HudOptions</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a>titlesHud t x y <span class="ot">=</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a>  defaultHudOptions</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a>    <span class="op">&amp;</span> <span class="op">#</span>hudTitles</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true"></a>    <span class="op">.~</span> [ defaultTitle t,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true"></a>         defaultTitle x <span class="op">&amp;</span> <span class="op">#</span>place <span class="op">.~</span> <span class="dt">PlaceBottom</span> <span class="op">&amp;</span> <span class="op">#</span>style <span class="op">.</span> <span class="op">#</span>size <span class="op">.~</span> <span class="fl">0.08</span>,</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true"></a>         defaultTitle y <span class="op">&amp;</span> <span class="op">#</span>place <span class="op">.~</span> <span class="dt">PlaceLeft</span> <span class="op">&amp;</span> <span class="op">#</span>style <span class="op">.</span> <span class="op">#</span>size <span class="op">.~</span> <span class="fl">0.08</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true"></a>       ]</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true"></a><span class="co">-- | check if beta is recovering a simulated dependency on historical ma,</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true"></a><span class="co">-- and doing what is expected.</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true"></a><span class="co">-- (The cumulative drift in the specific sample is removed).</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true"></a><span class="co">-- &gt;&gt;&gt; s1Check 0.1 0.01 xs</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true"></a><span class="co">-- 9.999999999999876e-2</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true"></a><span class="co">--</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true"></a><span class="co">-- beta measure looks like it contains large noise sensitivities</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true"></a><span class="ot">s1Check ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true"></a>s1Check b r xs <span class="ot">=</span> xsb <span class="op">-</span> x0</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true"></a>    <span class="co">-- constructued time series with a beta between the ma and the series.</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true"></a>    xs&#39; <span class="ot">=</span> scanL1 (onlineDep b (ma (<span class="dv">1</span> <span class="op">-</span> r))) xs</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true"></a>    ma&#39; <span class="ot">=</span> scanL1 (ma (<span class="dv">1</span> <span class="op">-</span> r)) xs&#39;</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true"></a>    <span class="co">-- beta of ma&#39; on simulated series</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true"></a>    xsb <span class="ot">=</span> foldL1 (beta (ma (<span class="dv">1</span> <span class="op">-</span> r))) <span class="op">$</span> fromList <span class="op">$</span> <span class="fu">drop</span> <span class="dv">1</span> <span class="op">$</span> <span class="fu">zip</span> ma&#39; xs&#39;</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true"></a>    <span class="co">-- beta measurement if beta of ma was, in reality, zero.</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true"></a>    x0 <span class="ot">=</span> foldL1 (beta (ma (<span class="dv">1</span> <span class="op">-</span> r))) <span class="op">$</span> fromList <span class="op">$</span> <span class="fu">drop</span> <span class="dv">1</span> <span class="op">$</span> <span class="fu">zip</span> ma&#39; xs</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">SimCrossConfig</span> <span class="ot">=</span> <span class="dt">SimCrossConfig</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true"></a>  {<span class="ot"> rN ::</span> <span class="dt">Int</span>,</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true"></a><span class="ot">    rRates ::</span> [<span class="dt">Double</span>],</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true"></a><span class="ot">    rBeta ::</span> <span class="dt">Double</span>,</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true"></a><span class="ot">    rBetas ::</span> [<span class="dt">Double</span>],</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true"></a><span class="ot">    rStdMaDecay ::</span> <span class="dt">Double</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true"></a>  } <span class="kw">deriving</span> (<span class="dt">Generic</span>, <span class="dt">Eq</span>, <span class="dt">Show</span>)</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true"></a></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true"></a><span class="ot">defaultSimCrossConfig ::</span> <span class="dt">SimCrossConfig</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true"></a>defaultSimCrossConfig <span class="ot">=</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true"></a>  <span class="dt">SimCrossConfig</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true"></a>  <span class="dv">10000</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true"></a>  [<span class="fl">0.001</span>, <span class="fl">0.005</span>, <span class="fl">0.01</span>, <span class="fl">0.02</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>]</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true"></a>  <span class="fl">0.1</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true"></a>  [<span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.02</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span>]</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true"></a>  <span class="dv">1</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true"></a><span class="ot">main ::</span> <span class="dt">IO</span> ()</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true"></a>main <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true"></a>  <span class="kw">let</span> n <span class="ot">=</span> view <span class="op">#</span>rN defaultSimCrossConfig</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true"></a>  <span class="kw">let</span> rates <span class="ot">=</span> view <span class="op">#</span>rRates defaultSimCrossConfig</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true"></a>  <span class="co">-- let bs = view #rBetas defaultSimCrossConfig</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true"></a>  g <span class="ot">&lt;-</span> create</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true"></a>  xs <span class="ot">&lt;-</span> rvs g n</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true"></a>  _ <span class="ot">&lt;-</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true"></a>    runOutput</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true"></a>      (<span class="st">&quot;app/stats-testing.lhs&quot;</span>, <span class="dt">LHS</span>)</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true"></a>      (<span class="st">&quot;other/stats-testing.html&quot;</span>, <span class="dt">Html</span>)</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true"></a>      <span class="op">$</span> <span class="kw">do</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true"></a>        output <span class="st">&quot;stdofma&quot;</span> (<span class="dt">RawHtml</span> <span class="op">$</span> stdOfMaChart <span class="dv">1</span> rates xs)</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true"></a>        <span class="co">-- output &quot;avbeta&quot; (RawHtml $ avBetaChart 1 rates bs)</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true"></a>        <span class="co">-- output &quot;betaerrors&quot; (RawHtml $ betaErrorsChart bs rates xs)</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true"></a>        output <span class="st">&quot;header&quot;</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true"></a>          (<span class="dt">RawHtml</span> <span class="op">$</span> <span class="fu">mconcat</span> <span class="op">$</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true"></a>           [ <span class="st">&quot;&lt;link rel=\&quot;stylesheet\&quot; type=\&quot;text/css\&quot; href=\&quot;./lhs.css\&quot;  /&gt;&quot;</span>,</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true"></a>             <span class="st">&quot;&lt;script src=\&quot;https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js\&quot;&gt;&lt;/script&gt;&quot;</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true"></a>           ])</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true"></a>  <span class="fu">pure</span> ()</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true"></a></span></code></pre></div>
+<p>– | a constant fold mconst :: a -&gt; L1 a a mconst a = L1 (() _ -&gt; ()) () (const a)</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a></span></code></pre></div>
+<p>data T1 = T1 { t1Ma :: Double, t1Std :: Double, t1Orig :: Double } deriving (Eq, Show, Generic)</p>
+<p>t1 :: Double -&gt; SL.Scan Double T1 t1 r = SL.prescan (T1 &lt;$&gt; (ma r) &lt;<em>&gt; (std r)) &lt;</em>&gt; id</p>
+<p>f1 :: Double -&gt; T1 -&gt; Double f1 b (T1 m _ o) = o + b * m</p>
+<p>s1 :: Double -&gt; Double -&gt; SL.Scan Double Double s1 b r = SL.Scan step begin where step a = do m &lt;- get maStep (a + b * m) begin = Averager 0 0</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="ot">s0 ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">SL.Scan</span> <span class="dt">Double</span> <span class="dt">Double</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>s0 r <span class="ot">=</span> <span class="dt">SL.Scan</span> step begin</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    step a <span class="ot">=</span> state (step&#39; a)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    begin <span class="ot">=</span> <span class="dt">Averager</span> (<span class="fl">0.0</span>, <span class="fl">0.0</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    g <span class="ot">=</span> (r<span class="op">*</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    step&#39; a (<span class="dt">Averager</span> (s, c)) <span class="ot">=</span> <span class="kw">let</span> (s&#39;,c&#39;) <span class="ot">=</span> (g <span class="op">$</span> s <span class="op">+</span> a, g <span class="op">$</span> c <span class="op">+</span> <span class="dv">1</span>) <span class="kw">in</span> (s&#39;<span class="op">/</span>c&#39;, <span class="dt">Averager</span> (s&#39;,c&#39;))</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a><span class="ot">s1 ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">SL.Scan</span> <span class="dt">Double</span> <span class="dt">Double</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>s1 b r <span class="ot">=</span> <span class="dt">SL.Scan</span> step begin</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>    step a <span class="ot">=</span> state (step&#39; a)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>    begin <span class="ot">=</span> <span class="dt">Averager</span> (<span class="fl">0.0</span>, <span class="fl">0.0</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>    g <span class="ot">=</span> (r<span class="op">*</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>    step&#39; a (<span class="dt">Averager</span> (s, c)) <span class="ot">=</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>      <span class="kw">let</span> a&#39; <span class="ot">=</span> a <span class="op">+</span> b <span class="op">*</span> (s <span class="ot">`div0`</span> c) <span class="kw">in</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>      <span class="kw">let</span> (s&#39;,c&#39;) <span class="ot">=</span> (g <span class="op">$</span> s <span class="op">+</span> a&#39;, g <span class="op">$</span> c <span class="op">+</span> <span class="dv">1</span>) <span class="kw">in</span> (a&#39;, <span class="dt">Averager</span> (s&#39;,c&#39;))</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a>    div0 a b <span class="ot">=</span> bool (a<span class="op">/</span>b) <span class="dv">0</span> (b<span class="op">==</span><span class="dv">0</span>)</span></code></pre></div>
+<p>– model of linear beta relationship betweeen a historical statistic and a time series onlineDep :: Double -&gt; SL.Scan Double Double -&gt; SL.Scan Double Double onlineDep b (SL.Scan step’’ begin) = SL.Scan step begin where step a = do s’ &lt;- get let a’ = a + b * s’ undefined – step’’ a’</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Costrong</span> <span class="dt">SL.Scan</span> <span class="kw">where</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  unfirst (<span class="dt">SL.Scan</span> step begin) <span class="ot">=</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    <span class="dt">SL.Scan</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    (\a <span class="ot">-&gt;</span> state <span class="op">$</span> \s <span class="ot">-&gt;</span> <span class="kw">let</span> ((b,d),s&#39;) <span class="ot">=</span> runState (step (a,d)) s <span class="kw">in</span> (b,s&#39;))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    begin</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a><span class="co">-- | a constant scan</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="ot">sconst ::</span> a <span class="ot">-&gt;</span> <span class="dt">SL.Scan</span> a a</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>sconst a <span class="ot">=</span> <span class="dt">SL.Scan</span> (<span class="fu">const</span> (<span class="fu">pure</span> a)) ()</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a><span class="co">-- | delays values by 1</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a><span class="ot">delay ::</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>  <span class="co">-- | initial statistical value</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>  a <span class="ot">-&gt;</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>  <span class="dt">SL.Scan</span> a a</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>delay x0 <span class="ot">=</span> <span class="dt">SL.Scan</span> (\a <span class="ot">-&gt;</span> state (\s <span class="ot">-&gt;</span> (s,a))) x0</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a><span class="co">-- | delays values by n steps</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true"></a><span class="co">--</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true"></a><span class="co">-- delayN [0] == delay 0</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true"></a><span class="co">--</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true"></a><span class="co">-- delayN [] == id</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true"></a><span class="co">--</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true"></a><span class="co">-- delayN [1,2] = delay 2 . delay 1</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true"></a><span class="co">--</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true"></a><span class="ot">delayN ::</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true"></a>  <span class="co">-- | initial statistical values, delay equals length</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true"></a>  [a] <span class="ot">-&gt;</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true"></a>  <span class="dt">SL.Scan</span> a a</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true"></a>delayN x0 <span class="ot">=</span> <span class="dt">SL.Scan</span> (state <span class="op">.</span> step) (fromList x0)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true"></a><span class="ot">    step ::</span> a <span class="ot">-&gt;</span> <span class="dt">Seq</span> a <span class="ot">-&gt;</span> (a, <span class="dt">Seq</span> a)</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true"></a>    step a <span class="dt">Empty</span> <span class="ot">=</span> (a, <span class="dt">Empty</span>)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true"></a>    step a (x&#39; <span class="op">:&lt;|</span> xs) <span class="ot">=</span> (x&#39;, xs <span class="op">|&gt;</span> a)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true"></a></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true"></a><span class="co">-- model of linear beta relationship betweeen a historical statistic and a time series</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true"></a><span class="ot">onlineDep&#39; ::</span> (<span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span>) <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">SL.Scan</span> <span class="dt">Double</span> <span class="dt">Double</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true"></a>onlineDep&#39; f r b <span class="ot">=</span> <span class="dt">SL.Scan</span> step begin</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true"></a>    step a <span class="ot">=</span> state (step&#39; a)</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true"></a>    begin <span class="ot">=</span> <span class="dt">Averager</span> (<span class="fl">0.0</span>, <span class="fl">0.0</span>)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true"></a>    step&#39; a (<span class="dt">Averager</span> (s, c)) <span class="ot">=</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true"></a>      <span class="kw">let</span> a&#39; <span class="ot">=</span> a <span class="op">+</span> b <span class="op">*</span> (s <span class="ot">`div0`</span> c) <span class="kw">in</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true"></a>      <span class="kw">let</span> (s&#39;,c&#39;) <span class="ot">=</span> ((<span class="op">*</span> (<span class="dv">1</span><span class="op">-</span>r)) (s <span class="op">+</span> f a&#39;), (<span class="op">*</span> (<span class="dv">1</span><span class="op">-</span>r)) (c <span class="op">+</span> <span class="dv">1</span>)) <span class="kw">in</span> (a&#39;, <span class="dt">Averager</span> (s&#39;,c&#39;))</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true"></a>    div0 a b <span class="ot">=</span> bool (a<span class="op">/</span>b) <span class="dv">0</span> (b<span class="op">==</span><span class="dv">0</span>)</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true"></a></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true"></a><span class="ot">onlineL1 ::</span> (<span class="dt">Divisive</span> b, <span class="dt">Additive</span> b) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">L1</span> a b</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true"></a>onlineL1 f g <span class="ot">=</span> <span class="dt">L1</span> extract step intract</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true"></a>    intract a <span class="ot">=</span> <span class="dt">Averager</span> (f a, one)</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true"></a>    step (<span class="dt">Averager</span> (s, c)) a <span class="ot">=</span> <span class="dt">Averager</span> (g <span class="op">$</span> s <span class="op">+</span> f a, g <span class="op">$</span> c <span class="op">+</span> one)</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true"></a>    extract (<span class="dt">Averager</span> (s, c)) <span class="ot">=</span> s <span class="op">/</span> c</span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true"></a></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true"></a><span class="ot">onlineL ::</span> (<span class="dt">Divisive</span> b, <span class="dt">Additive</span> b) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">L</span> a b</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true"></a>onlineL f g <span class="ot">=</span> <span class="dt">L</span> extract step begin</span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true"></a>    begin <span class="ot">=</span> <span class="dt">Averager</span> (zero,zero)</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true"></a>    step (<span class="dt">Averager</span> (s, c)) a <span class="ot">=</span> <span class="dt">Averager</span> (g <span class="op">$</span> s <span class="op">+</span> f a, g <span class="op">$</span> c <span class="op">+</span> one)</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true"></a>    extract (<span class="dt">Averager</span> (s, c)) <span class="ot">=</span> s <span class="op">/</span> c</span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true"></a></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true"></a><span class="ot">maL1 ::</span> (<span class="dt">Divisive</span> a, <span class="dt">Additive</span> a) <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">L1</span> a a</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true"></a>maL1 r <span class="ot">=</span> onlineL1 <span class="fu">id</span> (<span class="op">*</span>r)</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true"></a></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">S</span> a b <span class="ot">=</span> <span class="kw">forall</span> x<span class="op">.</span> <span class="dt">S</span> {<span class="ot"> extract ::</span> x <span class="ot">-&gt;</span> b,<span class="ot"> step ::</span> x <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> x,<span class="ot"> intract ::</span> a <span class="ot">-&gt;</span> x}</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true"></a></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">S</span> a) <span class="kw">where</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true"></a>  <span class="fu">fmap</span> f (<span class="dt">S</span> e s i) <span class="ot">=</span> <span class="dt">S</span> (f <span class="op">.</span> e) s i</span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true"></a></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Profunctor</span> <span class="dt">S</span> <span class="kw">where</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true"></a>  dimap f g (<span class="dt">S</span> e s i) <span class="ot">=</span> <span class="dt">S</span> (g <span class="op">.</span> e) (\a <span class="ot">-&gt;</span> s a <span class="op">.</span> f) (i <span class="op">.</span> f)</span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true"></a></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true"></a><span class="ot">onlineS ::</span> (<span class="dt">Divisive</span> b, <span class="dt">Additive</span> b, <span class="dt">Eq</span> b) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">S</span> a b</span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true"></a>onlineS f g <span class="ot">=</span> <span class="dt">S</span> extract step intract</span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true"></a>    intract a <span class="ot">=</span> <span class="dt">Averager</span> (f a, one)</span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true"></a>    step (<span class="dt">Averager</span> (s,c)) a <span class="ot">=</span> <span class="kw">let</span> (<span class="dt">Averager</span> (s&#39;,c&#39;)) <span class="ot">=</span> intract a <span class="kw">in</span></span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true"></a>      <span class="dt">Averager</span> (g <span class="op">$</span> s <span class="op">+</span> s&#39;, g <span class="op">$</span> c <span class="op">+</span> c&#39;)</span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true"></a>    extract (<span class="dt">Averager</span> (s, c)) <span class="ot">=</span> bool (s<span class="op">/</span>c) zero (c<span class="op">==</span>zero)</span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true"></a></span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true"></a><span class="ot">maS ::</span> (<span class="dt">Divisive</span> a, <span class="dt">Additive</span> a, <span class="dt">Eq</span> a) <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">S</span> a a</span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true"></a>maS r <span class="ot">=</span> onlineS <span class="fu">id</span> (<span class="op">*</span>r)</span></code></pre></div>
+<p>onlineDepS :: (Double -&gt; Double) -&gt; Double -&gt; Double -&gt; S Double Double onlineDepS f r b = S extract step intract where intract a = (a, Averager (f a, one)) step (<em>, m@(Averager (s,c))) a = let (a’, Averager (s’,c’)) = intract (a + b * extract’ m) in (a’, Averager ((r<em>) $ s + s’, (r</em>) $ c + c’)) extract (a’, </em>) = a’ extract’ (Averager (s, c)) = bool (s/c) zero (c==zero)</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span></code></pre></div>
+<pre class="output avbeta"><code></code></pre>
+<pre class="output betaerrors"><code></code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="co">-- | check if beta is recovering a simulated dependency on historical ma,</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="co">-- and doing what is expected.</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a><span class="co">-- (The cumulative drift in the specific sample is removed).</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a><span class="co">-- &gt;&gt;&gt; betaCheck 0.1 0.01 xs</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a><span class="co">-- 0.10000000000000142</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a><span class="ot">betaCheck ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>betaCheck b r xs <span class="ot">=</span> xsb <span class="op">-</span> x0</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>    <span class="co">-- ma of underlying stochastic variable</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>    ma&#39; <span class="ot">=</span> scanL1 (ma (<span class="dv">1</span> <span class="op">-</span> r)) xs</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>    <span class="co">-- simulated series</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>    xs&#39; <span class="ot">=</span> <span class="fu">zipWith</span> (\e m <span class="ot">-&gt;</span> e <span class="op">+</span> b <span class="op">*</span> m) xs ma&#39;</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a>    <span class="co">-- beta of ma&#39; on simulated series</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true"></a>    xsb <span class="ot">=</span> foldL1 (beta (ma (<span class="dv">1</span> <span class="op">-</span> r))) <span class="op">$</span> <span class="fu">drop</span> <span class="dv">1</span> <span class="op">$</span> <span class="fu">zip</span> ma&#39; xs&#39;</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true"></a>    <span class="co">-- beta measurement if beta of ma was, in reality, zero.</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true"></a>    x0 <span class="ot">=</span>  foldL1 (beta (ma (<span class="dv">1</span> <span class="op">-</span> r))) <span class="op">$</span> <span class="fu">drop</span> <span class="dv">1</span> <span class="op">$</span> <span class="fu">zip</span> ma&#39; xs</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true"></a><span class="co">-- | relationship between historical std and std</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true"></a><span class="ot">betaStdCheck ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true"></a>betaStdCheck b r xs <span class="ot">=</span> xsb</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true"></a>    <span class="co">-- std of underlying stochastic</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true"></a>    std&#39; <span class="ot">=</span> scanL1 (std (<span class="dv">1</span> <span class="op">-</span> r)) xs</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true"></a>    <span class="co">-- simulated series</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true"></a>    xs&#39; <span class="ot">=</span> <span class="fu">zipWith</span> (\o m <span class="ot">-&gt;</span> o <span class="op">*</span> (<span class="dv">1</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">-</span> m) <span class="op">*</span> b)) xs std&#39;</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true"></a>    <span class="co">-- beta of std&#39; on squared simulated series</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true"></a>    xsb <span class="ot">=</span> foldL1 (beta (ma (<span class="dv">1</span> <span class="op">-</span> r))) <span class="op">$</span> <span class="fu">drop</span> <span class="dv">1</span> <span class="op">$</span> <span class="fu">zip</span> std&#39; xs&#39;</span></code></pre></div>
+<p>avMaBetaChart :: Double -&gt; [Double] -&gt; [Double] -&gt; Text avMaBetaChart b rates xs = renderHudOptionsChart defaultSvgOptions (titlesHud “beta ma check” “rate” “average beta”) [] ( (: []) $ Chart (LineA defaultLineStyle) (zipWith SP rates ((&gt; maBetaCheck b r xs / r) &lt;$&gt; rates)) )</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="ot">avBetaChart ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>avBetaChart b rates xs <span class="ot">=</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  renderHudOptionsChart</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>    defaultSvgOptions</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>    (titlesHud <span class="st">&quot;beta measure check&quot;</span> <span class="st">&quot;rate&quot;</span> <span class="st">&quot;average beta * (1/r)&quot;</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>    []</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>    ( (<span class="op">:</span> []) <span class="op">$</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a>        <span class="dt">Chart</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a>          (<span class="dt">LineA</span> defaultLineStyle)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true"></a>          (<span class="fu">zipWith</span> <span class="dt">SP</span> rates ((\r <span class="ot">-&gt;</span> betaCheck b r xs <span class="op">/</span> r) <span class="op">&lt;$&gt;</span> rates))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true"></a>    )</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true"></a><span class="ot">betaErrors ::</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Array</span> <span class="dt">Double</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true"></a>betaErrors bs rates xs <span class="ot">=</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true"></a>  expand</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true"></a>    (\r b <span class="ot">-&gt;</span> (<span class="dv">1</span> <span class="op">/</span> (r <span class="op">*</span> b)) <span class="op">*</span> betaCheck b r xs)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true"></a>    (fromFlatList [<span class="fu">length</span> rates] rates)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true"></a>    (fromFlatList [<span class="fu">length</span> bs] bs)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true"></a></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true"></a><span class="ot">betaErrorsChart ::</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true"></a>betaErrorsChart bs rates xs <span class="ot">=</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true"></a>  renderHudOptionsChart</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true"></a>    defaultSvgOptions</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true"></a>    (titlesHud <span class="st">&quot;beta measure error&quot;</span> <span class="st">&quot;rates&quot;</span> <span class="st">&quot;betas&quot;</span> <span class="op">&amp;</span> hudOptions)</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true"></a>    h0</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true"></a>    c0</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true"></a><span class="ot">    f1 ::</span> (<span class="dt">Point</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span>) <span class="ot">=</span> \(<span class="dt">Point</span> x y) <span class="ot">-&gt;</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true"></a>      NumHask.Array.Dynamic.index</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true"></a>        (betaErrors bs rates xs)</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true"></a>        [<span class="fu">fromIntegral</span> (<span class="fu">floor</span><span class="ot"> x ::</span> <span class="dt">Integer</span>), <span class="fu">fromIntegral</span> (<span class="fu">floor</span><span class="ot"> y ::</span> <span class="dt">Integer</span>)]</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true"></a>    (c0, h0) <span class="ot">=</span> pixelfl f1 pixelOptions (defaultPixelLegendOptions <span class="st">&quot;&quot;</span>)</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true"></a>    pixelOptions <span class="ot">=</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true"></a>      defaultPixelOptions</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true"></a>        <span class="op">&amp;</span> <span class="op">#</span>poGrain <span class="op">.~</span> <span class="dt">Point</span> (<span class="fu">fromIntegral</span> <span class="op">$</span> <span class="fu">length</span> rates) (<span class="fu">fromIntegral</span> <span class="op">$</span> <span class="fu">length</span> bs)</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true"></a>        <span class="op">&amp;</span> <span class="op">#</span>poRange <span class="op">.~</span> <span class="dt">Rect</span> <span class="dv">0</span> (<span class="fu">fromIntegral</span> <span class="op">$</span> <span class="fu">length</span> rates) <span class="dv">0</span> (<span class="fu">fromIntegral</span> <span class="op">$</span> <span class="fu">length</span> bs)</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true"></a>    hudOptions <span class="ot">=</span></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true"></a>      <span class="op">#</span>hudAxes</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true"></a>        <span class="op">.~</span> [ defaultAxisOptions</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true"></a>               <span class="op">&amp;</span> <span class="op">#</span>atick <span class="op">.</span> <span class="op">#</span>tstyle <span class="op">.~</span> <span class="dt">TickLabels</span> (<span class="fu">show</span> <span class="op">&lt;$&gt;</span> rates),</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true"></a>             defaultAxisOptions</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true"></a>               <span class="op">&amp;</span> <span class="op">#</span>place <span class="op">.~</span> <span class="dt">PlaceLeft</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true"></a>               <span class="op">&amp;</span> <span class="op">#</span>atick <span class="op">.</span> <span class="op">#</span>tstyle <span class="op">.~</span> <span class="dt">TickLabels</span> (<span class="fu">show</span> <span class="op">&lt;$&gt;</span> bs)</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true"></a>           ]</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true"></a></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true"></a><span class="co">-- | the average beta measure given an autocorrelation of the form r = a + b * ma.</span></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true"></a><span class="co">-- (The random variance in the specific beta measurement (ie assuming beta = 0) is removed.)</span></span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true"></a><span class="ot">avStdBeta ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true"></a>avStdBeta b r xs <span class="ot">=</span></span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true"></a>  ( \x <span class="ot">-&gt;</span></span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true"></a>      x</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true"></a>        <span class="op">-</span> foldL1</span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true"></a>          (beta (ma <span class="dv">1</span>))</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true"></a>          (<span class="fu">zip</span> ((\r <span class="ot">-&gt;</span> <span class="fu">drop</span> <span class="dv">1</span> <span class="op">$</span> <span class="fu">zipWith</span> (\o m <span class="ot">-&gt;</span> o <span class="op">+</span> <span class="dv">0</span> <span class="op">*</span> m) xs (scanL1 (ma (<span class="dv">1</span> <span class="op">-</span> r)) xs)) <span class="fl">0.001</span>) xs)</span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true"></a>  )</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true"></a>    <span class="op">$</span> foldL1 (beta (ma <span class="dv">1</span>))</span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true"></a>    <span class="op">$</span> <span class="fu">zip</span> ((\r <span class="ot">-&gt;</span> <span class="fu">drop</span> <span class="dv">1</span> <span class="op">$</span> <span class="fu">zipWith</span> (\o m <span class="ot">-&gt;</span> o <span class="op">*</span> (<span class="dv">1</span> <span class="op">+</span> b<span class="op">*</span>m)) xs (scanL1 (std (<span class="dv">1</span> <span class="op">-</span> r)) xs)) r) xs</span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true"></a></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true"></a><span class="co">-- | the average beta measure given an autocorrelation of the form r = a + b * ma.</span></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true"></a><span class="co">-- (The random variance in the specific beta measurement (ie assuming beta = 0) is removed.)</span></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true"></a><span class="ot">avStdBeta&#39; ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> [<span class="dt">Double</span>] <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true"></a>avStdBeta&#39; b r xs <span class="ot">=</span></span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true"></a>  foldL1 (beta (ma <span class="dv">1</span>))</span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true"></a>    <span class="op">$</span> <span class="fu">zip</span> (<span class="fu">drop</span> <span class="dv">1</span> <span class="op">$</span> <span class="fu">zipWith</span> (\o m <span class="ot">-&gt;</span> o <span class="op">+</span> b<span class="op">*</span>(m <span class="op">-</span> <span class="dv">1</span>)) xs (scanL1 (std (<span class="dv">1</span> <span class="op">-</span> r)) xs)) xs</span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true"></a></span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true"></a></span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true"></a><span class="co">-- representation of configuration</span></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true"></a><span class="ot">repSimCrossConfig ::</span> (<span class="dt">Monad</span> m) <span class="ot">=&gt;</span> <span class="dt">SimCrossConfig</span> <span class="ot">-&gt;</span> <span class="dt">SharedRep</span> m <span class="dt">SimCrossConfig</span></span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true"></a>repSimCrossConfig cfg <span class="ot">=</span> bimap hmap <span class="dt">SimCrossConfig</span> n&#39; <span class="op">&lt;&lt;*&gt;&gt;</span> rates&#39; <span class="op">&lt;&lt;*&gt;&gt;</span> beta&#39; <span class="op">&lt;&lt;*&gt;&gt;</span> betas&#39; <span class="op">&lt;&lt;*&gt;&gt;</span> stdmadecay&#39;</span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true"></a>    n&#39; <span class="ot">=</span> <span class="fu">either</span> (<span class="fu">const</span> (view <span class="op">#</span>rN cfg)) <span class="fu">id</span> <span class="op">&lt;$&gt;</span></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true"></a>      readTextbox (<span class="dt">Just</span> <span class="st">&quot;n&quot;</span>) (view <span class="op">#</span>rN cfg)</span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true"></a>    rates&#39; <span class="ot">=</span> <span class="fu">either</span> (<span class="fu">const</span> []) <span class="fu">id</span> <span class="op">&lt;$&gt;</span></span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true"></a>      readTextbox (<span class="dt">Just</span> <span class="st">&quot;rates&quot;</span>) (view <span class="op">#</span>rRates cfg)</span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true"></a>    beta&#39; <span class="ot">=</span> <span class="fu">either</span> (<span class="fu">const</span> (view <span class="op">#</span>rBeta cfg)) <span class="fu">id</span> <span class="op">&lt;$&gt;</span></span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true"></a>      readTextbox (<span class="dt">Just</span> <span class="st">&quot;test beta&quot;</span>) (view <span class="op">#</span>rBeta cfg)</span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true"></a>    betas&#39; <span class="ot">=</span> <span class="fu">either</span> (<span class="fu">const</span> []) <span class="fu">id</span> <span class="op">&lt;$&gt;</span></span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true"></a>      readTextbox (<span class="dt">Just</span> <span class="st">&quot;test betas&quot;</span>) (view <span class="op">#</span>rBetas cfg)</span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true"></a>    stdmadecay&#39; <span class="ot">=</span> <span class="fu">either</span> (<span class="fu">const</span> <span class="dv">1</span>) <span class="fu">id</span> <span class="op">&lt;$&gt;</span></span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true"></a>      readTextbox (<span class="dt">Just</span> <span class="st">&quot;std of ma decay rate&quot;</span>) (view <span class="op">#</span>rStdMaDecay cfg)</span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true"></a>    hmap n&#39;&#39; rates&#39;&#39; beta&#39;&#39; betas&#39;&#39; stdmadecay&#39;&#39; <span class="ot">=</span> n&#39;&#39; <span class="op">&lt;&gt;</span> rates&#39;&#39; <span class="op">&lt;&gt;</span> beta&#39;&#39; <span class="op">&lt;&gt;</span> betas&#39;&#39; <span class="op">&lt;&gt;</span> stdmadecay&#39;&#39;</span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true"></a></span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true"></a></span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true"></a></span>
+<span id="cb11-85"><a href="#cb11-85" aria-hidden="true"></a><span class="ot">makeCharts ::</span> <span class="dt">SimCrossConfig</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Text</span>]</span>
+<span id="cb11-86"><a href="#cb11-86" aria-hidden="true"></a>makeCharts cfg <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true"></a>  g <span class="ot">&lt;-</span> create</span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true"></a>  xs <span class="ot">&lt;-</span> rvs g (view <span class="op">#</span>rN cfg)</span>
+<span id="cb11-89"><a href="#cb11-89" aria-hidden="true"></a>  <span class="fu">pure</span> <span class="op">$</span></span>
+<span id="cb11-90"><a href="#cb11-90" aria-hidden="true"></a>    [ stdOfMaChart (view <span class="op">#</span>rStdMaDecay cfg) (view <span class="op">#</span>rRates cfg) xs,</span>
+<span id="cb11-91"><a href="#cb11-91" aria-hidden="true"></a>      avBetaChart (view <span class="op">#</span>rBeta cfg) (view <span class="op">#</span>rRates cfg) xs,</span>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true"></a>      betaErrorsChart (view <span class="op">#</span>rBetas cfg) (view <span class="op">#</span>rRates cfg) xs</span>
+<span id="cb11-93"><a href="#cb11-93" aria-hidden="true"></a>    ]</span>
+<span id="cb11-94"><a href="#cb11-94" aria-hidden="true"></a></span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true"></a><span class="ot">page ::</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> [(<span class="dt">Text</span>, <span class="dt">Html</span> ())] <span class="ot">-&gt;</span> <span class="dt">Page</span></span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true"></a>page title sections <span class="ot">=</span></span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true"></a>  bootstrapPage <span class="op">&lt;&gt;</span></span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true"></a>  bridgePage <span class="op">&amp;</span></span>
+<span id="cb11-99"><a href="#cb11-99" aria-hidden="true"></a>  <span class="op">#</span>htmlBody <span class="op">.~</span> divClass_ <span class="st">&quot;container&quot;</span> (<span class="fu">mconcat</span></span>
+<span id="cb11-100"><a href="#cb11-100" aria-hidden="true"></a>    [ divClass_ <span class="st">&quot;row&quot;</span> (h1_ (toHtml title))</span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true"></a>    , divClass_ <span class="st">&quot;row&quot;</span> <span class="op">$</span> <span class="fu">mconcat</span> <span class="op">$</span> (\(t,h) <span class="ot">-&gt;</span> divClass_ <span class="st">&quot;col&quot;</span> (h2_ (toHtml t) <span class="op">&lt;&gt;</span> with div_ [id_ t] h)) <span class="op">&lt;$&gt;</span> sections</span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true"></a>    ])</span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true"></a></span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true"></a>initChartsRep</span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true"></a><span class="ot">  ::</span> <span class="dt">Engine</span></span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true"></a>  <span class="ot">-&gt;</span> <span class="dt">Rep</span> <span class="dt">SimCrossConfig</span></span>
+<span id="cb11-107"><a href="#cb11-107" aria-hidden="true"></a>  <span class="ot">-&gt;</span> <span class="dt">StateL.StateT</span> (<span class="dt">HashMap</span> <span class="dt">Text</span> <span class="dt">Text</span>) <span class="dt">IO</span> ()</span>
+<span id="cb11-108"><a href="#cb11-108" aria-hidden="true"></a>initChartsRep e r <span class="ot">=</span></span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true"></a>  void <span class="op">$</span> oneRep r</span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true"></a>  (\(<span class="dt">Rep</span> h fa) m <span class="ot">-&gt;</span> <span class="kw">do</span></span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true"></a>      append e <span class="st">&quot;input&quot;</span> (toText h)</span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true"></a>      <span class="kw">case</span> <span class="fu">snd</span> (fa m) <span class="kw">of</span></span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true"></a>        <span class="dt">Left</span> err <span class="ot">-&gt;</span> append e <span class="st">&quot;debug&quot;</span> err</span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true"></a>        <span class="dt">Right</span> cfg <span class="ot">-&gt;</span> <span class="kw">do</span></span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true"></a>          c <span class="ot">&lt;-</span> makeCharts cfg</span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true"></a>          replace e <span class="st">&quot;output&quot;</span> (<span class="fu">mconcat</span> c))</span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true"></a></span>
+<span id="cb11-118"><a href="#cb11-118" aria-hidden="true"></a><span class="ot">updateChartsRep ::</span> <span class="dt">Engine</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">Text</span> (<span class="dt">HashMap</span> <span class="dt">Text</span> <span class="dt">Text</span>, <span class="dt">Either</span> <span class="dt">Text</span> <span class="dt">SimCrossConfig</span>) <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</span>
+<span id="cb11-119"><a href="#cb11-119" aria-hidden="true"></a>updateChartsRep e (<span class="dt">Left</span> err) <span class="ot">=</span> append e <span class="st">&quot;debug&quot;</span> err</span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true"></a>updateChartsRep e (<span class="dt">Right</span> (_, <span class="dt">Left</span> err)) <span class="ot">=</span> append e <span class="st">&quot;debug&quot;</span> err</span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true"></a>updateChartsRep e (<span class="dt">Right</span> (_, <span class="dt">Right</span> c)) <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true"></a>  t <span class="ot">&lt;-</span> makeCharts c</span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true"></a>  replace e <span class="st">&quot;output&quot;</span> (<span class="fu">mconcat</span> t)</span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true"></a></span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true"></a><span class="ot">serveCharts ::</span> <span class="dt">IO</span> ()</span>
+<span id="cb11-126"><a href="#cb11-126" aria-hidden="true"></a>serveCharts <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb11-127"><a href="#cb11-127" aria-hidden="true"></a>  <span class="kw">let</span> cfg <span class="ot">=</span> defaultSimCrossConfig</span>
+<span id="cb11-128"><a href="#cb11-128" aria-hidden="true"></a>  scotty <span class="dv">3000</span> <span class="op">$</span> <span class="kw">do</span></span>
+<span id="cb11-129"><a href="#cb11-129" aria-hidden="true"></a>    middleware <span class="op">$</span> midShared (repSimCrossConfig cfg) initChartsRep updateChartsRep</span>
+<span id="cb11-130"><a href="#cb11-130" aria-hidden="true"></a>    servePageWith <span class="st">&quot;/&quot;</span> (defaultPageConfig <span class="st">&quot;prod&quot;</span>)</span>
+<span id="cb11-131"><a href="#cb11-131" aria-hidden="true"></a>      (page <span class="st">&quot;simulation of cross-dependent moments&quot;</span></span>
+<span id="cb11-132"><a href="#cb11-132" aria-hidden="true"></a>       [ (<span class="st">&quot;input&quot;</span>, <span class="fu">mempty</span>)</span>
+<span id="cb11-133"><a href="#cb11-133" aria-hidden="true"></a>       , (<span class="st">&quot;output&quot;</span>, <span class="fu">mempty</span>)</span>
+<span id="cb11-134"><a href="#cb11-134" aria-hidden="true"></a>       , (<span class="st">&quot;debug&quot;</span>, <span class="fu">mempty</span>)</span>
+<span id="cb11-135"><a href="#cb11-135" aria-hidden="true"></a>       ])</span></code></pre></div>

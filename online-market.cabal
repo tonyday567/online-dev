@@ -21,6 +21,7 @@ library
   exposed-modules:
       Data.Random,
       Data.Yahoo,
+      Run,
       Stats
   hs-source-dirs:
       src
@@ -39,7 +40,6 @@ library
     , mwc-random
     , numhask-prelude >= 0.5 && < 0.6
     , numhask-space >= 0.4 && < 0.5
-    , online >= 0.5 && < 0.6
     , optparse-generic
     , online-csv == 0.0.1
     , primitive
@@ -48,10 +48,15 @@ library
     , text
     , time
     , numhask-array >= 0.6 && < 0.7
+    , box
+    , readme-lhs
+    , transformers
+    , profunctors
+    , folds
   default-language: Haskell2010
 
-executable regression
-  main-is: regression.hs
+executable stats-testing
+  main-is: stats-testing.lhs
   hs-source-dirs:
       app
   ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
@@ -68,7 +73,6 @@ executable regression
     , mwc-probability
     , mwc-random
     , numhask-space >= 0.4 && < 0.5
-    , online >= 0.5 && < 0.6
     , optparse-generic
     , online-csv == 0.0.1
     , numhask-prelude >= 0.5 && < 0.6
@@ -80,103 +84,28 @@ executable regression
     , interpolatedstring-perl6
     , pretty-simple
     , numhask-array >= 0.6 && < 0.7
+    , web-rep
+    , lucid
+    , wai
+    , wai-extra
+    , scotty
+    , wai-middleware-static
+    , box
+    , readme-lhs
+    , transformers
+    , profunctors
+    , folds
   default-language: Haskell2010
 
-executable random
-  main-is: random.hs
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: test.hs
   hs-source-dirs:
-      app
-  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
+      test
+  default-extensions: NoImplicitPrelude UnicodeSyntax NegativeLiterals OverloadedStrings
   build-depends:
+      base >=4.7 && <5,
+      protolude,
+      doctest,
       online-market
-    , attoparsec
-    , backprop
-    , base >=4.7 && <5
-    , chart-svg >= 0.0.3 && < 0.1
-    , containers
-    , foldl
-    , generic-lens >= 1.2 && < 2.0
-    , lens
-    , mwc-probability
-    , mwc-random
-    , numhask-space >= 0.4 && < 0.5
-    , online >= 0.5 && < 0.6
-    , optparse-generic
-    , online-csv == 0.0.1
-    , numhask-prelude >= 0.5 && < 0.6
-    , primitive
-    , readme-lhs >= 0.6 && < 0.7
-    , scientific
-    , text
-    , time
-    , interpolatedstring-perl6
-    , pretty-simple
-    , numhask-array >= 0.6 && < 0.7
   default-language: Haskell2010
-
-executable clean
-  main-is: clean.hs
-  hs-source-dirs:
-      app
-  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      online-market
-    , attoparsec
-    , backprop
-    , base >=4.7 && <5
-    , chart-svg >= 0.0.3 && < 0.1
-    , containers
-    , foldl
-    , generic-lens >= 1.2 && < 2.0
-    , lens
-    , mwc-probability
-    , mwc-random
-    , numhask-space >= 0.4 && < 0.5
-    , online >= 0.5 && < 0.6
-    , optparse-generic
-    , online-csv == 0.0.1
-    , numhask-prelude >= 0.5 && < 0.6
-    , primitive
-    , readme-lhs >= 0.6 && < 0.7
-    , scientific
-    , text
-    , time
-    , interpolatedstring-perl6
-    , pretty-simple
-    , numhask-array >= 0.6 && < 0.7
-  default-language: Haskell2010
-
-executable bayes
-  main-is: bayes.hs
-  hs-source-dirs:
-      app
-  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      online-market
-    , attoparsec
-    , backprop
-    , base >=4.7 && <5
-    , chart-svg >= 0.0.3 && < 0.1
-    , containers
-    , foldl
-    , generic-lens >= 1.2 && < 2.0
-    , lens
-    , mwc-probability
-    , mwc-random
-    , numhask-space >= 0.4 && < 0.5
-    , online >= 0.5 && < 0.6
-    , optparse-generic
-    , online-csv == 0.0.1
-    , numhask-prelude >= 0.5 && < 0.6
-    , primitive
-    , readme-lhs >= 0.6 && < 0.7
-    , scientific
-    , text
-    , time
-    , interpolatedstring-perl6
-    , pretty-simple
-    , numhask-array >= 0.6 && < 0.7
-    , monad-bayes
-    , log-domain
-  default-language: Haskell2010
-
