@@ -178,8 +178,8 @@ digitChart fp title names xs = writeFile fp $ renderHudOptionsChart defaultSvgOp
     xs' = fromIntegral . snd <$> xs
     dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) . fst <$> xs)
     chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ Colour 0 0 1 1 & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
-    chartma = Chart (LineA defaultLineStyle) (zipWith SP [0 ..] (drop 1 $ scanL1 (ma 0.95) xs'))
-    chartstd = Chart (LineA (defaultLineStyle & #color .~ Colour 1 0 0 1)) (zipWith SP [0 ..] (drop 1 $ scanL1 (std 0.95) xs'))
+    chartma = Chart (LineA defaultLineStyle) (zipWith SP [0 ..] (drop 1 $ scanS (ma 0.95) xs'))
+    chartstd = Chart (LineA (defaultLineStyle & #color .~ Colour 1 0 0 1)) (zipWith SP [0 ..] (drop 1 $ scanS (std 0.95) xs'))
 
 -- | scatter chart
 scatterChart ::

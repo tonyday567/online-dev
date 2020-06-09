@@ -12,6 +12,7 @@ copyright:      Tony Day
 license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
+extra-doc-files: other/*.svg
 
 source-repository head
   type: git
@@ -56,7 +57,7 @@ library
   default-language: Haskell2010
 
 executable stats-testing
-  main-is: stats-testing.lhs
+  main-is: stats-testing.hs
   hs-source-dirs:
       app
   ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
@@ -95,6 +96,8 @@ executable stats-testing
     , transformers
     , profunctors
     , folds
+    , optparse-generic
+
   default-language: Haskell2010
 
 test-suite test
