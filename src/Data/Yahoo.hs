@@ -19,13 +19,13 @@ module Data.Yahoo
   )
 where
 
-import qualified Control.Foldl as L
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
 import qualified Data.Attoparsec.Text as A
 import Data.Csv
 import Data.Generics.Labels ()
 import Data.Time
 import NumHask.Prelude
+import Stats
 
 -- | yahoo csv data
 -- See: https://finance.yahoo.com/quote/%5EGSPC/history?period1=-631015200&period2=1497103200&interval=1d&filter=history&frequency=1d
@@ -75,12 +75,8 @@ yahooCsvConfig = defaultCsvConfig & #name .~ "data" & #csep .~ ',' & #dir .~ "./
 
 -- compute the log return from a price series
 -- returns are geometric by nature, and using log(1+daily return) as the base unit of the time series leads to all sorts of benefits, not least of which is you can then add up the variates to get the cumulative return, without having to go through log and exp chicanery.  Ditto for distributional assumptions.
-lret :: [Double] -> [Double]
-lret [] = []
-lret [_] = []
-lret (x : xs) = L.fold (L.Fold step ([], x) (reverse . fst)) xs
-  where
-    step (acc, v) v' = (log (v' / v) : acc, v')
+lret :: (ExpField a) => [a] -> [a]
+lret xs = drop 1 $ scan ((\x x' -> log (x/x')) <$> id <*> delay [zero]) xs
 
 getdc :: [YahooData] -> [(Day, Double)]
 getdc xs = zip (drop 1 $ view #yDate <$> xs) (lret (view #yClose <$> xs))

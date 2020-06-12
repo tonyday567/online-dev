@@ -10,5 +10,6 @@ import Stats
 main :: IO ()
 main =
   doctest
-  [ "src/Stats.hs"
+  [ "src/Stats.hs",
+    "src/Data/Random.hs"
   ]

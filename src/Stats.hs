@@ -63,7 +63,6 @@ where
 import qualified Box
 import Chart hiding (one, zero, shape, singleton)
 import Control.Category ((>>>), Category)
-import qualified Control.Foldl as L
 import Control.Lens hiding ((:>), Empty, Unwrapped, Wrapped, index)
 import Control.Monad
 import qualified Control.Monad.Trans.State.Lazy as StateL
@@ -353,6 +352,12 @@ data RegressionState (n :: Nat) a =
 \[
 \begin{align}
 {\hat  {{\mathbf  {B}}}}=({\mathbf  {X}}^{{{\rm {T}}}}{\mathbf  {X}})^{{ -1}}{\mathbf  {X}}^{{{\rm {T}}}}{\mathbf  {Y}}
+\end{align}
+\]
+
+\[
+\begin{align}
+{\mathbf  {X}}={\begin{bmatrix}{\mathbf  {x}}_{1}^{{{\rm {T}}}}\\{\mathbf  {x}}_{2}^{{{\rm {T}}}}\\\vdots \\{\mathbf  {x}}_{n}^{{{\rm {T}}}}\end{bmatrix}}={\begin{bmatrix}x_{{1,1}}&\cdots &x_{{1,k}}\\x_{{2,1}}&\cdots &x_{{2,k}}\\\vdots &\ddots &\vdots \\x_{{n,1}}&\cdots &x_{{n,k}}\end{bmatrix}}
 \end{align}
 \]
 
