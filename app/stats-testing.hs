@@ -30,7 +30,7 @@ import Control.Lens hiding ((:>), Unwrapped, Wrapped, Empty)
 import Data.Generics.Labels ()
 import Data.Random
 import NumHask.Array.Dynamic hiding (append)
-import NumHask.Prelude hiding ((<<*>>), replace, state, StateT, State, get, runStateT, runState, L1)
+import NumHask.Prelude hiding ((<<*>>), replace, state, StateT, State, get, runStateT, runState, L1, fold)
 import Readme.Lhs
 import System.Random.MWC
 import Control.Lens hiding (Wrapped, Unwrapped, Empty)
@@ -51,7 +51,7 @@ import Control.Monad.Trans.State.Strict
 import qualified Control.Monad.Trans.State.Lazy as StateL
 import Data.Sequence (ViewR(..), Seq(..))
 import Data.Profunctor.Strong
-import Data.Fold
+import Data.Fold hiding (M)
 import Data.Foldable (foldl1)
 import Data.List (scanl1, (!!))
 import Stats
@@ -79,7 +79,7 @@ sChart svgOptions m rates d title xs =
       ))
     []
     ( zipWith (\s xs' -> Chart (LineA s) xs') ls $
-      (zipWith SP (fromIntegral <$> [d..]) <$> ((\r -> drop d $ scanS (m r) xs) <$> rates))
+      (zipWith SP (fromIntegral <$> [d..]) <$> ((\r -> drop d $ scan (m r) xs) <$> rates))
     )
 
 stdOfMaChart :: SvgOptions -> Double -> [Double] -> [Double] -> Text
@@ -95,7 +95,7 @@ stdOfMaChart svgOptions stdr rates xs =
     )
   where
     rates' = (\r -> bool r 0.00001 (r==0)) <$> rates
-    stdOfMa stdr r xs = foldS (std stdr) (fromList $ scanS (ma (1 - r)) xs)
+    stdOfMa stdr r xs = fold (std stdr) (fromList $ scan (ma (1 - r)) xs)
 -- | common pattern of chart title, x-axis title and y-axis title
 titlesHud :: Text -> Text -> Text -> HudOptions
 titlesHud t x y =
@@ -106,32 +106,14 @@ titlesHud t x y =
          defaultTitle y & #place .~ PlaceLeft & #style . #size .~ 0.08
        ]
 
--- | check if beta is recovering the exact simulated dependency via maDependency
--- and doing what is expected.
--- (The cumulative drift in the specific sample is removed).
--- >>> maDependencyCheck 0.1 0.01 xs
--- 9.999999999999876e-2
---
--- beta measure looks like it contains large noise sensitivities
-maDependencyCheck :: Double -> Double -> [Double] -> Double
-maDependencyCheck b r xs = xsb - x0
-  where
-    -- constructued time series with a beta between the ma and the series.
-    xs' = scanS (maDependency b (ma (1 - r))) xs
-    ma' = scanS ((ma (1 - r)) >>> delay [0]) xs'
-    -- beta of ma' on simulated series
-    xsb = foldS (beta (ma (1 - r))) $ fromList $ drop 1 $ zip ma' xs'
-    -- beta measurement if beta of ma was, in reality, zero.
-    x0 = foldS (beta (ma (1 - r))) $ fromList $ drop 1 $ zip ma' xs
-
-makeMaDependencyChart :: SvgOptions -> Double -> Double -> Double -> [Double] -> Text
+makeMaDependencyChart :: Foldable f => SvgOptions -> Double -> Double -> Double -> f Double -> Text
 makeMaDependencyChart svgOptions b r rb xs =
   renderHudOptionsChart svgOptions defaultHudOptions [] $
-  [ Chart (LineA defaultLineStyle) $ drop 1000 $ zipWith SP [0..] (scanS (beta (ma (1 - rb))) $ fromList $ drop 100 $ zip ma' xs')
+  [ Chart (LineA defaultLineStyle) $ drop 1000 $ zipWith SP [0..] (scan (beta1 (ma (1 - rb))) $ fromList $ drop 100 $ zip ma' (toList xs'))
   ]
   where
-    xs' = scanS (maDependency b (ma (1 - r))) xs
-    ma' = scanS ((ma (1 - r)) >>> delay [0]) xs'
+    xs' = scan (depState (\a m -> a + b * m) (ma (1 - r))) (toList xs)
+    ma' = scan ((ma (1 - r)) >>> delay [0]) xs'
 
 -- | various configuration details
 data StatsTestingConfig = StatsTestingConfig
@@ -185,7 +167,8 @@ repStatsTestingConfig cfg = bimap hmap StatsTestingConfig n' <<*>> rates' <<*>> 
 
 data Opts =
   ServeCharts |
-  MakeCharts
+  MakeCharts |
+  ServeModel1
   deriving (Generic, Show)
 
 instance ParseRecord Opts
@@ -196,12 +179,13 @@ main = do
   putStrLn (show o :: Text)
   case o of
     MakeCharts -> do
-      cs <- makeCharts defaultStatsTestingConfig
+      cs <- makeTestCharts defaultStatsTestingConfig
       traverse_ (\(fp,c) -> writeFile ("other/" <> unpack fp <> ".svg") c) cs
-    ServeCharts -> serveCharts defaultStatsTestingConfig
+    ServeCharts -> serveRep defaultStatsTestingConfig repStatsTestingConfig makeTestCharts
+    ServeModel1 -> serveRep zeroModel1 repModel1 (makeChartsModel1 defaultStatsTestingConfig)
 
-makeCharts :: StatsTestingConfig -> IO [(Text, Text)]
-makeCharts cfg = do
+makeTestCharts :: StatsTestingConfig -> IO [(Text, Text)]
+makeTestCharts cfg = do
   g <- create
   xs <- rvs g (view #stN cfg)
   xs1 <- rvs g (view #stN cfg)
@@ -215,6 +199,21 @@ makeCharts cfg = do
       ("ex-ma", sChart (defaultSvgOptions & #svgHeight .~ view #stHeight cfg) ma ((1 -) <$> view #stRates cfg) 0 "ma" (xs <> ((1+) . (2*) <$> xs1))),
       ("ex-std", sChart (defaultSvgOptions & #svgHeight .~ view #stHeight cfg) std ((1 -) <$> view #stRates cfg) 0 "std" (xs <> ((1+) . (2*) <$> xs1))),
       ("ex-stdma", stdOfMaChart (defaultSvgOptions & #svgHeight .~ view #stHeight cfg) (view #stStdMaDecay cfg) (view #stRates cfg) xs)
+    ]
+
+makeChartsModel1 :: StatsTestingConfig -> Model1 -> IO [(Text, Text)]
+makeChartsModel1 cfg m1 = do
+  g <- create
+  xs <- rvs g (view #stN cfg)
+  pure $
+    [ ("ex-stats",
+        show (fold (depModel1 0.99 m1 >>> ((,) <$> ma 0.99 <*> std 0.99)) xs)),
+      ("ex-model1",
+       sChart (defaultSvgOptions & #svgHeight .~ view #stHeight cfg)
+        (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 "model1 walk" xs),
+      ("ex-orig",
+       sChart (defaultSvgOptions & #svgHeight .~ view #stHeight cfg)
+        (\_ -> M id (+) id) [0.01] 0 "orig random walk" xs)
     ]
 
 page :: Bool -> Text -> Page
@@ -237,29 +236,41 @@ page doDebug maxWidth =
     sec d n = divClass_ d (with div_ [id_ n] mempty)
     sec' d n = divClass_ d (with div_ [id_ n, style_ ("max-width: " <> maxWidth <> "px")] mempty)
 
-initChartsRep
-  :: Engine
-  -> Rep StatsTestingConfig
-  -> StateL.StateT (HashMap Text Text) IO ()
-initChartsRep e r =
-  void $ oneRep r
-  (\(Rep h fa) m -> do
-      append e "input" (toText h)
-      case snd (fa m) of
-        Left err -> append e "debug" err
-        Right cfg -> do
-          c <- makeCharts cfg
-          replace e "output" (mconcat (snd <$> c)))
-
-updateChartsRep :: Engine -> Either Text (HashMap Text Text, Either Text StatsTestingConfig) -> IO ()
-updateChartsRep e (Left err) = append e "debug" err
-updateChartsRep e (Right (_, Left err)) = append e "debug" err
-updateChartsRep e (Right (_, Right c)) = do
-  t <- makeCharts c
-  replace e "output" (mconcat (snd <$> t))
-
-serveCharts :: StatsTestingConfig -> IO ()
-serveCharts cfg = do
+serveRep :: a -> (a -> SharedRep IO a) -> (a -> IO [(Text, Text)]) -> IO ()
+serveRep m mRep makeRep = do
   scotty 3000 $ do
-    middleware $ midShared (repStatsTestingConfig cfg) initChartsRep updateChartsRep
+    middleware $ midShared (mRep m) initRep updateRep
     servePageWith "/" (defaultPageConfig "prod") (page True "450")
+      where
+        initRep e r =
+          void $ oneRep r
+            (\(Rep h fa) m -> do
+              append e "input" (toText h)
+              case snd (fa m) of
+                Left err -> append e "debug" err
+                Right cfg -> do
+                  c <- makeRep cfg
+                  replace e "output" (mconcat (snd <$> c)))
+        updateRep e (Left err) = append e "debug" err
+        updateRep e (Right (_, Left err)) = append e "debug" err
+        updateRep e (Right (_, Right c)) = do
+            t <- makeRep c
+            replace e "output" (mconcat (snd <$> t))
+
+-- | representation of model1
+repModel1 :: (Monad m) => Model1 -> SharedRep m Model1
+repModel1 m1 = bimap hmap Model1 alphaX' <<*>> alphaS' <<*>> betaMa2X' <<*>> betaMa2S' <<*>> betaStd2X' <<*>> betaStd2S'
+  where
+    alphaX' = either (const (view #alphaX m1)) id <$>
+      readTextbox (Just "alphaX") (view #alphaX m1)
+    alphaS' = either (const (view #alphaS m1)) id <$>
+      readTextbox (Just "alphaS") (view #alphaS m1)
+    betaMa2X' = either (const (view #betaMa2X m1)) id <$>
+      readTextbox (Just "betaMa2X") (view #betaMa2X m1)
+    betaMa2S' = either (const (view #betaMa2S m1)) id <$>
+      readTextbox (Just "betaMa2S") (view #betaMa2S m1)
+    betaStd2X' = either (const (view #betaStd2X m1)) id <$>
+      readTextbox (Just "betaStd2X") (view #betaStd2X m1)
+    betaStd2S' = either (const (view #betaStd2S m1)) id <$>
+      readTextbox (Just "betaStd2S") (view #betaStd2S m1)
+    hmap alphaX'' alphaS'' betaMa2X'' betaMa2S'' betaStd2X'' betaStd2S'' = alphaX'' <> alphaS'' <> betaMa2X'' <> betaMa2S'' <> betaStd2X'' <> betaStd2S''
