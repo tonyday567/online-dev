@@ -50,7 +50,8 @@ module Stats
     beta,
     alpha,
     reg,
-    sconst,
+    asum,
+    aconst,
     delay1,
     delay,
     depState,
@@ -84,7 +85,7 @@ import NumHask.Array.Fixed (with)
 import qualified NumHask.Array.Fixed as F
 import NumHask.Array.Shape (HasShape)
 import qualified NumHask.Array.HMatrix as HM
-import NumHask.Prelude hiding ((<<*>>), L1, State, StateT, get, replace, runState, runStateT, state, fold)
+import NumHask.Prelude hiding ((<<*>>), L1, State, StateT, get, replace, runState, runStateT, state, fold, asum)
 import Options.Generic
 import Readme.Lhs
 import System.Random.MWC
@@ -388,7 +389,6 @@ rsOnline r (A (RegressionState xx x xy y) c) (A (RegressionState xx' x' xy' y') 
   where
     d s s' = r * s + s'
 
-
 -- | alpha in a multiple regression
 alpha :: (LA.Field a, ExpField a, KnownNat n) => a -> Mealy (F.Array '[n] a, a) a
 alpha r = (\xs b y -> y - sum (liftR2 (*) b xs)) <$> lmap fst (arrayify $ ma r) <*> beta r <*> lmap snd (ma r)
@@ -413,9 +413,13 @@ reg :: (LA.Field a, ExpField a, KnownNat n) => a -> Mealy (F.Array '[n] a, a) (F
 reg r = (,) <$> beta r <*> alpha r
 {-# INLINEABLE reg #-}
 
--- | a constant scan
-sconst :: b -> Mealy a b
-sconst a = M (\_ -> a) (\_ _ -> ()) (\_ -> ())
+-- | accumulated sum
+asum :: (Additive a) => Mealy a a
+asum = M id (+) id
+
+-- | constant Mealy
+aconst :: b -> Mealy a b
+aconst a = M (\_ -> a) (\_ _ -> ()) (\_ -> ())
 
 -- | delay input values by 1
 delay1 :: a -> Mealy a a

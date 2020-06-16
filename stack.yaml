@@ -2,6 +2,7 @@ resolver: lts-15.13
 
 packages:
   - .
+  # - ../web-rep
 
 extra-deps:
   - protolude-0.3.0
@@ -22,7 +23,7 @@ extra-deps:
     commit: 9769d847520b28d7fb8a669cef3aa333068cb09a
   # - web-rep-0.5.0
   - git: https://github.com/tonyday567/web-rep
-    commit: 723b72b9b23d78bfd34cb082cf8676ea19847b63
+    commit: d00e70f0f7a76b7d19ae58dbd7bd57565ba2cc67
   # external non-stack libraries
   - Color-0.1.4
   - backprop-0.2.6.3

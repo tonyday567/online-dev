@@ -10,9 +10,14 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-module Run
-  ( RunConfig (..),
-    defaultRunConfig,
+module Run.Types
+  ( ls,
+    selectItems,
+    repItemsSelect,
+    scanHud,
+    scanChart,
+    foldScanChart,
+    titlesHud,
     onlineRs,
     writeChartOnline,
     chartOnline,
@@ -37,9 +42,14 @@ import Data.Maybe
 import qualified Data.Text as Text
 import Data.Time
 import Data.Yahoo
-import NumHask.Prelude
+import NumHask.Prelude hiding (fold, (<<*>>), asum)
 import NumHask.Space
 import Stats
+import Data.List ((!!))
+import Web.Page hiding (StateT(..), State, state, get, bool, runState)
+import qualified Data.Attoparsec.Text as A
+
+type Rate = Double
 
 data RunConfig
   = RunConfig
@@ -61,6 +71,63 @@ data RunConfig
 defaultRunConfig :: RunConfig
 defaultRunConfig = RunConfig 12000 10000 [0.95, 0.99] 0.99 (0.95, 0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99, 0.99) 20 (Range (-0.03) 0.03) "default" "other/default"
 
+-- generic rep helpers
+selectItems :: [Text] -> Map.Map Text Text -> [(Text,Text)]
+selectItems ks m =
+  Map.toAscList $
+    Map.filterWithKey (\k _ -> k `elem` ks) m
+
+-- selectItems ks (randomCharts defaultSvgOptions rs)
+repItemsSelect :: Monad m => [Text] -> [Text] -> SharedRep m [Text]
+repItemsSelect init full =
+  dropdownMultiple (A.takeWhile (`notElem` [','])) id (Just "items") full init
+
+-- * chart helpers
+ls :: [LineStyle]
+ls = fmap (\c -> defaultLineStyle & #color .~ c & #width .~ 0.003) palette
+
+-- simple scan of a time series through a Mealy using a list of rates, with time dimension labelled as 0..
+scanChart :: (Rate -> Mealy a Double) -> [Rate] -> Int -> [a] -> [Chart Double]
+scanChart m rates d xs =
+  ( zipWith (\s xs' -> Chart (LineA s) xs') ls $
+    (zipWith SP (fromIntegral <$> [d..]) <$> ((\r -> drop d $ scan (m r) xs) <$> rates))
+  )
+
+-- | common line chart hud with rates as a legend
+scanHud :: Text -> [Double] -> HudOptions
+scanHud t rates = 
+  (defaultHudOptions &
+     #hudTitles .~ [ defaultTitle t] &
+     #hudLegend .~ Just
+      ( defaultLegendOptions
+          & #ltext . #size .~ 0.2
+          & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
+          & #legendFrame .~ Just (RectStyle 0.02 (palette !! 5) white),
+        zipWith
+          (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
+          ls
+          rates
+      ))
+
+-- | fold over a scanned time series by rates
+foldScanChart :: (Rate -> Mealy a b) -> (Rate -> Mealy b Double) -> [Rate] -> [a] -> [Chart Double]
+foldScanChart scan' fold' rates xs =
+    ( (: []) $
+        Chart
+          (LineA defaultLineStyle)
+          (zipWith SP rates ((\r -> fold (fold' r) $ scan (scan' r) xs) <$> rates)))
+
+-- | common pattern of chart title, x-axis title and y-axis title
+titlesHud :: Text -> Text -> Text -> HudOptions
+titlesHud t x y =
+  defaultHudOptions
+    & #hudTitles
+    .~ [ defaultTitle t,
+         defaultTitle x & #place .~ PlaceBottom & #style . #size .~ 0.08,
+         defaultTitle y & #place .~ PlaceLeft & #style . #size .~ 0.08
+       ]
+
+-- uptohere
 onlineRs :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [[Point Double]]
 onlineRs c f xs =
   zipWith Point [0 ..]
@@ -314,3 +381,4 @@ makeTitles (t, xt, yt) =
       defaultTitle xt & #place .~ PlaceBottom & #style . #size .~ 0.06,
       defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06
     ]
+
