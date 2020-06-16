@@ -144,3 +144,17 @@ repModel1 m1 = bimap hmap Model1 alphaX' <<*>> alphaS' <<*>> betaMa2X' <<*>> bet
     betaStd2S' = either (const (view #betaStd2S m1)) id <$>
       readTextbox (Just "betaStd2S") (view #betaStd2S m1)
     hmap alphaX'' alphaS'' betaMa2X'' betaMa2S'' betaStd2X'' betaStd2S'' = alphaX'' <> alphaS'' <> betaMa2X'' <> betaMa2S'' <> betaStd2X'' <> betaStd2S''
+
+model1Charts :: SvgOptions -> RandomSets -> Model1 -> Double -> Map.Map Text Text
+model1Charts svgo rs m1 r = Map.fromList
+    [ ("ex-stats",
+        show (fold (depModel1 r m1 >>> ((,) <$> ma r <*> std r)) xs)),
+      ("ex-model1",
+       sChart svgo
+        (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 "model1 walk" xs),
+      ("ex-orig",
+       sChart svgo
+        (\_ -> M id (+) id) [0.01] 0 "orig random walk" xs)
+    ]
+  where
+    xs = (rs ^. #rs) !! 0
