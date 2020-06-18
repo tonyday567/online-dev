@@ -61,12 +61,22 @@ module Data.Mealy
 
     -- * conversion
     fromFoldl,
+    foldB,
+    maB,
+
+    -- * median
+    Medianer(..),
+    onlineL1,
+    onlineL1',
+    maL1,
+    absmaL1,
   )
 where
 
 import qualified Box
 import Chart hiding (one, zero, shape, singleton)
 import Control.Category ((>>>), Category)
+import qualified Control.Foldl as L
 import Control.Lens hiding ((:>), Empty, Unwrapped, Wrapped, index)
 import Control.Monad
 import qualified Control.Monad.Trans.State.Lazy as StateL
@@ -96,6 +106,10 @@ import qualified Numeric.LinearAlgebra as LA
 import qualified Numeric.LinearAlgebra.Data as LA
 import Data.Functor.Rep
 import qualified Control.Foldl as L
+import qualified Numeric.Backprop as B
+import qualified Prelude.Backprop as PB
+import Numeric.Backprop (Backprop, Reifies, BVar, W)
+import qualified Prelude as P
 
 {- $setup
 Generate some random variates for the examples.
@@ -555,3 +569,68 @@ depModel1 r m1 =
 
 fromFoldl :: L.Fold a b -> Mealy a b
 fromFoldl (L.Fold step begin e) = M e step (step begin)
+
+foldB :: (Reifies s W) => (BVar s Double -> BVar s Double) -> BVar s Double -> BVar s [Double] -> BVar s Double
+foldB f r xs = divide (PB.foldl' (step' f r) (B.T2 0 0) xs) where
+  step' f' r' (B.T2 s c) a = uncurry B.T2 ((r P.*) $ s P.+ f' a, (r' P.*) $ c P.+ 1)  
+  divide (B.T2 s c) = s P./ c
+
+maB :: Reifies s W => BVar s Double -> BVar s [Double] -> BVar s Double
+maB r = foldB id r
+
+-- | A rough Median.
+-- The average absolute value of the stat is used to callibrate estimate drift towards the median
+data Medianer a b = Medianer
+  { medAbsSum :: a
+  , medCount :: b
+  , medianEst :: a
+  }
+
+-- | onlineL1' takes a function and turns it into a `Control.Foldl.Fold` where the step is an incremental update of an (isomorphic) median statistic.
+onlineL1' ::
+     (Ord b, Field b, Signed b) => b -> b -> (a -> b) -> (b -> b) -> L.Fold a (b, b)
+onlineL1' i d f g = L.Fold step begin extract
+  where
+    begin = Medianer zero zero zero
+    step (Medianer s c m) a =
+      Medianer
+        (g $ s + abs (f a))
+        (g $ c + one)
+        ((one - d) * (m + s' * i * s / c') + d * f a)
+      where
+        c' =
+          if c == zero
+            then one
+            else c
+        s'
+          | f a > m = one
+          | f a < m = negate one
+          | otherwise = zero
+    extract (Medianer s c m) = (s / c, m)
+{-# INLINABLE onlineL1' #-}
+
+-- | onlineL1 takes a function and turns it into a `Control.Foldl.Fold` where the step is an incremental update of an (isomorphic) median statistic.
+onlineL1 :: (Ord b, Field b, Signed b) => b -> b -> (a -> b) -> (b -> b) -> L.Fold a b
+onlineL1 i d f g = snd <$> onlineL1' i d f g
+{-# INLINABLE onlineL1 #-}
+
+-- $setup
+--
+-- >>> import qualified Control.Foldl as L
+-- >>> let n = 100
+-- >>> let inc = 0.1
+-- >>> let d = 0
+-- >>> let r = 0.9
+
+-- | moving median
+-- >>> L.fold (maL1 inc d r) [1..n]
+-- 93.92822312742108
+--
+maL1 :: (Ord a, Field a, Signed a) => a -> a -> a -> L.Fold a a
+maL1 i d r = onlineL1 i d id (* r)
+{-# INLINABLE maL1 #-}
+
+-- | moving absolute deviation
+absmaL1 :: (Ord a, Field a, Signed a) => a -> a -> a -> L.Fold a a
+absmaL1 i d r = fst <$> onlineL1' i d id (* r)
+{-# INLINABLE absmaL1 #-}
