@@ -28,7 +28,7 @@ import qualified Data.Map.Strict as Map
 import Data.Maybe
 import qualified Data.Text as Text
 import NumHask.Prelude hiding (fold, (<<*>>), asum)
-import Stats
+import Data.Mealy
 import Data.Random
 import Data.List ((!!))
 import Web.Page hiding (StateT(..), State, state, get, bool, runState)

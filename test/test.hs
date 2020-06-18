@@ -5,11 +5,11 @@ module Main where
 
 import Protolude
 import Test.DocTest
-import Stats
+import Data.Mealy
 
 main :: IO ()
 main =
   doctest
-  [ "src/Stats.hs",
+  [ "src/Data/Mealy.hs",
     "src/Data/Random.hs"
   ]

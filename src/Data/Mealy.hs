@@ -23,7 +23,7 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 -- | Online statistics for ordered data (such as time-series data), modelled as [mealy machines](https://en.wikipedia.org/wiki/Mealy_machine)
-module Stats
+module Data.Mealy
   ( -- * Types
     Mealy (..),
     pattern M,
@@ -58,6 +58,9 @@ module Stats
     Model1 (..),
     zeroModel1,
     depModel1,
+
+    -- * conversion
+    fromFoldl,
   )
 where
 
@@ -92,6 +95,7 @@ import System.Random.MWC
 import qualified Numeric.LinearAlgebra as LA
 import qualified Numeric.LinearAlgebra.Data as LA
 import Data.Functor.Rep
+import qualified Control.Foldl as L
 
 {- $setup
 Generate some random variates for the examples.
@@ -548,3 +552,6 @@ depModel1 r m1 =
         + m1 ^. #alphaX
         + (m1 ^. #betaMa2X) * m
         + (m1 ^. #betaStd2X) * (s - 1)
+
+fromFoldl :: L.Fold a b -> Mealy a b
+fromFoldl (L.Fold step begin e) = M e step (step begin)

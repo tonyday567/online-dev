@@ -11,7 +11,7 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Data.Yahoo
-  ( runReturn,
+  ( makeReturnSeries,
     taker,
     YahooData (..),
     pYahoo,
@@ -25,7 +25,7 @@ import Data.Csv
 import Data.Generics.Labels ()
 import Data.Time
 import NumHask.Prelude
-import Stats
+import Data.Mealy
 
 -- | yahoo csv data
 -- See: https://finance.yahoo.com/quote/%5EGSPC/history?period1=-631015200&period2=1497103200&interval=1d&filter=history&frequency=1d
@@ -84,7 +84,7 @@ getdc xs = zip (drop 1 $ view #yDate <$> xs) (lret (view #yClose <$> xs))
 taker :: Int -> [a] -> [a]
 taker n = reverse . take n . reverse
 
-runReturn :: Int -> IO [(Day, Double)]
-runReturn n = do
+makeReturnSeries :: Int -> IO [(Day, Double)]
+makeReturnSeries n = do
   r <- runCsv yahooCsvConfig pYahoo
   pure $ taker n $ getdc $ rights r

@@ -11,80 +11,52 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Run.Types
-  ( ls,
+  ( defaultQuantiles,
+    quantileNames,
+    ls,
     selectItems,
     repItemsSelect,
     scanHud,
     scanChart,
     foldScanChart,
     titlesHud,
-    onlineRs,
-    writeChartOnline,
-    chartOnline,
-    svgName,
-    writeOnline,
     histChart,
     scatterChart,
-    quantileChart,
     quantileHistChart,
-    digitChart,
     digitPixelChart,
+    digitChart,
+    quantileChart,
   )
 where
 
 import Chart
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
 import Control.Monad
-import Data.Bifunctor
 import Data.Generics.Labels ()
 import qualified Data.Map.Strict as Map
 import Data.Maybe
 import qualified Data.Text as Text
-import Data.Time
-import Data.Yahoo
 import NumHask.Prelude hiding (fold, (<<*>>), asum)
 import NumHask.Space
-import Stats
+import Data.Mealy
 import Data.List ((!!))
 import Web.Page hiding (StateT(..), State, state, get, bool, runState)
 import qualified Data.Attoparsec.Text as A
+import Data.List (transpose)
+import Data.Time
+
+defaultQuantiles :: [Double]
+defaultQuantiles = ((0.1 *) <$> [1 .. 9])
+
+quantileNames :: [Double] -> [Text]
+quantileNames qs = (<> "th") . comma 0 . (100 *) <$> qs
 
 type Rate = Double
 
-data RunConfig
-  = RunConfig
-      { nAll :: Int,
-        n :: Int,
-        rates :: [Double],
-        betaRate :: Double,
-        versus :: (Double, Double),
-        qs :: [Double],
-        qsRate :: Double,
-        foreRate :: (Double, Double),
-        histGrain :: Int,
-        histRange :: Range Double,
-        name :: FilePath,
-        dir :: FilePath
-      }
-  deriving (Eq, Show, Generic)
-
-defaultRunConfig :: RunConfig
-defaultRunConfig = RunConfig 12000 10000 [0.95, 0.99] 0.99 (0.95, 0.95) ((0.1 *) <$> [1 .. 9]) 0.99 (0.99, 0.99) 20 (Range (-0.03) 0.03) "default" "other/default"
-
--- generic rep helpers
-selectItems :: [Text] -> Map.Map Text Text -> [(Text,Text)]
-selectItems ks m =
-  Map.toAscList $
-    Map.filterWithKey (\k _ -> k `elem` ks) m
-
--- selectItems ks (randomCharts defaultSvgOptions rs)
-repItemsSelect :: Monad m => [Text] -> [Text] -> SharedRep m [Text]
-repItemsSelect init full =
-  dropdownMultiple (A.takeWhile (`notElem` [','])) id (Just "items") full init
 
 -- * chart helpers
 ls :: [LineStyle]
-ls = fmap (\c -> defaultLineStyle & #color .~ c & #width .~ 0.003) palette
+ls = fmap (\c -> defaultLineStyle & #color .~ c & #width .~ 0.003) (drop 1 palette)
 
 -- simple scan of a time series through a Mealy using a list of rates, with time dimension labelled as 0..
 scanChart :: (Rate -> Mealy a Double) -> [Rate] -> Int -> [a] -> [Chart Double]
@@ -127,134 +99,14 @@ titlesHud t x y =
          defaultTitle y & #place .~ PlaceLeft & #style . #size .~ 0.08
        ]
 
--- uptohere
-onlineRs :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [[Point Double]]
-onlineRs c f xs =
-  zipWith Point [0 ..]
-    . taker (c ^. #n)
-    . drop 1
-    . (`f` xs)
-    <$> (c ^. #rates)
-
-chartOnline :: RunConfig -> (Double -> [Double] -> [Double]) -> [Double] -> [Chart Double]
-chartOnline c f xs = zipWith (\l c -> Chart (LineA l) c)
-  lineStyles (zeroLine : (fmap SpotPoint <$> onlineRs c f xs))
-  where
-    zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
-    (Rect lx ux _ _) = space1 $ mconcat (onlineRs c f xs)
-
 lineStyles :: [LineStyle]
 lineStyles = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) palette (0.001 : repeat 0.003)
 
-hudOptionsOnline :: RunConfig -> Text -> [Day] -> HudOptions
-hudOptionsOnline c title ds =
-  defaultHudOptions
-    & #hudTitles
-    .~ [defaultTitle title & #style . #size .~ 0.08]
-    & #hudLegend
-    .~ Just
-      ( defaultLegendOptions
-          & #ltext . #size .~ 0.3
-          & #lplace .~ PlaceBottom,
-        zipWith
-          (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
-          (drop 1 lineStyles)
-          (c ^. #rates)
-      )
-    & #hudAxes
-    .~ [ defaultAxisOptions
-           & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
-           & #place .~ PlaceLeft,
-         defaultAxisOptions & #atick . #tstyle
-           .~ TickPlaced
-             ( first fromIntegral
-                 <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) <$> taker (c ^. #n) ds)
-             )
-       ]
-
-writeChartOnline :: FilePath -> RunConfig -> Text -> [Day] -> [Chart Double] -> IO ()
-writeChartOnline fp c title ds cs = writeFile fp $ renderHudOptionsChart defaultSvgOptions (hudOptionsOnline c title ds) [] cs
-
-svgName :: RunConfig -> FilePath -> FilePath
-svgName c f = view #dir c <> view #name c <> "/" <> f
-
-writeOnline :: FilePath -> RunConfig -> (Double -> [Double] -> [Double]) -> [(Day, Double)] -> IO ()
-writeOnline fp c f rs =
-  writeChartOnline
-    (svgName c fp)
-    c
-    ""
-    (taker (c ^. #n) $ fst <$> rs)
-    (chartOnline c f (taker (c ^. #n) $ snd <$> rs))
-
-quantileChart ::
-  FilePath ->
-  Text ->
-  [Text] ->
-  [(Day, [Double])] ->
-  IO ()
-quantileChart fp title names xs = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] chart'
-  where
-    hudOptions =
-      defaultHudOptions
-        & #hudTitles .~ [defaultTitle title]
-        & ( #hudLegend
-              .~ Just
-                ( defaultLegendOptions
-                    & #ltext . #size .~ 0.1
-                    & #vgap .~ 0.05
-                    & #innerPad .~ 0.2
-                    & #lplace .~ PlaceRight,
-                  legendFromChart names chart'
-                )
-          )
-        & #hudAxes
-          .~ [ defaultAxisOptions
-                 & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
-                 & #place .~ PlaceLeft,
-               defaultAxisOptions & #atick . #tstyle .~ TickPlaced dateTicks
-             ]
-    qss = transpose $ snd <$> xs
-    dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) . fst <$> xs)
-    chart' =
-      zipWith (\l c -> Chart (LineA l) c) lo (zipWith SP [0 ..] <$> qss)
-    l = length names
-    m = (fromIntegral l - 1) / 2 :: Double
-    cs = (\x -> 1 - abs (fromIntegral x - m) / m) <$> [0 .. (l - 1)]
-    bs = (\x -> blend x (Colour 0.7 0.1 0.3 0.2) (Colour 0.1 0.4 0.8 1)) <$> cs
-    lo = (\c -> defaultLineStyle & #width .~ 0.001 & #color .~ c) <$> bs
-
--- | a chart showing a time series of digitized values (eg this return was a 30th percentile)
-digitChart ::
-  FilePath ->
-  Text ->
-  [Text] ->
-  [(Day, Int)] ->
-  IO ()
-digitChart fp title names xs = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart', chartma, chartstd]
-  where
-    hudOptions =
-      defaultHudOptions
-        & #hudTitles .~ [defaultTitle title]
-        & #hudAxes
-          .~ [ defaultAxisOptions
-                 & #atick . #tstyle .~ TickPlaced (zip ((0.5 +) <$> [0 ..]) names)
-                 & #place .~ PlaceLeft,
-               defaultAxisOptions & #atick . #tstyle .~ TickPlaced dateTicks
-             ]
-    xs' = fromIntegral . snd <$> xs
-    dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) . fst <$> xs)
-    chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ Colour 0 0 1 1 & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
-    -- FIXME: refactor scans out of here
-    chartma = Chart (LineA defaultLineStyle) (zipWith SP [0 ..] (drop 1 $ scan (ma 0.95) xs'))
-    chartstd = Chart (LineA (defaultLineStyle & #color .~ Colour 1 0 0 1)) (zipWith SP [0 ..] (drop 1 $ scan (std 0.95) xs'))
-
 -- | scatter chart
 scatterChart ::
-  FilePath ->
   [Point Double] ->
-  IO ()
-scatterChart fp rels = writeFile fp $ renderHudOptionsChart defaultSvgOptions defaultHudOptions [] [chart']
+  [Chart Double]
+scatterChart rels = [chart']
   where
     chart' =
       Chart
@@ -268,14 +120,14 @@ scatterChart fp rels = writeFile fp $ renderHudOptionsChart defaultSvgOptions de
 
 -- | histogram chart
 histChart ::
+  SvgOptions ->
   Text ->
   Maybe [Text] ->
   Range Double ->
   Int ->
   [Double] ->
-  FilePath ->
-  IO ()
-histChart title names r g xs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart']
+  Text
+histChart svgo title names r g xs = renderHudOptionsChart svgo hudOptions [] [chart']
   where
     hudOptions =
       defaultHudOptions
@@ -296,15 +148,15 @@ histChart title names r g xs fp = writeFile fp $ renderHudOptionsChart defaultSv
 
 -- | a chart drawing a histogram based on quantile information
 quantileHistChart ::
+  SvgOptions ->
   Text ->
   Maybe [Text] ->
   -- | quantiles
   [Double] ->
   -- | quantile values
   [Double] ->
-  FilePath ->
-  IO ()
-quantileHistChart title names qs vs fp = writeFile fp $ renderHudOptionsChart defaultSvgOptions hudOptions [] [chart']
+  Text
+quantileHistChart svgo title names qs vs = renderHudOptionsChart svgo hudOptions [] [chart']
   where
     hudOptions =
       defaultHudOptions
@@ -347,19 +199,69 @@ digitPixelChart pixelStyle plo ts names ps =
         (PixelOptions pixelStyle pts gr)
         plo
 
+quantileChart ::
+  SvgOptions ->
+  Text ->
+  [Text] ->
+  [(Day, [Double])] ->
+  Text
+quantileChart svgo title names xs = renderHudOptionsChart svgo hudOptions [] chart'
+  where
+    hudOptions =
+      defaultHudOptions
+        & #hudTitles .~ [defaultTitle title]
+        & ( #hudLegend
+              .~ Just
+                ( defaultLegendOptions
+                    & #ltext . #size .~ 0.1
+                    & #vgap .~ 0.05
+                    & #innerPad .~ 0.2
+                    & #lplace .~ PlaceRight,
+                  legendFromChart names chart'
+                )
+          )
+        & #hudAxes
+          .~ [ defaultAxisOptions
+                 & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
+                 & #place .~ PlaceLeft,
+               defaultAxisOptions & #atick . #tstyle .~ TickPlaced dateTicks
+             ]
+    qss = Data.List.transpose $ snd <$> xs
+    dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) . fst <$> xs)
+    chart' =
+      zipWith (\l c -> Chart (LineA l) c) lo (zipWith SP [0 ..] <$> qss)
+    l = length names
+    m = (fromIntegral l - 1) / 2 :: Double
+    cs = (\x -> 1 - abs (fromIntegral x - m) / m) <$> [0 .. (l - 1)]
+    bs = (\x -> blend x (Colour 0.7 0.1 0.3 0.2) (Colour 0.1 0.4 0.8 1)) <$> cs
+    lo = (\c -> defaultLineStyle & #width .~ 0.001 & #color .~ c) <$> bs
+
+-- | a chart showing a time series of digitized values (eg this return was a 30th percentile)
+digitChart ::
+  SvgOptions ->
+  Text ->
+  [Text] ->
+  [(Day, Int)] ->
+  Text
+digitChart svgo title names xs =
+  renderHudOptionsChart svgo hudOptions [] [chart', chartma, chartstd]
+  where
+    hudOptions =
+      defaultHudOptions
+        & #hudTitles .~ [defaultTitle title]
+        & #hudAxes
+          .~ [ defaultAxisOptions
+                 & #atick . #tstyle .~ TickPlaced (zip ((0.5 +) <$> [0 ..]) names)
+                 & #place .~ PlaceLeft,
+               defaultAxisOptions & #atick . #tstyle .~ TickPlaced dateTicks
+             ]
+    xs' = fromIntegral . snd <$> xs
+    dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) . fst <$> xs)
+    chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ Colour 0 0 1 1 & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
+    chartma = Chart (LineA defaultLineStyle) (zipWith SP [0 ..] (scan (ma 0.95) xs'))
+    chartstd = Chart (LineA (defaultLineStyle & #color .~ Colour 1 0 0 1)) (zipWith SP [0 ..] (scan (std 0.95) xs'))
+
 -- style helpers
-returnHud :: (Text, Text, Text) -> HudOptions
-returnHud ts =
-  defaultHudOptions
-    & #hudTitles .~ makeTitles ts
-    & #hudAxes
-      .~ [ defaultAxisOptions
-             & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
-             & #place .~ PlaceLeft,
-           defaultAxisOptions
-             & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
-             & #place .~ PlaceBottom
-         ]
 
 qvqHud :: (Text, Text, Text) -> [Text] -> HudOptions
 qvqHud ts labels =
@@ -382,3 +284,14 @@ makeTitles (t, xt, yt) =
       defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06
     ]
 
+-- transfer to wep-rep
+-- | select test keys from a Map
+selectItems :: [Text] -> Map.Map Text a -> [(Text,a)]
+selectItems ks m =
+  Map.toAscList $
+    Map.filterWithKey (\k _ -> k `elem` ks) m
+
+-- | rep of multiple items list
+repItemsSelect :: Monad m => [Text] -> [Text] -> SharedRep m [Text]
+repItemsSelect init full =
+  dropdownMultiple (A.takeWhile (`notElem` ([',']::[Char]))) id (Just "items") full init

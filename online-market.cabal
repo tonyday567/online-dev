@@ -20,12 +20,14 @@ source-repository head
 
 library
   exposed-modules:
+      Data.Mealy,
+      Data.Quantiles,
       Data.Random,
       Data.Yahoo,
-      Run.Stats,
+      Run.History,
       Run.Random,
-      Run.Types,
-      Stats
+      Run.Stats,
+      Run.Types
   hs-source-dirs:
       src
   default-extensions: NoImplicitPrelude UnicodeSyntax NegativeLiterals OverloadedStrings
@@ -61,6 +63,8 @@ library
     , hmatrix >= 0.20
     , web-rep >= 0.5
     , vector >= 0.12
+    , tdigest >= 0.2
+    , vector-algorithms >= 0.8
   default-language: Haskell2010
 
 executable stats-testing
@@ -104,51 +108,6 @@ executable stats-testing
     , profunctors
     , folds
     , optparse-generic
-
-  default-language: Haskell2010
-
-executable history-fits
-  main-is: history-fits.hs
-  hs-source-dirs:
-      app
-  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      online-market
-    , attoparsec
-    , backprop
-    , base >=4.7 && <5
-    , chart-svg >= 0.0.3 && < 0.1
-    , containers
-    , foldl
-    , generic-lens >= 1.2 && < 2.0
-    , lens
-    , mwc-probability
-    , mwc-random
-    , numhask-space >= 0.4 && < 0.5
-    , optparse-generic
-    , online-csv == 0.0.1
-    , numhask-prelude >= 0.5 && < 0.6
-    , primitive
-    , readme-lhs >= 0.6 && < 0.7
-    , scientific
-    , text
-    , time
-    , interpolatedstring-perl6
-    , pretty-simple
-    , numhask-array >= 0.6 && < 0.7
-    , web-rep
-    , lucid
-    , wai
-    , wai-extra
-    , scotty
-    , wai-middleware-static
-    , box
-    , readme-lhs
-    , transformers
-    , profunctors
-    , folds
-    , optparse-generic
-    , web-rep >= 0.5
 
   default-language: Haskell2010
 

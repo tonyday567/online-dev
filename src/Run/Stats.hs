@@ -15,7 +15,12 @@ module Run.Stats
     defaultStatsConfig,
     repStatsConfig,
     testStatsCharts,
-    allTestStatsCharts
+    allTestStatsCharts,
+    Model1(..),
+    zeroModel1,
+    repModel1,
+    model1Charts,
+    model1ChartNames,
   )
 where
 
@@ -27,7 +32,7 @@ import Data.Generics.Labels ()
 import qualified Data.Map.Strict as Map
 import Data.Maybe
 import NumHask.Prelude hiding (fold, (<<*>>), asum)
-import Stats
+import Data.Mealy
 import Data.List ((!!))
 import Web.Page hiding (StateT(..), State, state, get, bool, runState)
 import Run.Random
@@ -145,16 +150,44 @@ repModel1 m1 = bimap hmap Model1 alphaX' <<*>> alphaS' <<*>> betaMa2X' <<*>> bet
       readTextbox (Just "betaStd2S") (view #betaStd2S m1)
     hmap alphaX'' alphaS'' betaMa2X'' betaMa2S'' betaStd2X'' betaStd2S'' = alphaX'' <> alphaS'' <> betaMa2X'' <> betaMa2S'' <> betaStd2X'' <> betaStd2S''
 
+model1ChartNames :: [Text]
+model1ChartNames = ["ex-stats", "ex-model1", "ex-orig", "ex-model1-compare"]
+
 model1Charts :: SvgOptions -> RandomSets -> Model1 -> Double -> Map.Map Text Text
-model1Charts svgo rs m1 r = Map.fromList
+model1Charts svgo rs m1 r =
+  Map.fromList
     [ ("ex-stats",
-        show (fold (depModel1 r m1 >>> ((,) <$> ma r <*> std r)) xs)),
+      show (fold (depModel1 r m1 >>> ((,) <$> ma r <*> std r)) xs)),
       ("ex-model1",
-       sChart svgo
-        (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 "model1 walk" xs),
+       renderHudOptionsChart
+       svgo
+       (titlesHud "model1 random walk: " "" "")
+       []
+       (scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs)),
       ("ex-orig",
-       sChart svgo
-        (\_ -> M id (+) id) [0.01] 0 "orig random walk" xs)
+        renderHudOptionsChart
+        svgo
+        (titlesHud "origin random walk: " "" "")
+        []
+        (scanChart (\_ -> M id (+) id) [0.01] 0 xs)),
+      ("ex-model1-compare",
+       renderHudOptionsChart
+       svgo
+       (titlesHud "model1 random walk: " "" ""  &
+         #hudLegend .~ Just
+         ( defaultLegendOptions
+          & #ltext . #size .~ 0.2
+          & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
+          & #legendFrame .~ Just (RectStyle 0.02 (palette !! 5) white),
+           zipWith
+           (\a l -> (LineA a, l))
+           ls
+           ["model1", "original"]
+         ))
+       []
+       ((scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs) <>
+       (scanChart (\_ -> M id (+) id) [0.01] 0 xs)))
     ]
   where
     xs = (rs ^. #rs) !! 0
+

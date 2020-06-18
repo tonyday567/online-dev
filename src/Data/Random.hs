@@ -17,7 +17,7 @@ import System.Random.MWC.Probability hiding (beta)
 
 -- $setup
 -- >>> :set -XFlexibleContexts
--- >>> import Stats
+-- >>> import Data.Mealy
 -- >>> gen <- create
 -- >>> let n = 3
 -- >>> let eq' a b = all nearZero $ zipWith (-) a b

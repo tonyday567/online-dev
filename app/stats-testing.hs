@@ -58,7 +58,8 @@ import Data.List (scanl1, (!!), head, elemIndex, elem)
 import Run.Types
 import Run.Stats
 import Run.Random
-import Stats
+import Run.History
+import Data.Mealy
 import Options.Generic
 import Data.Attoparsec.Text hiding (scan)
 import qualified Data.Map.Strict as Map
@@ -71,8 +72,10 @@ data Opts =
 instance ParseRecord Opts
 
 data ServeType =
-  ServeStats RandomConfig StatsConfig [Text] SvgOptions|
-  ServeRandoms RandomConfig [Text] SvgOptions
+  ServeStats RandomConfig StatsConfig [Text] SvgOptions |
+  ServeRandoms RandomConfig [Text] SvgOptions |
+  ServeModel1 RandomConfig Model1 Double [Text] SvgOptions |
+  ServeHistory HistoryConfig Model1HistoryConfig SvgOptions
   deriving (Eq, Show, Generic)
 
 repServeType :: (Monad m) => [Text] -> ServeType -> SharedRep m ServeType
@@ -104,6 +107,38 @@ repServeType allItems (ServeRandoms rc items svgo) = bimap hmap ServeRandoms a <
           ("items", b),
           ("svg", c)
         ]
+repServeType allItems (ServeModel1 rc m1 rate items svgo) =
+  bimap hmap ServeModel1 a <<*>> b <<*>> c <<*>> d <<*>> e
+  where
+    a = repRandomConfig rc
+    b = repModel1 m1
+    c = either (const rate) id <$>
+      readTextbox (Just "model1 beta") rate
+    d = repItemsSelect items allItems
+    e = repSvgOptions svgo
+    hmap a b c d e =
+      accordion_
+        "acctick"
+        Nothing
+        [ ("randoms", a),
+          ("model1", b <> c),
+          ("items", d),
+          ("svg", e)
+        ]
+repServeType allItems (ServeHistory hc m1hc svgo) =
+  bimap hmap ServeHistory a <<*>> b <<*>> c
+  where
+    a = repHistoryConfig allItems hc
+    b = repModel1HistoryConfig m1hc
+    c = repSvgOptions svgo
+    hmap a b c =
+      accordion_
+        "acctick"
+        Nothing
+        [ ("history", a),
+          ("model1", b),
+          ("svg", c)
+        ]
 
 main :: IO ()
 main = do
@@ -117,7 +152,9 @@ main = do
       serveRep
         (repChoice 1
          [ ("stats testing", repServeType allTestStatsCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)),
-           ("random testing", repServeType ["walk0", "walks", "correlated walks"] (ServeRandoms defaultRandomConfig ["walk0"] defaultSvgOptions))
+           ("random testing", repServeType ["walk0", "walks", "correlated walks"] (ServeRandoms defaultRandomConfig ["walk0"] defaultSvgOptions)),
+           ("model1", repServeType model1ChartNames (ServeModel1 defaultRandomConfig zeroModel1 0.01 ["ex-model1-compare"] defaultSvgOptions)),
+           ("history", repServeType historyChartNames (ServeHistory defaultHistoryConfig defaultModel1HistoryConfig defaultSvgOptions))
          ])
         (fmap (fmap snd) <$> makeCharts)
 
@@ -128,6 +165,12 @@ makeCharts (ServeStats rcfg ncfg items svgo) = do
 makeCharts (ServeRandoms cfg items svgo) = do
   rs <- makeRandomSets cfg
   pure $ selectItems items (randomCharts svgo rs)
+makeCharts (ServeModel1 cfg m1 r items svgo) = do
+  rs <- makeRandomSets cfg
+  pure $ selectItems items (model1Charts svgo rs m1 r)
+makeCharts (ServeHistory cfg m1hc svgo) = do
+  xs <- makeReturns cfg
+  pure $ selectItems (cfg ^. #hCharts) (historyCharts svgo cfg m1hc xs)
 
 page :: Bool -> Page
 page doDebug =
