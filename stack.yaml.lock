@@ -77,6 +77,17 @@ packages:
     git: https://github.com/tonyday567/box
     commit: d496d333524d5a64a799dd390f4cc98b0d35bb67
 - completed:
+    name: box-csv
+    version: 0.0.1
+    git: https://github.com/tonyday567/box-csv
+    pantry-tree:
+      size: 772
+      sha256: 65ea961e1ac4b44d49f6142385924e964632e22aa8c940969ac4aea08cd44add
+    commit: f8a0ff31595537d314315f6fc6d79f606ae632f2
+  original:
+    git: https://github.com/tonyday567/box-csv
+    commit: f8a0ff31595537d314315f6fc6d79f606ae632f2
+- completed:
     name: web-rep
     version: 0.6.0
     git: https://github.com/tonyday567/web-rep
@@ -106,38 +117,30 @@ packages:
     git: https://github.com/tonyday567/chart-svg
     commit: 25e1e1eae49a588d356d51e5289e339e0975f05b
 - completed:
-    name: box-csv
-    version: 0.0.1
-    git: https://github.com/tonyday567/box-csv
+    hackage: Color-0.1.4@sha256:bd63ebe43000228a0ce087f2aee91b99d3c5d2a0c8506551ce37dad8eb5e44e8,8070
     pantry-tree:
-      size: 772
-      sha256: 65ea961e1ac4b44d49f6142385924e964632e22aa8c940969ac4aea08cd44add
-    commit: f8a0ff31595537d314315f6fc6d79f606ae632f2
+      size: 6542
+      sha256: bf8d32156533b4c7725fbd0834d0cfcf441bf13a09dc713c117b1554f9e8b90a
   original:
-    git: https://github.com/tonyday567/box-csv
-    commit: f8a0ff31595537d314315f6fc6d79f606ae632f2
+    hackage: Color-0.1.4
 - completed:
     name: readme-lhs
     version: 0.7.0
     git: https://github.com/tonyday567/readme-lhs
     pantry-tree:
       size: 1071
-      sha256: af59c33e38ec9ab164b5faa9f590767a071351095e37484100c57f009eb4a4ed
-    commit: 36b895ee81aad473131e07ef40ba964765362b00
+      sha256: 0436d5de30d885083ec3acd6af883d93e7cef3482ac15bd570eef03863c3fa83
+    commit: e2a07bd492073dfed912f214cad61919a70c6fd7
   original:
     git: https://github.com/tonyday567/readme-lhs
-    commit: 36b895ee81aad473131e07ef40ba964765362b00
+    commit: e2a07bd492073dfed912f214cad61919a70c6fd7
 - completed:
-    name: pandoc
-    version: '2.10'
-    git: https://github.com/jgm/pandoc
+    hackage: pandoc-2.10@sha256:954cb8d8c8a49ff52372fa77ca8414052d6a31e1b99c0c9552fbe349e707ce5f,36760
     pantry-tree:
-      size: 92725
-      sha256: 3b44ba17bb327d6fb1497e9327cbd0676437ca2f7f7c27b19eba1113f7d96d17
-    commit: cd3941d34e578f2ebd4dd11484fc26c7afae8a6a
+      size: 89401
+      sha256: bd2837083be670e471abd6a3bc3df31c2695444c9095daba34987ca8557aece9
   original:
-    git: https://github.com/jgm/pandoc
-    commit: cd3941d34e578f2ebd4dd11484fc26c7afae8a6a
+    hackage: pandoc-2.10
 - completed:
     hackage: hslua-1.1.2@sha256:6c231b2af447430d1ed04f065d40bb6882ece93cc7f32f4051dc99deb69beeae,9694
     pantry-tree:
@@ -153,19 +156,36 @@ packages:
   original:
     hackage: jira-wiki-markup-1.3.2
 - completed:
-    hackage: Color-0.1.4@sha256:bd63ebe43000228a0ce087f2aee91b99d3c5d2a0c8506551ce37dad8eb5e44e8,8070
+    subdir: perf
+    name: perf
+    version: 0.7.0
+    git: https://github.com/tonyday567/perf
     pantry-tree:
-      size: 6542
-      sha256: bf8d32156533b4c7725fbd0834d0cfcf441bf13a09dc713c117b1554f9e8b90a
+      size: 422
+      sha256: 81ad1bd21358936486d8d00f1d41cc0032832c06e5ab8554886de698c0573583
+    commit: d68a32144810775fbddf541a0f5109843d625809
   original:
-    hackage: Color-0.1.4
+    subdir: perf
+    git: https://github.com/tonyday567/perf
+    commit: d68a32144810775fbddf541a0f5109843d625809
 - completed:
-    hackage: vinyl-0.12.2@sha256:cefc269fd137841861c13f28a3f20f5973ef24e9f1e6245b77b688f1cbd979de,3717
+    name: online
+    version: 0.6.0
+    git: https://github.com/tonyday567/online
     pantry-tree:
-      size: 1857
-      sha256: 746367fcc06b7b1ffe5f55cc388df2daa3f5eb0f87b06f4e79582e3d16ef33a9
+      size: 741
+      sha256: f4438910f394729dbf9344517ac9da68081e009bf55c3ff09d7a7be717dde7c8
+    commit: 1bf501b738a3250bbe47ce8962d5188b9911fb99
   original:
-    hackage: vinyl-0.12.2
+    git: https://github.com/tonyday567/online
+    commit: 1bf501b738a3250bbe47ce8962d5188b9911fb99
+- completed:
+    hackage: backprop-0.2.6.4@sha256:9c08b0bace225b9a1ac08ce8201bad5ae140bcb501f70704a57db7ee99334618,2805
+    pantry-tree:
+      size: 2123
+      sha256: 43bfca6c02c69f5fc48caad795f573cfe6a1134610bef0234954736e096047fe
+  original:
+    hackage: backprop-0.2.6.4
 - completed:
     hackage: monad-bayes-0.1.1.0@sha256:57d96f530a37a1c8efed0830c7f2bcf86da05d0d53324aebdd5b5aa165d72829,5132
     pantry-tree:
@@ -174,16 +194,12 @@ packages:
   original:
     hackage: monad-bayes-0.1.1.0
 - completed:
-    name: online
-    version: 0.6.0
-    git: https://github.com/tonyday567/online
+    hackage: vinyl-0.12.2@sha256:cefc269fd137841861c13f28a3f20f5973ef24e9f1e6245b77b688f1cbd979de,3717
     pantry-tree:
-      size: 741
-      sha256: 61671498223cb6c39d0c0f813c5035c9b8a2f8c8124974e94674bd9794416309
-    commit: 122fa34f066957de170029cc0997cabc3e67c53b
+      size: 1857
+      sha256: 746367fcc06b7b1ffe5f55cc388df2daa3f5eb0f87b06f4e79582e3d16ef33a9
   original:
-    git: https://github.com/tonyday567/online
-    commit: 122fa34f066957de170029cc0997cabc3e67c53b
+    hackage: vinyl-0.12.2
 snapshots:
 - completed:
     size: 503181
