@@ -1,6 +1,3 @@
 /.stack-work/
-/other/.DS_Store
-/.DS_Store
 /dist-newstyle
-*/.DS_Store
-/stack.yaml.lock
+**/.DS_Store

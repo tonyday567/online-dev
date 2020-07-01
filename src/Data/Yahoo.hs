@@ -21,7 +21,7 @@ where
 
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
 import qualified Data.Attoparsec.Text as A
-import Data.Csv
+import Box.Csv
 import Data.Generics.Labels ()
 import Data.Time
 import NumHask.Prelude
@@ -71,7 +71,7 @@ pYahoo c = do
   pure (YahooData d (realToFrac o) (realToFrac h) (realToFrac l) (realToFrac close) (realToFrac ac) (realToFrac v))
 
 yahooCsvConfig :: CsvConfig
-yahooCsvConfig = defaultCsvConfig & #name .~ "data" & #csep .~ ',' & #dir .~ "./other"
+yahooCsvConfig = defaultCsvConfig & #name .~ "data" & #fsep .~ ',' & #dir .~ "./other"
 
 -- compute the log return from a price series
 -- returns are geometric by nature, and using log(1+daily return) as the base unit of the time series leads to all sorts of benefits, not least of which is you can then add up the variates to get the cumulative return, without having to go through log and exp chicanery.  Ditto for distributional assumptions.

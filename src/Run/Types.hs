@@ -36,7 +36,7 @@ import Data.Generics.Labels ()
 import qualified Data.Map.Strict as Map
 import Data.Maybe
 import qualified Data.Text as Text
-import NumHask.Prelude hiding (fold, (<<*>>), asum)
+import NumHask.Prelude hiding (fold, asum)
 import NumHask.Space
 import Data.Mealy
 import Data.List ((!!))

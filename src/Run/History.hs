@@ -22,7 +22,7 @@ import Data.Generics.Labels ()
 import qualified Data.Text as Text
 -- import Data.Time.Format
 import Data.Yahoo
-import NumHask.Prelude hiding ((<<*>>))
+import NumHask.Prelude
 -- import Readme.Lhs
 -- import Text.InterpolatedString.Perl6
 -- import Text.Pretty.Simple
@@ -116,7 +116,7 @@ data Model1HistoryConfig = Model1HistoryConfig
   } deriving (Eq, Show, Generic)
 
 defaultModel1HistoryConfig :: Model1HistoryConfig
-defaultModel1HistoryConfig = Model1HistoryConfig -10 10 0.999
+defaultModel1HistoryConfig = Model1HistoryConfig (-10) 10 0.999
 
 repModel1HistoryConfig :: (Monad m) => Model1HistoryConfig -> SharedRep m Model1HistoryConfig
 repModel1HistoryConfig cfg = bimap hmap Model1HistoryConfig a <<*>> b <<*>> c

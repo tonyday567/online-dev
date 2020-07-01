@@ -27,9 +27,9 @@ import Data.Generics.Labels ()
 import qualified Data.Map.Strict as Map
 import Data.Maybe
 import qualified Data.Text as Text
-import NumHask.Prelude hiding (fold, (<<*>>), asum)
+import NumHask.Prelude hiding (fold, asum)
 import Data.Mealy
-import Data.Random
+import Data.Simulate
 import Data.List ((!!))
 import Web.Page hiding (StateT(..), State, state, get, bool, runState)
 import System.Random.MWC

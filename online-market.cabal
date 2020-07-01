@@ -1,4 +1,4 @@
-cabal-version: 3.0
+cabal-version:  2.4
 name:           online-market
 version:        0.0.1
 synopsis:       online market daily statistics
@@ -20,152 +20,131 @@ source-repository head
 
 library
   exposed-modules:
-      Data.Mealy,
-      Data.Quantiles,
-      Data.Random,
-      Data.Yahoo,
-      Run.History,
-      Run.Random,
-      Run.Stats,
-      Run.Types
+    Data.Yahoo
+    Run.History
+    Run.Random
+    Run.Stats
+    Run.Types
   hs-source-dirs:
-      src
-  default-extensions: NoImplicitPrelude UnicodeSyntax NegativeLiterals OverloadedStrings
+    src
   build-depends:
-      base >=4.7 && <5
-    , attoparsec
-    , backprop
-    , chart-svg >= 0.0.3 && < 0.1
-    , containers
-    , turtle
-    , foldl
-    , generic-lens >= 1.2 && < 2.0
-    , lens
-    , mwc-probability
-    , mwc-random
-    , numhask-prelude >= 0.5 && < 0.6
-    , numhask-space >= 0.4 && < 0.5
-    , optparse-generic
-    , online-csv == 0.0.1
-    , primitive
-    , readme-lhs >= 0.6 && < 0.7
-    , scientific
-    , text
-    , time
-    , numhask-array >= 0.6 && < 0.7
-    , box
-    , readme-lhs
-    , transformers
-    , profunctors
-    , folds
-    , distributive >= 0.6
-    , adjunctions >= 4.4
-    , hmatrix >= 0.20
-    , web-rep >= 0.5
-    , vector >= 0.12
-    , tdigest >= 0.2
-    , vector-algorithms >= 0.8
-    , backprop
+    adjunctions >= 4.4,
+    attoparsec,
+    backprop,
+    base >=4.7 && <5,
+    box,
+    chart-svg >= 0.1,
+    containers,
+    distributive >= 0.6,
+    foldl,
+    folds,
+    generic-lens >= 2.0,
+    hmatrix >= 0.20,
+    lens,
+    mwc-probability,
+    mwc-random,
+    numhask-array >= 0.7,
+    numhask-prelude >= 0.6,
+    numhask-space >= 0.5,
+    online,
+    box-csv,
+    optparse-generic,
+    primitive,
+    profunctors,
+    readme-lhs >= 0.7,
+    scientific,
+    tdigest >= 0.2,
+    text,
+    time,
+    transformers,
+    turtle,
+    vector >= 0.12,
+    vector-algorithms >= 0.8,
+    web-rep >= 0.6
   default-language: Haskell2010
 
 executable stats-testing
   main-is: stats-testing.hs
   hs-source-dirs:
-      app
+    app
   ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      online-market
-    , attoparsec
-    , backprop
-    , base >=4.7 && <5
-    , chart-svg >= 0.0.3 && < 0.1
-    , containers
-    , foldl
-    , generic-lens >= 1.2 && < 2.0
-    , lens
-    , mwc-probability
-    , mwc-random
-    , numhask-space >= 0.4 && < 0.5
-    , optparse-generic
-    , online-csv == 0.0.1
-    , numhask-prelude >= 0.5 && < 0.6
-    , primitive
-    , readme-lhs >= 0.6 && < 0.7
-    , scientific
-    , text
-    , time
-    , interpolatedstring-perl6
-    , pretty-simple
-    , numhask-array >= 0.6 && < 0.7
-    , web-rep
-    , lucid
-    , wai
-    , wai-extra
-    , scotty
-    , wai-middleware-static
-    , box
-    , readme-lhs
-    , transformers
-    , profunctors
-    , folds
-    , optparse-generic
-
+    attoparsec,
+    backprop,
+    base >=4.7 && <5,
+    box,
+    chart-svg >= 0.1,
+    containers,
+    foldl,
+    folds,
+    generic-lens >= 1.2,
+    interpolatedstring-perl6,
+    lens,
+    lucid,
+    mwc-probability,
+    mwc-random,
+    numhask-array >= 0.7,
+    numhask-prelude >= 0.6,
+    numhask-space >= 0.5,
+    online,
+    box-csv,
+    online-market,
+    optparse-generic,
+    pretty-simple,
+    primitive,
+    profunctors,
+    readme-lhs >= 0.7,
+    scientific,
+    scotty,
+    text,
+    time,
+    transformers,
+    wai,
+    wai-extra,
+    wai-middleware-static,
+    web-rep
   default-language: Haskell2010
 
 executable bayes-testing
   main-is: bayes-testing.hs
   hs-source-dirs:
-      app
+    app
   ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      online-market
-    , attoparsec
-    , backprop
-    , base >=4.7 && <5
-    , chart-svg >= 0.0.3 && < 0.1
-    , containers
-    , foldl
-    , generic-lens >= 1.2 && < 2.0
-    , lens
-    , mwc-probability
-    , mwc-random
-    , numhask-space >= 0.4 && < 0.5
-    , optparse-generic
-    , online-csv == 0.0.1
-    , numhask-prelude >= 0.5 && < 0.6
-    , primitive
-    , readme-lhs >= 0.6 && < 0.7
-    , scientific
-    , text
-    , time
-    , interpolatedstring-perl6
-    , pretty-simple
-    , numhask-array >= 0.6 && < 0.7
-    , web-rep
-    , lucid
-    , wai
-    , wai-extra
-    , scotty
-    , wai-middleware-static
-    , box
-    , readme-lhs
-    , transformers
-    , profunctors
-    , folds
-    , optparse-generic
-    , monad-bayes
-    , log-domain
-  default-language: Haskell2010
-
-test-suite test
-  type: exitcode-stdio-1.0
-  main-is: test.hs
-  hs-source-dirs:
-      test
-  default-extensions: NoImplicitPrelude UnicodeSyntax NegativeLiterals OverloadedStrings
-  build-depends:
-      base >=4.7 && <5,
-      protolude,
-      doctest,
-      online-market
+    attoparsec,
+    backprop,
+    base >=4.7 && <5,
+    box,
+    chart-svg >= 0.1,
+    containers,
+    foldl,
+    folds,
+    generic-lens >= 1.2 && < 3.0,
+    interpolatedstring-perl6,
+    lens,
+    log-domain,
+    lucid,
+    monad-bayes,
+    mwc-probability,
+    mwc-random,
+    numhask-array >= 0.7,
+    numhask-prelude >= 0.6,
+    numhask-space >= 0.5,
+    online,
+    box-csv,
+    online-market,
+    optparse-generic,
+    pretty-simple,
+    primitive,
+    profunctors,
+    readme-lhs >= 0.7,
+    scientific,
+    scotty,
+    text,
+    time,
+    transformers,
+    wai,
+    wai-extra,
+    wai-middleware-static,
+    web-rep
   default-language: Haskell2010

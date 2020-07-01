@@ -31,7 +31,7 @@ import Control.Monad
 import Data.Generics.Labels ()
 import qualified Data.Map.Strict as Map
 import Data.Maybe
-import NumHask.Prelude hiding (fold, (<<*>>), asum)
+import NumHask.Prelude hiding (fold, asum)
 import Data.Mealy
 import Data.List ((!!))
 import Web.Page hiding (StateT(..), State, state, get, bool, runState)

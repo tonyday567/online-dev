@@ -1,0 +1,8 @@
+cradle:
+  stack:
+    - path: "./src/"
+      component: "online-market:lib"
+    - path: "./app/stats-testing.hs"
+      component: "online-market:exe:stats-testing"
+    - path: "./app/bayes-testing.hs"
+      component: "online-market:exe:bayes-testing"

@@ -28,9 +28,9 @@ import qualified Control.Foldl as L
 import qualified Control.Scanl as SL
 import Control.Lens hiding ((:>), Unwrapped, Wrapped, Empty)
 import Data.Generics.Labels ()
-import Data.Random
+import Data.Simulate
 import NumHask.Array.Dynamic hiding (append)
-import NumHask.Prelude hiding ((<<*>>), replace, state, StateT, State, get, runStateT, runState, L1, fold)
+import NumHask.Prelude hiding (replace, state, StateT, State, get, runStateT, runState, L1, fold)
 import Readme.Lhs
 import System.Random.MWC
 import Control.Lens hiding (Wrapped, Unwrapped, Empty)
@@ -156,6 +156,7 @@ main = do
            ("model1", repServeType model1ChartNames (ServeModel1 defaultRandomConfig zeroModel1 0.01 ["ex-model1-compare"] defaultSvgOptions)),
            ("history", repServeType historyChartNames (ServeHistory defaultHistoryConfig defaultModel1HistoryConfig defaultSvgOptions))
          ])
+        True
         (fmap (fmap snd) <$> makeCharts)
 
 makeCharts :: ServeType -> IO [(Text, Text)]
@@ -188,53 +189,3 @@ page doDebug =
              bool mempty (div_ [class__ "row", id_ "debug"] mempty) doDebug))
          )
 
-serveRep :: (Show a) => SharedRep IO a -> (a -> IO [Text]) -> IO ()
-serveRep mRep makeRep = do
-  scotty 3000 $ do
-    middleware $ midShared mRep initRep updateRep
-    servePageWith "/" (defaultPageConfig "prod") (page True)
-      where
-        initRep e r =
-          void $ oneRep r
-            (\(Rep h fa) m -> do
-              append e "input" (toText h)
-              case snd (fa m) of
-                Left err -> append e "debug" err
-                Right cfg -> do
-                  c <- makeRep cfg
-                  replace e "output" (mconcat c))
-        updateRep e (Left err) = do
-          putStrLn (show err :: Text)
-          append e "debug" err
-        updateRep e (Right (_, Left err)) = do
-          putStrLn (show err :: Text)
-          append e "debug" err
-        updateRep e (Right (_, Right c)) = do
-            putStrLn (show c :: Text)
-            t <- makeRep c
-            replace e "output" (mconcat t)
-
-repChoice :: (Monad m) => Int -> [(Text, SharedRep m a)] -> SharedRep m a
-repChoice initt xs =
-  bimap hmap mmap dd
-    <<*>> foldr (\x a -> bimap (:) (:) x <<*>> a) (pure []) cs
-  where
-    ts = fst <$> xs
-    cs = snd <$> xs
-    dd = dropdownSum takeText id Nothing ts t0
-    t0 = ts !! initt
-    hmap dd' cs' =
-      div_
-        ( dd'
-            <> mconcat (zipWith (\c t -> subtype c t0 t) cs' ts)
-        )
-    mmap dd' cs' = maybe (Data.List.head cs') (cs' !!) (elemIndex dd' ts)
-
-subtype :: With a => a -> Text -> Text -> a
-subtype h origt t =
-  with
-    h
-    [ class__ "subtype ",
-      data_ "sumtype" t,
-      style_ ("display:" <> bool "block" "none" (origt /= t))
-    ]
