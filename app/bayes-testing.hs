@@ -20,7 +20,7 @@ import Control.Monad.Bayes.Sequential
 import Control.Monad.Bayes.Traced
 import Control.Monad.Bayes.Traced.Static (Traced)
 import Control.Monad.Bayes.Weighted
-import Data.List
+import qualified Data.List as List
 import qualified Data.Map.Strict as Map
 import Data.Yahoo
 import NumHask.Prelude
@@ -210,7 +210,7 @@ main = do
   uniformSamples <- sampleIOfixed $ replicateM 2000 $ uniform2D (Rect (-10) 10 (-10) 10)
   let desiredProb = samplingDistribution' params0 <$> uniformSamples
   uniform0max <- sampleIOfixed $ replicateM 2000 $ uniform 0 (maximum desiredProb)
-  let points3 = [p | (p, u, l) <- zip3 uniformSamples uniform0max desiredProb, u < l]
+  let points3 = [p | (p, u, l) <- List.zip3 uniformSamples uniform0max desiredProb, u < l]
   writeCharts "other/mcmc3.svg" $ scatterChart "mcmc3" points3 (aspect 1.5)
   modelsamples <- sampleIOfixed $ prior . mh 1000 $ postParams priorParams points3
   writeCharts "other/modelsamples.svg" $ scatterChart "modelsamples" ((\(Params a b _) -> Point a b) <$> modelsamples) (aspect 1.5)

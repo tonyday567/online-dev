@@ -22,7 +22,7 @@ Experimenting with the Stats module
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-import Chart hiding (one, zero, repChoice)
+import Chart hiding (one, zero)
 import Control.Category ((>>>))
 import qualified Control.Foldl as L
 import qualified Control.Scanl as SL
@@ -41,7 +41,7 @@ import Network.Wai (rawPathInfo)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import Options.Generic
-import Web.Page hiding (StateT(..), State, state, get, bool, runState)
+import Web.Page
 import Web.Page.Examples
 import Web.Scotty (scotty, middleware)
 import qualified Box
@@ -172,20 +172,4 @@ makeCharts (ServeModel1 cfg m1 r items svgo) = do
 makeCharts (ServeHistory cfg m1hc svgo) = do
   xs <- makeReturns cfg
   pure $ selectItems (cfg ^. #hCharts) (historyCharts svgo cfg m1hc xs)
-
-page :: Bool -> Page
-page doDebug =
-  mathjaxSvgPage "hasmathjax"
-    <> bootstrapPage
-    <> bridgePage
-    & #htmlHeader .~ title_ "stats.hs testing"
-    & #htmlBody
-      .~ (
-           div_ [class__ "container"]
-            ((div_ [class__ "row no-gutters"]
-             ( div_ [class__ "col-4", id_ "input"] mempty <>
-               div_ [class__ "col-8", id_ "output"] mempty
-             ) <>
-             bool mempty (div_ [class__ "row", id_ "debug"] mempty) doDebug))
-         )
 

@@ -40,7 +40,7 @@ import NumHask.Prelude hiding (fold, asum)
 import NumHask.Space
 import Data.Mealy
 import Data.List ((!!))
-import Web.Page hiding (StateT(..), State, state, get, bool, runState)
+import Web.Page
 import qualified Data.Attoparsec.Text as A
 import Data.List (transpose)
 import Data.Time

@@ -70,34 +70,34 @@ packages:
     version: 0.5.0
     git: https://github.com/tonyday567/box
     pantry-tree:
-      size: 1548
-      sha256: 72c80845dbdb92c0490acef73ced0b2259ad28a9ad25c17e40f14ec6ef02256a
-    commit: d496d333524d5a64a799dd390f4cc98b0d35bb67
+      size: 1399
+      sha256: 4896d68121e4c6bac9de7c0802fc0f9bd14a0bbbfee3a64c9c1df6b81461e1ee
+    commit: 6df3c4542ead135d31d0e1d7d06dcc2052915079
   original:
     git: https://github.com/tonyday567/box
-    commit: d496d333524d5a64a799dd390f4cc98b0d35bb67
+    commit: 6df3c4542ead135d31d0e1d7d06dcc2052915079
 - completed:
     name: box-csv
     version: 0.0.1
     git: https://github.com/tonyday567/box-csv
     pantry-tree:
       size: 772
-      sha256: 65ea961e1ac4b44d49f6142385924e964632e22aa8c940969ac4aea08cd44add
-    commit: f8a0ff31595537d314315f6fc6d79f606ae632f2
+      sha256: c049ecac6800fbdf51fbf01be52d8e923bc72a88f25140ac1d15faad995c8796
+    commit: 7d012cdb90c0172bea46e67945505acc2abcf1da
   original:
     git: https://github.com/tonyday567/box-csv
-    commit: f8a0ff31595537d314315f6fc6d79f606ae632f2
+    commit: 7d012cdb90c0172bea46e67945505acc2abcf1da
 - completed:
     name: web-rep
     version: 0.6.0
     git: https://github.com/tonyday567/web-rep
     pantry-tree:
       size: 2308
-      sha256: 05cbbf82057041ff5291da3d3f731dc63bfd512f377ce0e613075e7c01599b72
-    commit: 340751aff13ce23c13b55960f78c51d52a8ad6f7
+      sha256: d35e91d0569e5dbe760a367e217fa6ed43a2a62ce882adb7389893dd1bd70256
+    commit: 3bd6b82c33a80b4f7c785e042839be9d12fab3de
   original:
     git: https://github.com/tonyday567/web-rep
-    commit: 340751aff13ce23c13b55960f78c51d52a8ad6f7
+    commit: 3bd6b82c33a80b4f7c785e042839be9d12fab3de
 - completed:
     hackage: javascript-bridge-0.2.0@sha256:851bf3abef5b7ee66dc2019d818288d9ea4dbeb8bc90de92eca75d08a5db6eec,3242
     pantry-tree:
@@ -111,11 +111,11 @@ packages:
     git: https://github.com/tonyday567/chart-svg
     pantry-tree:
       size: 2162
-      sha256: 40f77a26f60421a9af4564831e67dbc66d80405ee5eb0c3db69bdabb3b667674
-    commit: 25e1e1eae49a588d356d51e5289e339e0975f05b
+      sha256: f689f91baa4593d9e63fa84b3a5be3cc1effebd2f0037b4c2eb2ebe4840a10e8
+    commit: eb6f1647f6d76950c16d76a7a944dcd4e4a8129a
   original:
     git: https://github.com/tonyday567/chart-svg
-    commit: 25e1e1eae49a588d356d51e5289e339e0975f05b
+    commit: eb6f1647f6d76950c16d76a7a944dcd4e4a8129a
 - completed:
     hackage: Color-0.1.4@sha256:bd63ebe43000228a0ce087f2aee91b99d3c5d2a0c8506551ce37dad8eb5e44e8,8070
     pantry-tree:

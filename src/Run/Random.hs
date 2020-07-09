@@ -31,7 +31,7 @@ import NumHask.Prelude hiding (fold, asum)
 import Data.Mealy
 import Data.Simulate
 import Data.List ((!!))
-import Web.Page hiding (StateT(..), State, state, get, bool, runState)
+import Web.Page
 import System.Random.MWC
 import Data.Vector (Vector)
 import Run.Types

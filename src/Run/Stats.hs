@@ -34,7 +34,7 @@ import Data.Maybe
 import NumHask.Prelude hiding (fold, asum)
 import Data.Mealy
 import Data.List ((!!))
-import Web.Page hiding (StateT(..), State, state, get, bool, runState)
+import Web.Page
 import Run.Random
 import Run.Types
 
