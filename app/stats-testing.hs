@@ -31,7 +31,7 @@ import Data.Generics.Labels ()
 import Data.Simulate
 import NumHask.Array.Dynamic hiding (append)
 import NumHask.Prelude hiding (replace, state, StateT, State, get, runStateT, runState, L1, fold)
-import Readme.Lhs
+import Readme.Lhs hiding (Replace)
 import System.Random.MWC
 import Control.Lens hiding (Wrapped, Unwrapped, Empty)
 import Data.Attoparsec.Text (parseOnly, decimal)
@@ -140,24 +140,16 @@ repServeType allItems (ServeHistory hc m1hc svgo) =
           ("svg", c)
         ]
 
-main :: IO ()
-main = do
-  o :: Opts <- getRecord "Chart production"
-  putStrLn (show o :: Text)
-  case o of
-    MakeCharts -> do
-      cs <- makeCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)
-      traverse_ (\(fp,c) -> writeFile ("other/" <> unpack fp <> ".svg") c) cs
-    ServeCharts ->
-      serveRep
-        (repChoice 1
-         [ ("stats testing", repServeType allTestStatsCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)),
-           ("random testing", repServeType ["walk0", "walks", "correlated walks"] (ServeRandoms defaultRandomConfig ["walk0"] defaultSvgOptions)),
-           ("model1", repServeType model1ChartNames (ServeModel1 defaultRandomConfig zeroModel1 0.01 ["ex-model1-compare"] defaultSvgOptions)),
-           ("history", repServeType historyChartNames (ServeHistory defaultHistoryConfig defaultModel1HistoryConfig defaultSvgOptions))
-         ])
-        True
-        (fmap (fmap snd) <$> makeCharts)
+serveRep' :: SharedRep IO ServeType -> IO ()
+serveRep' srep = sharedServer srep defaultSocketConfig defaultSocketPage defaultInputCode outputCode
+  where
+    outputCode ea = do
+      case ea of
+        Left err -> pure [Append "debug" err]
+        Right st -> do
+          chartTexts <- makeCharts st
+          pure [ Replace "output" (mconcat (snd <$> chartTexts))
+               ]
 
 makeCharts :: ServeType -> IO [(Text, Text)]
 makeCharts (ServeStats rcfg ncfg items svgo) = do
@@ -172,4 +164,21 @@ makeCharts (ServeModel1 cfg m1 r items svgo) = do
 makeCharts (ServeHistory cfg m1hc svgo) = do
   xs <- makeReturns cfg
   pure $ selectItems (cfg ^. #hCharts) (historyCharts svgo cfg m1hc xs)
+
+main :: IO ()
+main = do
+  o :: Opts <- getRecord "Chart production"
+  putStrLn (show o :: Text)
+  case o of
+    MakeCharts -> do
+      cs <- makeCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)
+      traverse_ (\(fp,c) -> writeFile ("other/" <> unpack fp <> ".svg") c) cs
+    ServeCharts ->
+      serveRep'
+        (repChoice 1
+         [ ("stats testing", repServeType allTestStatsCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)),
+           ("random testing", repServeType ["walk0", "walks", "correlated walks"] (ServeRandoms defaultRandomConfig ["walk0"] defaultSvgOptions)),
+           ("model1", repServeType model1ChartNames (ServeModel1 defaultRandomConfig zeroModel1 0.01 ["ex-model1-compare"] defaultSvgOptions)),
+           ("history", repServeType historyChartNames (ServeHistory defaultHistoryConfig defaultModel1HistoryConfig defaultSvgOptions))
+         ])
 

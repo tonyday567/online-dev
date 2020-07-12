@@ -71,58 +71,55 @@ packages:
     git: https://github.com/tonyday567/box
     pantry-tree:
       size: 1399
-      sha256: 4896d68121e4c6bac9de7c0802fc0f9bd14a0bbbfee3a64c9c1df6b81461e1ee
-    commit: 6df3c4542ead135d31d0e1d7d06dcc2052915079
+      sha256: 84eb5336beb867d1b9f828eb6ec23f88a94702d0b361904aa7ce961146f5db05
+    commit: c646bd417574366b0c2d5ff529974ad55e202783
   original:
     git: https://github.com/tonyday567/box
-    commit: 6df3c4542ead135d31d0e1d7d06dcc2052915079
+    commit: c646bd417574366b0c2d5ff529974ad55e202783
 - completed:
-    name: box-csv
+    name: box-socket
     version: 0.0.1
-    git: https://github.com/tonyday567/box-csv
+    git: https://github.com/tonyday567/box-socket
     pantry-tree:
-      size: 772
-      sha256: c049ecac6800fbdf51fbf01be52d8e923bc72a88f25140ac1d15faad995c8796
-    commit: 7d012cdb90c0172bea46e67945505acc2abcf1da
+      size: 679
+      sha256: c56317a92342323c4f671ca321c5d3dee3a2d8dd7726484ed09ae611b3074895
+    commit: c22ff8122f10ca5a709ff1ec73bd80924687271d
   original:
-    git: https://github.com/tonyday567/box-csv
-    commit: 7d012cdb90c0172bea46e67945505acc2abcf1da
+    git: https://github.com/tonyday567/box-socket
+    commit: c22ff8122f10ca5a709ff1ec73bd80924687271d
 - completed:
     name: web-rep
     version: 0.6.0
     git: https://github.com/tonyday567/web-rep
     pantry-tree:
-      size: 2308
-      sha256: d35e91d0569e5dbe760a367e217fa6ed43a2a62ce882adb7389893dd1bd70256
-    commit: 3bd6b82c33a80b4f7c785e042839be9d12fab3de
+      size: 2305
+      sha256: 99e1657e2f0549fd6be34c5aadc3ca3f16d7fdd1a8983602deb9191063d33a94
+    commit: c974e97c1e27d94dffa16ac78cc0d3d72fa745cf
   original:
     git: https://github.com/tonyday567/web-rep
-    commit: 3bd6b82c33a80b4f7c785e042839be9d12fab3de
-- completed:
-    hackage: javascript-bridge-0.2.0@sha256:851bf3abef5b7ee66dc2019d818288d9ea4dbeb8bc90de92eca75d08a5db6eec,3242
-    pantry-tree:
-      size: 753
-      sha256: a516002d05f3b2ba83d020e5c2370d9d462446853bdd9948810d5627e269fa7a
-  original:
-    hackage: javascript-bridge-0.2.0
+    commit: c974e97c1e27d94dffa16ac78cc0d3d72fa745cf
 - completed:
     name: chart-svg
     version: 0.1.0
     git: https://github.com/tonyday567/chart-svg
     pantry-tree:
       size: 2162
-      sha256: f689f91baa4593d9e63fa84b3a5be3cc1effebd2f0037b4c2eb2ebe4840a10e8
-    commit: eb6f1647f6d76950c16d76a7a944dcd4e4a8129a
+      sha256: 5ba2f65e27c1fc7b60a8ededa49c8e4a374a0a6101728e8bafed8da3d0c57c03
+    commit: 5eca1317ecd4239606cce50936474ce47b7f20e0
   original:
     git: https://github.com/tonyday567/chart-svg
-    commit: eb6f1647f6d76950c16d76a7a944dcd4e4a8129a
+    commit: 5eca1317ecd4239606cce50936474ce47b7f20e0
 - completed:
-    hackage: Color-0.1.4@sha256:bd63ebe43000228a0ce087f2aee91b99d3c5d2a0c8506551ce37dad8eb5e44e8,8070
+    name: box-csv
+    version: 0.0.1
+    git: https://github.com/tonyday567/box-csv
     pantry-tree:
-      size: 6542
-      sha256: bf8d32156533b4c7725fbd0834d0cfcf441bf13a09dc713c117b1554f9e8b90a
+      size: 772
+      sha256: 1a0e3cadf87422ce14a3afd110b655cea15575a746cadf26e7031e073f005bdf
+    commit: 6d953d0731851fca6b7f738f865070334ff2cf99
   original:
-    hackage: Color-0.1.4
+    git: https://github.com/tonyday567/box-csv
+    commit: 6d953d0731851fca6b7f738f865070334ff2cf99
 - completed:
     name: readme-lhs
     version: 0.7.0
