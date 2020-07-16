@@ -14,8 +14,7 @@ module Run.Types
   ( defaultQuantiles,
     quantileNames,
     ls,
-    selectItems,
-    repItemsSelect,
+    sp,
     scanHud,
     scanChart,
     foldScanChart,
@@ -40,8 +39,6 @@ import NumHask.Prelude hiding (fold, asum)
 import NumHask.Space
 import Data.Mealy
 import Data.List ((!!))
-import Web.Page
-import qualified Data.Attoparsec.Text as A
 import Data.List (transpose)
 import Data.Time
 
@@ -53,16 +50,18 @@ quantileNames qs = (<> "th") . comma 0 . (100 *) <$> qs
 
 type Rate = Double
 
+sp :: a -> a -> Spot a
+sp = (\x y -> SpotPoint (Point x y))
 
 -- * chart helpers
 ls :: [LineStyle]
-ls = fmap (\c -> defaultLineStyle & #color .~ c & #width .~ 0.003) (drop 1 palette)
+ls = fmap (\c -> defaultLineStyle & #color .~ c & #width .~ 0.003) (drop 1 palette1)
 
 -- simple scan of a time series through a Mealy using a list of rates, with time dimension labelled as 0..
 scanChart :: (Rate -> Mealy a Double) -> [Rate] -> Int -> [a] -> [Chart Double]
 scanChart m rates d xs =
   ( zipWith (\s xs' -> Chart (LineA s) xs') ls $
-    (zipWith SP (fromIntegral <$> [d..]) <$> ((\r -> drop d $ scan (m r) xs) <$> rates))
+    (zipWith sp (fromIntegral <$> [d..]) <$> ((\r -> drop d $ scan (m r) xs) <$> rates))
   )
 
 -- | common line chart hud with rates as a legend
@@ -74,7 +73,7 @@ scanHud t rates =
       ( defaultLegendOptions
           & #ltext . #size .~ 0.2
           & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
-          & #legendFrame .~ Just (RectStyle 0.02 (palette !! 5) white),
+          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
         zipWith
           (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
           ls
@@ -87,7 +86,7 @@ foldScanChart scan' fold' rates xs =
     ( (: []) $
         Chart
           (LineA defaultLineStyle)
-          (zipWith SP rates ((\r -> fold (fold' r) $ scan (scan' r) xs) <$> rates)))
+          (zipWith sp rates ((\r -> fold (fold' r) $ scan (scan' r) xs) <$> rates)))
 
 -- | common pattern of chart title, x-axis title and y-axis title
 titlesHud :: Text -> Text -> Text -> HudOptions
@@ -100,7 +99,7 @@ titlesHud t x y =
        ]
 
 lineStyles :: [LineStyle]
-lineStyles = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) palette (0.001 : repeat 0.003)
+lineStyles = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) palette1 (0.001 : repeat 0.003)
 
 -- | scatter chart
 scatterChart ::
@@ -229,7 +228,7 @@ quantileChart svgo title names xs = renderHudOptionsChart svgo hudOptions [] cha
     qss = Data.List.transpose $ snd <$> xs
     dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) . fst <$> xs)
     chart' =
-      zipWith (\l c -> Chart (LineA l) c) lo (zipWith SP [0 ..] <$> qss)
+      zipWith (\l c -> Chart (LineA l) c) lo (zipWith sp [0 ..] <$> qss)
     l = length names
     m = (fromIntegral l - 1) / 2 :: Double
     cs = (\x -> 1 - abs (fromIntegral x - m) / m) <$> [0 .. (l - 1)]
@@ -257,9 +256,9 @@ digitChart svgo title names xs =
              ]
     xs' = fromIntegral . snd <$> xs
     dateTicks = first fromIntegral <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) . fst <$> xs)
-    chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ Colour 0 0 1 1 & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith SP [0 ..] xs')
-    chartma = Chart (LineA defaultLineStyle) (zipWith SP [0 ..] (scan (ma 0.95) xs'))
-    chartstd = Chart (LineA (defaultLineStyle & #color .~ Colour 1 0 0 1)) (zipWith SP [0 ..] (scan (std 0.95) xs'))
+    chart' = Chart (GlyphA (defaultGlyphStyle & #color .~ Colour 0 0 1 1 & #shape .~ CircleGlyph & #size .~ 0.01)) (zipWith sp [0 ..] xs')
+    chartma = Chart (LineA defaultLineStyle) (zipWith sp [0 ..] (scan (ma 0.95) xs'))
+    chartstd = Chart (LineA (defaultLineStyle & #color .~ Colour 1 0 0 1)) (zipWith sp [0 ..] (scan (std 0.95) xs'))
 
 -- style helpers
 
@@ -284,14 +283,3 @@ makeTitles (t, xt, yt) =
       defaultTitle yt & #place .~ PlaceLeft & #style . #size .~ 0.06
     ]
 
--- transfer to wep-rep
--- | select test keys from a Map
-selectItems :: [Text] -> Map.Map Text a -> [(Text,a)]
-selectItems ks m =
-  Map.toAscList $
-    Map.filterWithKey (\k _ -> k `elem` ks) m
-
--- | rep of multiple items list
-repItemsSelect :: Monad m => [Text] -> [Text] -> SharedRep m [Text]
-repItemsSelect init full =
-  dropdownMultiple (A.takeWhile (`notElem` ([',']::[Char]))) id (Just "items") full init

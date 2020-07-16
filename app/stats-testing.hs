@@ -1,13 +1,10 @@
-{-
-Experimenting with the Stats module
--}
-
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -15,67 +12,67 @@ Experimenting with the Stats module
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_GHC -Wno-type-defaults #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
 
-import Chart hiding (one, zero)
-import Control.Category ((>>>))
+{-
+Experimenting with the Stats module
+-}
+
+import qualified Box
+import Chart
 import qualified Control.Foldl as L
+import Control.Lens hiding ((:>), Empty, Unwrapped, Wrapped)
+import Control.Lens hiding (Empty, Unwrapped, Wrapped)
+import qualified Control.Monad.Trans.State.Lazy as StateL
+import Control.Monad.Trans.State.Strict
 import qualified Control.Scanl as SL
-import Control.Lens hiding ((:>), Unwrapped, Wrapped, Empty)
-import Data.Generics.Labels ()
-import Data.Simulate
-import NumHask.Array.Dynamic hiding (append)
-import NumHask.Prelude hiding (replace, state, StateT, State, get, runStateT, runState, L1, fold)
-import Readme.Lhs hiding (Replace)
-import System.Random.MWC
-import Control.Lens hiding (Wrapped, Unwrapped, Empty)
-import Data.Attoparsec.Text (parseOnly, decimal)
+import Data.Attoparsec.Text (decimal, parseOnly)
 import qualified Data.Attoparsec.Text as A
+import Data.Attoparsec.Text hiding (scan)
+import Data.Fold hiding (M)
+import Data.Foldable (foldl1)
+import Data.Generics.Labels ()
+import Data.List ((!!), elem, elemIndex, head, scanl1)
+import qualified Data.HashMap.Strict as HashMap
+import Data.Mealy
+import Data.Profunctor.Strong
+import Data.Sequence (Seq (..), ViewR (..))
+import Data.Simulate
+import qualified Data.Text as Text
 import Lucid
 import Network.Wai (rawPathInfo)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
-import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
+import Network.Wai.Middleware.Static ((>->), addBase, noDots, staticPolicy)
+import NumHask.Array.Dynamic hiding (append)
+import NumHask.Prelude hiding (L1, State, StateT, fold, get, replace, runState, runStateT, state)
 import Options.Generic
-import Web.Page
-import Web.Page.Examples
-import Web.Scotty (scotty, middleware)
-import qualified Box
-import qualified Data.Text as Text
-import Control.Monad
-import Data.Maybe
-import Control.Monad.Trans.State.Strict
-import qualified Control.Monad.Trans.State.Lazy as StateL
-import Data.Sequence (ViewR(..), Seq(..))
-import Data.Profunctor.Strong
-import Data.Fold hiding (M)
-import Data.Foldable (foldl1)
-import Data.List (scanl1, (!!), head, elemIndex, elem)
-import Run.Types
-import Run.Stats
-import Run.Random
+import Options.Generic
+import Readme.Lhs hiding (Replace)
 import Run.History
-import Data.Mealy
-import Options.Generic
-import Data.Attoparsec.Text hiding (scan)
-import qualified Data.Map.Strict as Map
+import Run.Random
+import Run.Stats
+import Run.Types
+import System.Random.MWC
+import Web.Rep
+import Web.Rep.Examples
+import Web.Scotty (middleware, scotty)
 
-data Opts =
-  MakeCharts |
-  ServeCharts
+data Opts
+  = MakeCharts
+  | ServeCharts
   deriving (Generic, Show)
 
 instance ParseRecord Opts
 
-data ServeType =
-  ServeStats RandomConfig StatsConfig [Text] SvgOptions |
-  ServeRandoms RandomConfig [Text] SvgOptions |
-  ServeModel1 RandomConfig Model1 Double [Text] SvgOptions |
-  ServeHistory HistoryConfig Model1HistoryConfig SvgOptions
+data ServeType
+  = ServeStats RandomConfig StatsConfig [Text] SvgOptions
+  | ServeRandoms RandomConfig [Text] SvgOptions
+  | ServeModel1 RandomConfig Model1 Double [Text] SvgOptions
+  | ServeHistory HistoryConfig Model1HistoryConfig SvgOptions
   deriving (Eq, Show, Generic)
 
 repServeType :: (Monad m) => [Text] -> ServeType -> SharedRep m ServeType
@@ -112,8 +109,9 @@ repServeType allItems (ServeModel1 rc m1 rate items svgo) =
   where
     a = repRandomConfig rc
     b = repModel1 m1
-    c = either (const rate) id <$>
-      readTextbox (Just "model1 beta") rate
+    c =
+      either (const rate) id
+        <$> readTextbox (Just "model1 beta") rate
     d = repItemsSelect items allItems
     e = repSvgOptions svgo
     hmap a b c d e =
@@ -148,8 +146,9 @@ serveRep' srep = sharedServer srep defaultSocketConfig defaultSocketPage default
         Left err -> pure [Append "debug" err]
         Right st -> do
           chartTexts <- makeCharts st
-          pure [ Replace "output" (mconcat (snd <$> chartTexts))
-               ]
+          pure
+            [ Replace "output" (mconcat (snd <$> chartTexts))
+            ]
 
 makeCharts :: ServeType -> IO [(Text, Text)]
 makeCharts (ServeStats rcfg ncfg items svgo) = do
@@ -172,13 +171,14 @@ main = do
   case o of
     MakeCharts -> do
       cs <- makeCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)
-      traverse_ (\(fp,c) -> writeFile ("other/" <> unpack fp <> ".svg") c) cs
+      traverse_ (\(fp, c) -> writeFile ("other/" <> unpack fp <> ".svg") c) cs
     ServeCharts ->
       serveRep'
-        (repChoice 1
-         [ ("stats testing", repServeType allTestStatsCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)),
-           ("random testing", repServeType ["walk0", "walks", "correlated walks"] (ServeRandoms defaultRandomConfig ["walk0"] defaultSvgOptions)),
-           ("model1", repServeType model1ChartNames (ServeModel1 defaultRandomConfig zeroModel1 0.01 ["ex-model1-compare"] defaultSvgOptions)),
-           ("history", repServeType historyChartNames (ServeHistory defaultHistoryConfig defaultModel1HistoryConfig defaultSvgOptions))
-         ])
-
+        ( repChoice
+            1
+            [ ("stats testing", repServeType allTestStatsCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)),
+              ("random testing", repServeType ["walk0", "walks", "correlated walks"] (ServeRandoms defaultRandomConfig ["walk0"] defaultSvgOptions)),
+              ("model1", repServeType model1ChartNames (ServeModel1 defaultRandomConfig zeroModel1 0.01 ["ex-model1-compare"] defaultSvgOptions)),
+              ("history", repServeType historyChartNames (ServeHistory defaultHistoryConfig defaultModel1HistoryConfig defaultSvgOptions))
+            ]
+        )

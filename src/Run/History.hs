@@ -20,14 +20,10 @@ import Control.Category ((>>>), (<<<))
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
 import Data.Generics.Labels ()
 import qualified Data.Text as Text
--- import Data.Time.Format
 import Data.Yahoo
 import NumHask.Prelude
--- import Readme.Lhs
--- import Text.InterpolatedString.Perl6
--- import Text.Pretty.Simple
-import qualified Data.Map.Strict as Map
-import Web.Page
+import qualified Data.HashMap.Strict as HashMap
+import Web.Rep
 import Run.Types
 import Data.Time
 import Data.Mealy
@@ -132,8 +128,8 @@ repModel1HistoryConfig cfg = bimap hmap Model1HistoryConfig a <<*>> b <<*>> c
 historyChartNames :: [Text]
 historyChartNames = ["ma", "std", "betaMa2X", "betaStd2X", "model1JustBeta", "quantiles", "digitise"]
 
-historyCharts :: SvgOptions -> HistoryConfig -> Model1HistoryConfig -> [(Day,Double)] -> Map.Map Text Text
-historyCharts svgo hc m1hc xs = Map.fromList
+historyCharts :: SvgOptions -> HistoryConfig -> Model1HistoryConfig -> [(Day,Double)] -> HashMap.HashMap Text Text
+historyCharts svgo hc m1hc xs = HashMap.fromList
   [ ("ma",
       renderHudOptionsChart svgo
       (tsHud (hc ^. #hN) (hc ^. #hRates) "ma" ds)
@@ -195,7 +191,7 @@ tsZeroChart n rs rscan xs = zipWith (\l c -> Chart (LineA l) c)
     (Rect lx ux _ _) = space1 $ mconcat (tsrs n rs rscan xs)
 
 tsZeroLineStyle :: [LineStyle]
-tsZeroLineStyle = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) palette (0.001 : repeat 0.005)
+tsZeroLineStyle = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) palette1 (0.001 : repeat 0.005)
 
 tsHud :: Int -> [Double] -> Text -> [Day] -> HudOptions
 tsHud n rs title ds =
@@ -207,7 +203,7 @@ tsHud n rs title ds =
       ( defaultLegendOptions
           & #ltext . #size .~ 0.3
           & #lplace .~ PlaceBottom
-          & #legendFrame .~ Just (RectStyle 0.02 (palette !! 5) white),
+          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
         zipWith
           (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
           (drop 1 tsZeroLineStyle)
@@ -256,7 +252,7 @@ tsModel1BetaHud n title ds =
       ( defaultLegendOptions
           & #ltext . #size .~ 0.3
           & #lplace .~ PlaceBottom
-          & #legendFrame .~ Just (RectStyle 0.02 (palette !! 5) white),
+          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
         zipWith
           (\a r -> (LineA a, r))
           (drop 1 tsZeroLineStyle)

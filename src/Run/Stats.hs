@@ -29,12 +29,12 @@ import Control.Category ((>>>))
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
 import Control.Monad
 import Data.Generics.Labels ()
-import qualified Data.Map.Strict as Map
+import qualified Data.HashMap.Strict as HashMap
 import Data.Maybe
 import NumHask.Prelude hiding (fold, asum)
 import Data.Mealy
 import Data.List ((!!))
-import Web.Page
+import Web.Rep
 import Run.Random
 import Run.Types
 
@@ -80,8 +80,8 @@ repStatsConfig cfg = bimap hmap StatsConfig rates' <<*>> beta' <<*>> betas' <<*>
       readTextbox (Just "rate of beta calc for madep") (view #stMaDepBetaRate cfg)
     hmap rates'' beta'' betas'' stdmadecay'' madepbeta'' madeprate'' madepbetarate'' = rates'' <> beta'' <> betas'' <> stdmadecay'' <> madepbeta'' <> madeprate'' <> madepbetarate''
 
-testStatsCharts :: SvgOptions -> RandomSets -> StatsConfig -> Map.Map Text Text
-testStatsCharts svgo rs st = Map.fromList
+testStatsCharts :: SvgOptions -> RandomSets -> StatsConfig -> HashMap.HashMap Text Text
+testStatsCharts svgo rs st = HashMap.fromList
     [ ("ex-madep",
        renderHudOptionsChart
         svgo
@@ -118,7 +118,7 @@ allTestStatsCharts = ["ex-ma", "ex-std", "ex-stdma", "ex-madep"]
 
 betaCheckChart :: Double -> Double -> Double -> Int -> [Double] -> [Chart Double]
 betaCheckChart b r rb d xs =
-  [ Chart (LineA defaultLineStyle) $ drop d $ zipWith SP [0..] (scan (beta1 (ma (1 - rb))) $ fromList $ drop 100 $ scan (betaCheck b r) xs)
+  [ Chart (LineA defaultLineStyle) $ drop d $ zipWith sp [0..] (scan (beta1 (ma (1 - rb))) $ fromList $ drop 100 $ scan (betaCheck b r) xs)
   ]
 
 betaCheck :: Double -> Double -> Mealy Double (Double, Double)
@@ -153,9 +153,9 @@ repModel1 m1 = bimap hmap Model1 alphaX' <<*>> alphaS' <<*>> betaMa2X' <<*>> bet
 model1ChartNames :: [Text]
 model1ChartNames = ["ex-stats", "ex-model1", "ex-orig", "ex-model1-compare"]
 
-model1Charts :: SvgOptions -> RandomSets -> Model1 -> Double -> Map.Map Text Text
+model1Charts :: SvgOptions -> RandomSets -> Model1 -> Double -> HashMap.HashMap Text Text
 model1Charts svgo rs m1 r =
-  Map.fromList
+  HashMap.fromList
     [ ("ex-stats",
       show (fold (depModel1 r m1 >>> ((,) <$> ma r <*> std r)) xs)),
       ("ex-model1",
@@ -178,7 +178,7 @@ model1Charts svgo rs m1 r =
          ( defaultLegendOptions
           & #ltext . #size .~ 0.2
           & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
-          & #legendFrame .~ Just (RectStyle 0.02 (palette !! 5) white),
+          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
            zipWith
            (\a l -> (LineA a, l))
            ls

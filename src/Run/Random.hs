@@ -24,14 +24,14 @@ import Chart
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
 import Control.Monad
 import Data.Generics.Labels ()
-import qualified Data.Map.Strict as Map
+import qualified Data.HashMap.Strict as HashMap
 import Data.Maybe
 import qualified Data.Text as Text
 import NumHask.Prelude hiding (fold, asum)
 import Data.Mealy
 import Data.Simulate
 import Data.List ((!!))
-import Web.Page
+import Web.Rep
 import System.Random.MWC
 import Data.Vector (Vector)
 import Run.Types
@@ -74,8 +74,8 @@ repRandomConfig cfg = bimap hmap RandomConfig seed' <<*>> n' <<*>> nsets' <<*>> 
       readTextbox (Just "n") (view #corr cfg)
     hmap a b c d = a <> b <> c <> d
 
-randomCharts :: SvgOptions -> RandomSets -> Map.Map Text Text
-randomCharts svgo rs = Map.fromList
+randomCharts :: SvgOptions -> RandomSets -> HashMap.HashMap Text Text
+randomCharts svgo rs = HashMap.fromList
   [ ("walk0",
      renderHudOptionsChart
       svgo
@@ -91,14 +91,14 @@ randomCharts svgo rs = Map.fromList
       ( defaultLegendOptions
           & #ltext . #size .~ 0.2
           & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
-          & #legendFrame .~ Just (RectStyle 0.02 (palette !! 5) white),
+          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
         zipWith
           (\a r -> (LineA a, ("rw: " <>) . Text.pack . show $ r))
           ls
           (take (length $ rs ^. #rs) [(0::Int)..])
       ))
       []
-      (zipWith (\l xs -> Chart (LineA l) (xs)) ls ((zipWith SP [0..] . scan asum) <$> ((rs ^. #rs))))
+      (zipWith (\l xs -> Chart (LineA l) (xs)) ls ((zipWith sp [0..] . scan asum) <$> ((rs ^. #rs))))
       ),
     ("correlated walks",
      renderHudOptionsChart
@@ -108,14 +108,14 @@ randomCharts svgo rs = Map.fromList
       ( defaultLegendOptions
           & #ltext . #size .~ 0.2
           & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
-          & #legendFrame .~ Just (RectStyle 0.02 (palette !! 5) white),
+          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
         zipWith
           (\a r -> (LineA a, ("rw: " <>) . Text.pack . show $ r))
           ls
           (take (length $ rs ^. #rs) [(0::Int)..])
       ))
       []
-      (zipWith (\l xs -> Chart (LineA l) (xs)) ls ((zipWith SP [0..] . scan asum) <$> transpose (((\(x,y) -> [x,y])) <$> (rs ^. #rsp))))
+      (zipWith (\l xs -> Chart (LineA l) (xs)) ls ((zipWith sp [0..] . scan asum) <$> transpose (((\(x,y) -> [x,y])) <$> (rs ^. #rsp))))
       )
     ]
 
