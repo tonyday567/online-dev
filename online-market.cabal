@@ -20,7 +20,6 @@ source-repository head
 
 library
   exposed-modules:
-    Chart.Various
     Data.Yahoo
     Run.History
     Run.Random

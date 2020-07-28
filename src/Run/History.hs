@@ -70,7 +70,7 @@ defaultQuantiles :: [Double]
 defaultQuantiles = ((0.1 *) <$> [1 .. 9])
 
 quantileNames :: [Double] -> [Text]
-quantileNames qs = (<> "th") . comma 0 . (100 *) <$> qs
+quantileNames qs = (<> "th") . comma (Just 0) . (100 *) <$> qs
 
 nAll :: HistoryConfig -> Int
 nAll c = ((c ^. #hN) + (c ^. #hRunup))
@@ -166,7 +166,7 @@ historyCharts hc m1hc xs =
     ),
     ("quantile histogram", quantileHistChart "quantile histogram" Nothing (hc ^. #hQuantiles) qs),
     ("digitise",
-      digitChart "digitized return" (quantileNames (hc ^. #hQuantiles)) utcs digits &
+      digitChart "digitized return" utcs digits &
       second (<> stdLineChart 0.01 palette1 (scan ((\x y -> [x,y]) <$> ma 0.95 <*> std 0.95) digits))
     ),
     ("digit pixel", (mempty, digitPixelChart defaultPixelStyle (defaultPixelLegendOptions "legend!") ("digit pixel", "ma", "std") (quantileNames $ hc ^. #hQuantiles) d1)),
@@ -251,10 +251,10 @@ stats cfg rs =
     ["End Date", maybe "" ftime (head (reverse ds))],
     ["n", show n],
     ["nAll", show (nAll cfg)],
-    ["daily average return", formatN (FormatPercent 3) (fold (ma 1) (taker n xs))],
-    ["average return pa", formatN (FormatPercent 3) (250 * fold (ma 1) (taker n xs))],
-    ["daily average sd return", formatN (FormatPercent 3) (fold (std 1) (taker n xs))],
-    ["average sd return pa", formatN (FormatPercent 3) (sqrt 250.0 * fold (std 1) (taker n xs))]
+    ["daily average return", formatN (FormatPercent (Just 3)) (fold (ma 1) (taker n xs))],
+    ["average return pa", formatN (FormatPercent (Just 3)) (250 * fold (ma 1) (taker n xs))],
+    ["daily average sd return", formatN (FormatPercent (Just 3)) (fold (std 1) (taker n xs))],
+    ["average sd return pa", formatN (FormatPercent (Just 3)) (sqrt 250.0 * fold (std 1) (taker n xs))]
   ]
   where
     n = cfg ^. #hN

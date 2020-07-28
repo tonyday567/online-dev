@@ -178,6 +178,9 @@ makeReturnsCharts cfg svgo items cs = do
   pure $ selectItems items
     (HashMap.map (defaultRender svgo) (cs rs))
 
+defaultRender :: SvgOptions -> (HudOptions, [Chart Double]) -> Text
+defaultRender svgo (h,c) = renderHudOptionsChart svgo h [] c
+
 main :: IO ()
 main = do
   o :: Opts <- getRecord "Chart production"
