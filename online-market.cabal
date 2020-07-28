@@ -20,11 +20,11 @@ source-repository head
 
 library
   exposed-modules:
+    Chart.Various
     Data.Yahoo
     Run.History
     Run.Random
     Run.Stats
-    Run.Types
   hs-source-dirs:
     src
   build-depends:
@@ -34,6 +34,7 @@ library
     base >=4.7 && <5,
     box >= 0.5 && < 0.6,
     chart-svg >= 0.1 && < 0.2,
+    chart-svg-various >= 0.0.1 && < 0.1,
     containers,
     distributive >= 0.6,
     foldl,
@@ -51,7 +52,6 @@ library
     optparse-generic,
     primitive,
     profunctors,
-    readme-lhs >= 0.7 && < 0.8,
     scientific,
     tdigest >= 0.2,
     text,
@@ -75,6 +75,7 @@ executable stats-testing
     base >=4.7 && <5,
     box >= 0.5 && < 0.6,
     chart-svg >= 0.1 && < 0.2,
+    chart-svg-various >= 0.0.1 && < 0.1,
     containers,
     foldl,
     folds,
@@ -94,7 +95,6 @@ executable stats-testing
     pretty-simple,
     primitive,
     profunctors,
-    readme-lhs >= 0.7 && < 0.8,
     scientific,
     scotty,
     text,
@@ -107,47 +107,3 @@ executable stats-testing
     web-rep >= 0.6 && < 0.7
   default-language: Haskell2010
 
-executable bayes-testing
-  main-is: bayes-testing.hs
-  hs-source-dirs:
-    app
-  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-    attoparsec,
-    backprop >= 0.2.6.4 && < 0.2.7,
-    base >=4.7 && <5,
-    box >= 0.5 && < 0.6,
-    chart-svg >= 0.1 && < 0.2,
-    containers,
-    foldl,
-    folds,
-    generic-lens >= 1.2 && < 3.0,
-    interpolatedstring-perl6,
-    lens,
-    log-domain,
-    lucid,
-    monad-bayes,
-    mwc-probability,
-    mwc-random,
-    numhask-array >= 0.7 && < 0.8,
-    numhask >= 0.6 && < 0.7,
-    numhask-space >= 0.5 && < 0.6,
-    online >= 0.6 && < 0.7,
-    box-csv >= 0.0.1 && < 0.1,
-    online-market,
-    optparse-generic,
-    pretty-simple,
-    primitive,
-    profunctors,
-    readme-lhs >= 0.7 && < 0.8,
-    scientific,
-    scotty,
-    text,
-    time,
-    transformers,
-    unordered-containers,
-    wai,
-    wai-extra,
-    wai-middleware-static,
-    web-rep >= 0.6 && < 0.7
-  default-language: Haskell2010

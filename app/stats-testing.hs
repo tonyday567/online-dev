@@ -27,6 +27,7 @@ import Chart
 import qualified Control.Foldl as L
 import Control.Lens hiding ((:>), Empty, Unwrapped, Wrapped)
 import Control.Lens hiding (Empty, Unwrapped, Wrapped)
+import Control.Category
 import qualified Control.Monad.Trans.State.Lazy as StateL
 import Control.Monad.Trans.State.Strict
 import qualified Control.Scanl as SL
@@ -51,15 +52,14 @@ import NumHask.Array.Dynamic hiding (append)
 import NumHask.Prelude hiding (L1, State, StateT, fold, get, replace, runState, runStateT, state)
 import Options.Generic
 import Options.Generic
-import Readme.Lhs hiding (Replace)
 import Run.History
 import Run.Random
 import Run.Stats
-import Run.Types
 import System.Random.MWC
 import Web.Rep
 import Web.Rep.Examples
 import Web.Scotty (middleware, scotty)
+import Data.Time
 
 data Opts
   = MakeCharts
@@ -139,7 +139,8 @@ repServeType allItems (ServeHistory hc m1hc svgo) =
         ]
 
 serveRep' :: SharedRep IO ServeType -> IO ()
-serveRep' srep = sharedServer srep defaultSocketConfig defaultSocketPage defaultInputCode outputCode
+serveRep' srep = sharedServer srep defaultSocketConfig defaultSocketPage
+  defaultInputCode outputCode
   where
     outputCode ea = do
       case ea of
@@ -151,18 +152,31 @@ serveRep' srep = sharedServer srep defaultSocketConfig defaultSocketPage default
             ]
 
 makeCharts :: ServeType -> IO [(Text, Text)]
-makeCharts (ServeStats rcfg ncfg items svgo) = do
-  rs <- makeRandomSets rcfg
-  pure $ selectItems items (testStatsCharts svgo rs ncfg)
+makeCharts (ServeStats rcfg ncfg items svgo) =
+  makeRandomCharts rcfg svgo items (testStatsCharts ncfg)
 makeCharts (ServeRandoms cfg items svgo) = do
-  rs <- makeRandomSets cfg
-  pure $ selectItems items (randomCharts svgo rs)
-makeCharts (ServeModel1 cfg m1 r items svgo) = do
-  rs <- makeRandomSets cfg
-  pure $ selectItems items (model1Charts svgo rs m1 r)
-makeCharts (ServeHistory cfg m1hc svgo) = do
-  xs <- makeReturns cfg
-  pure $ selectItems (cfg ^. #hCharts) (historyCharts svgo cfg m1hc xs)
+  makeRandomCharts cfg svgo items randomCharts
+makeCharts (ServeModel1 cfg m1 _ items svgo) =
+  makeRandomCharts cfg svgo items
+    (model1Charts m1)
+makeCharts (ServeHistory cfg m1hc svgo) =
+  makeReturnsCharts cfg svgo (cfg ^. #hCharts) (historyCharts cfg m1hc)
+
+-- make charts that rely on a RandomSet
+makeRandomCharts :: RandomConfig -> SvgOptions -> [Text] ->
+  (RandomSets -> HashMap.HashMap Text (HudOptions, [Chart Double])) -> IO [(Text, Text)]
+makeRandomCharts rcfg svgo items cs = do
+  rs <- makeRandomSets rcfg
+  pure $ selectItems items
+    (HashMap.map (defaultRender svgo) (cs rs))
+
+-- make charts that rely on history
+makeReturnsCharts :: HistoryConfig -> SvgOptions -> [Text] ->
+  ([(UTCTime, Double)] -> HashMap.HashMap Text (HudOptions, [Chart Double])) -> IO [(Text, Text)]
+makeReturnsCharts cfg svgo items cs = do
+  rs <- makeReturns cfg
+  pure $ selectItems items
+    (HashMap.map (defaultRender svgo) (cs rs))
 
 main :: IO ()
 main = do
@@ -170,15 +184,24 @@ main = do
   putStrLn (show o :: Text)
   case o of
     MakeCharts -> do
-      cs <- makeCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)
+      cs <- makeCharts (ServeStats defaultRandomConfig defaultStatsConfig testStatsChartsNames
+                       defaultSvgOptions)
       traverse_ (\(fp, c) -> writeFile ("other/" <> unpack fp <> ".svg") c) cs
     ServeCharts ->
       serveRep'
         ( repChoice
             1
-            [ ("stats testing", repServeType allTestStatsCharts (ServeStats defaultRandomConfig defaultStatsConfig allTestStatsCharts defaultSvgOptions)),
-              ("random testing", repServeType ["walk0", "walks", "correlated walks"] (ServeRandoms defaultRandomConfig ["walk0"] defaultSvgOptions)),
-              ("model1", repServeType model1ChartNames (ServeModel1 defaultRandomConfig zeroModel1 0.01 ["ex-model1-compare"] defaultSvgOptions)),
-              ("history", repServeType historyChartNames (ServeHistory defaultHistoryConfig defaultModel1HistoryConfig defaultSvgOptions))
+            [ ("stats testing", repServeType testStatsChartsNames
+                (ServeStats defaultRandomConfig defaultStatsConfig testStatsChartsNames
+                 defaultSvgOptions)),
+              ("random testing", repServeType
+                randomChartsNames
+                (ServeRandoms defaultRandomConfig ["walk0"] defaultSvgOptions)),
+              ("model1", repServeType model1ChartsNames
+                (ServeModel1 defaultRandomConfig zeroModel1 0.01
+                 ["ex-model1-compare"] defaultSvgOptions)),
+              ("history", repServeType historyChartNames
+                (ServeHistory defaultHistoryConfig defaultModel1HistoryConfig
+                 defaultSvgOptions))
             ]
         )

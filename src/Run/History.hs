@@ -13,57 +13,44 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-type-defaults #-}
 
-module Run.History where
+module Run.History
+  ( HistoryConfig (..),
+    defaultHistoryConfig,
+    defaultQuantiles,
+    quantileNames,
+    nAll,
+    makeReturns,
+    repHistoryConfig,
+    Model1HistoryConfig (..),
+    defaultModel1HistoryConfig,
+    repModel1HistoryConfig,
+    historyChartNames,
+    historyCharts,
+
+    -- * analysis
+    model1fit,
+    model1BetaFit,
+    stats,
+    qscan,
+    dscan,
+  ) where
 
 import Chart
+import Chart.Various
 import Control.Category ((>>>), (<<<))
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
 import Data.Generics.Labels ()
-import qualified Data.Text as Text
 import Data.Yahoo
-import NumHask.Prelude
+import NumHask.Prelude hiding (fold)
 import qualified Data.HashMap.Strict as HashMap
 import Web.Rep
-import Run.Types
 import Data.Time
 import Data.Mealy
 import Data.Quantiles
-import Data.List ((!!), transpose)
+import Data.List ((!!))
 import NumHask.Array.Fixed
 
--- scatterChart
--- histChart
--- quantileHistChart
--- digitPixelChart
--- statistics table
-{-
-  let ftime = Text.pack . formatTime defaultTimeLocale (iso8601DateFormat Nothing)
-  let output' = do
-        output "run" $ Fence $
-          Text.unlines
-            [ toStrict (pShowNoColor c)
-            ]
-        output "stats" $ Native $
-          (: [])
-            ( table
-                mempty
-                []
-                [AlignLeft, AlignRight]
-                []
-                [ ["Pre-load from", maybe "" (ftime . fst) (head (taker nAll rs))],
-                  ["Start Date", maybe "" (ftime . fst) (head $ taker n rs)],
-                  ["End Date", maybe "" (ftime . fst) (head (reverse rs))],
-                  ["n", show n],
-                  ["nAll", show nAll],
-                  ["daily average return", formatN (FormatPercent 3) (L.fold (ma 1) (taker n $ snd <$> rs))],
-                  ["average return pa", formatN (FormatPercent 3) (250 * L.fold (ma 1) (taker n $ snd <$> rs))],
-                  ["daily average sd return", formatN (FormatPercent 3) (L.fold (std 1) (taker n $ snd <$> rs))],
-                  ["average sd return pa", formatN (FormatPercent 3) (sqrt 250.0 * L.fold (std 1) (taker n $ snd <$> rs))]
-                ]
-            )
-
--}
-
+-- * representation
 data HistoryConfig = HistoryConfig
   { hN :: Int,
     hRunup :: Int,
@@ -79,9 +66,18 @@ data HistoryConfig = HistoryConfig
 defaultHistoryConfig :: HistoryConfig
 defaultHistoryConfig = HistoryConfig 10000 2000 0.99 [0.99, 0.95] 0.99 0.99 ["ma", "std", "betama"] defaultQuantiles 0.99
 
-makeReturns :: HistoryConfig -> IO [(Day, Double)]
-makeReturns c = do
-  makeReturnSeries ((c ^. #hN) + (c ^. #hRunup))
+defaultQuantiles :: [Double]
+defaultQuantiles = ((0.1 *) <$> [1 .. 9])
+
+quantileNames :: [Double] -> [Text]
+quantileNames qs = (<> "th") . comma 0 . (100 *) <$> qs
+
+nAll :: HistoryConfig -> Int
+nAll c = ((c ^. #hN) + (c ^. #hRunup))
+
+makeReturns :: HistoryConfig -> IO [(UTCTime, Double)]
+makeReturns c =
+  fmap (first (`UTCTime` 0)) <$> makeReturnSeries ((c ^. #hN) + (c ^. #hRunup))
 
 repHistoryConfig :: (Monad m) => [Text] -> HistoryConfig -> SharedRep m HistoryConfig
 repHistoryConfig allItems cfg = bimap hmap HistoryConfig a <<*>> b <<*>> c <<*>> d <<*>> e <<*>> f <<*>> g <<*>> h <<*>> i
@@ -125,99 +121,112 @@ repModel1HistoryConfig cfg = bimap hmap Model1HistoryConfig a <<*>> b <<*>> c
       readTextbox (Just "model1 regression beta") (cfg ^. #m1RegRate)
     hmap a b c = a <> b <> c
 
-historyChartNames :: [Text]
-historyChartNames = ["ma", "std", "betaMa2X", "betaStd2X", "model1JustBeta", "quantiles", "digitise"]
 
-historyCharts :: SvgOptions -> HistoryConfig -> Model1HistoryConfig -> [(Day,Double)] -> HashMap.HashMap Text Text
-historyCharts svgo hc m1hc xs = HashMap.fromList
-  [ ("ma",
-      renderHudOptionsChart svgo
-      (tsHud (hc ^. #hN) (hc ^. #hRates) "ma" ds)
-      []
-      (tsZeroChart (hc ^. #hN) (hc ^. #hRates) (\r -> scan (ma r)) rs
-      )),
+-- |
+--
+-- > rs <- makeReturns defaultHistoryConfig
+-- > HashMap.keys $ historyCharts defaultHistoryConfig defaultModel1HistoryConfig rs
+-- ["betaMa2X","quantile histogram","betaStd2X","stats","laststd","quantiles","model1JustBeta","ma","digit pixel","ma vs std","digitise","std","lastma"]
+historyChartNames :: [Text]
+historyChartNames = ["betaMa2X","quantile histogram","betaStd2X","stats","laststd","quantiles","model1JustBeta","ma","digit pixel","ma vs std","digitise","std","lastma"]
+
+-- | a map of the possible history charts
+historyCharts :: HistoryConfig -> Model1HistoryConfig -> [(UTCTime,Double)] -> HashMap.HashMap Text (HudOptions, [Chart Double])
+historyCharts hc m1hc xs =
+  HashMap.fromList
+  [ ("stats",
+      (mempty, tableChart (stats defaultHistoryConfig xs))),
+    ("ma",
+      ( tsRatesHud "ma" (hc ^. #hRates) utcs,
+        scannerChart (hc ^. #hN) (hc ^. #hRates) (\r -> scan (ma r)) rs)),
     ("std",
-      renderHudOptionsChart svgo
-      (tsHud (hc ^. #hN) (hc ^. #hRates) "std" ds)
-      []
-      (tsZeroChart (hc ^. #hN) (hc ^. #hRates) (\r -> scan (std r)) rs
-      )),
+      ( tsRatesHud "std" (hc ^. #hRates) utcs,
+        scannerChart (hc ^. #hN) (hc ^. #hRates) (\r -> scan (std r)) rs)),
+    ("lastma", histChart "last ma" (Just $ show <$> (hc ^. #hRates))
+      (Range (-0.01) 0.01) 20 (lastma rs)),
+    ("laststd", histChart "last ma" (Just $ show <$> (hc ^. #hRates))
+      (Range (-0.01) 0.01) 20 (laststd rs)),
     ("betaMa2X",
-      renderHudOptionsChart svgo
-      (tsHud (hc ^. #hN) (hc ^. #hRates) "beta ma measure" ds)
-      []
-      (tsZeroChart (hc ^. #hN) (hc ^. #hRates) (betama2x (hc ^. #hRateBetaMa2X)) rs
-      )),
+      ( tsRatesHud "beta ma measure" (hc ^. #hRates) utcs,
+        scannerChart (hc ^. #hN) (hc ^. #hRates)
+        (betama2x (hc ^. #hRateBetaMa2X)) rs)),
     ("betaStd2X",
-      renderHudOptionsChart svgo
-      (tsHud (hc ^. #hN) (hc ^. #hRates) "beta std to ma" ds)
-      []
-      (tsZeroChart (hc ^. #hN) (hc ^. #hRates) (betastd2x (hc ^. #hRateBetaStd2X)) rs
-      )),
+      ( tsRatesHud "beta std to ma" (hc ^. #hRates) utcs,
+        scannerChart (hc ^. #hN) (hc ^. #hRates)
+        (betastd2x (hc ^. #hRateBetaStd2X)) rs)),
     ("model1JustBeta",
-      renderHudOptionsChart svgo
-      (tsModel1BetaHud (hc ^. #hN) "model1 just beta" ds)
-      []
-      (tsCharts (hc ^. #hN) (hc ^. #hRate) model1fit rs)),
+      ( tsModel1BetaHud "model1 just beta" utcs,
+        scannersChart (hc ^. #hN) (hc ^. #hRate) (model1fit m1hc) rs)),
     ("quantiles",
-      quantileChart svgo "quantiles" (quantileNames $ hc ^. #hQuantiles) (zip ds (qscan (hc ^. #hQuantileRate) rs))
+      quantileChart "quantiles" (quantileNames $ hc ^. #hQuantiles)
+      (blendMidLineStyles (length qss) 0.001
+       ((Colour 0.7 0.1 0.3 0.2), (Colour 0.1 0.4 0.8 1)))
+      (tsAxes utcs)
+      qss
     ),
+    ("quantile histogram", quantileHistChart "quantile histogram" Nothing (hc ^. #hQuantiles) qs),
     ("digitise",
-     digitChart svgo "digitized return" (quantileNames (hc ^. #hQuantiles))
-      (zip ds (digitscan rs))
+      digitChart "digitized return" (quantileNames (hc ^. #hQuantiles)) utcs digits &
+      second (<> stdLineChart 0.01 palette1 (scan ((\x y -> [x,y]) <$> ma 0.95 <*> std 0.95) digits))
+    ),
+    ("digit pixel", (mempty, digitPixelChart defaultPixelStyle (defaultPixelLegendOptions "legend!") ("digit pixel", "ma", "std") (quantileNames $ hc ^. #hQuantiles) d1)),
+    ("ma vs std",
+      ((defaultHudOptions & #hudTitles .~ [defaultTitle "ma vs std"]), scatterChart (scat rs))
     )
   ]
   where
-    ds = fst <$> xs
+    n = hc ^. #hN
+    utcs = taker n (fst <$> xs)
     rs = snd <$> xs
+    lastma rs = (\r -> fold (ma r) rs) <$> (hc ^. #hRates)
+    laststd rs = (\r -> fold (std r) rs) <$> (hc ^. #hRates)
+    scat rs = (\r -> scan (Point <$> ma r <*> std r) rs) <$> (hc ^. #hRates)
     betama2x br r rs = scan (beta1 (ma br)) $ zip rs (scan (ma r >>> delay [0]) rs)
     betastd2x br r rs = scan (beta1 (ma br)) $ zip rs (scan (std r >>> delay [0]) rs)
-    model1fit r rs = fmap (fmap ((min (m1hc ^. #m1Max)) . (max (m1hc ^. #m1Min)))) . scan (model1BetaFit (m1hc ^. #m1RegRate) r) $ rs
-    qscan r rs = scan (fromFoldl (onlineQuantiles r (hc ^. #hQuantiles))) rs
-    digitscan rs = taker 1000 $ scan (fromFoldl $ onlineDigitize (hc ^. #hQuantileRate) (hc ^. #hQuantiles)) rs
+    digitscan rs = taker 1000 $ scan (dscan (hc ^. #hQuantiles) (hc ^. #hQuantileRate)) rs
+    digits = fromIntegral <$> digitscan rs
+    qss = scan (qscan (hc ^. #hQuantiles) (hc ^. #hQuantileRate)) rs
+    qs = fold (qscan (hc ^. #hQuantiles) (hc ^. #hQuantileRate)) rs
+    d1 = scan
+      ((,) <$>
+       (ma 0.95 >>> dscan (hc ^. #hQuantiles) (hc ^. #hQuantileRate)) <*>
+       (std 0.95 >>> dscan (hc ^. #hQuantiles) (hc ^. #hQuantileRate)))
+      rs
 
-tsrs :: Int -> [Double] -> (Double -> [a] -> [Double]) -> [a] -> [[Point Double]]
-tsrs n rs rscan xs =
-  zipWith Point [0 ..]
-    . taker n
-    . (\r -> rscan r xs)
-    <$> rs
+-- * scans
+-- | scan of quantiles
+qscan :: [Double] -> Double -> Mealy Double [Double]
+qscan qs r = fromFoldl (onlineQuantiles r qs)
 
-tsZeroChart :: Int -> [Double] -> (Double -> [a] -> [Double]) -> [a] -> [Chart Double]
-tsZeroChart n rs rscan xs = zipWith (\l c -> Chart (LineA l) c)
-  tsZeroLineStyle (zeroLine : (fmap SpotPoint <$> tsrs n rs rscan xs))
-  where
-    zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
-    (Rect lx ux _ _) = space1 $ mconcat (tsrs n rs rscan xs)
+-- | scan of digits
+dscan :: [Double] -> Double -> Mealy Double Int
+dscan qs r = fromFoldl (onlineDigitize r qs)
 
-tsZeroLineStyle :: [LineStyle]
-tsZeroLineStyle = zipWith (\c w -> defaultLineStyle & #color .~ c & #width .~ w) palette1 (0.001 : repeat 0.005)
-
-tsHud :: Int -> [Double] -> Text -> [Day] -> HudOptions
-tsHud n rs title ds =
+tsModel1BetaHud :: Text -> [UTCTime] -> HudOptions
+tsModel1BetaHud title ds =
   defaultHudOptions
     & #hudTitles
     .~ [defaultTitle title & #style . #size .~ 0.08]
-    & #hudLegend
-    .~ Just
-      ( defaultLegendOptions
-          & #ltext . #size .~ 0.3
-          & #lplace .~ PlaceBottom
-          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
-        zipWith
-          (\a r -> (LineA a, ("rate = " <>) . Text.pack . show $ r))
-          (drop 1 tsZeroLineStyle)
-          rs)
-    & #hudAxes
-    .~ [ defaultAxisOptions
-           & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
-           & #place .~ PlaceLeft,
-         defaultAxisOptions & #atick . #tstyle
-           .~ TickPlaced
-             ( first fromIntegral
-                 <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) <$> taker n ds)
-             )
-       ]
+    & #hudLegend .~ Just leg
+    & #hudAxes .~ tsAxes ds
+  where
+    leg =
+      (defaultLegendOptions
+      & #ltext . #size .~ 0.3
+      & #lplace .~ PlaceBottom
+      & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
+      zipWith
+      (\a r -> (LineA a, r))
+      (stdLines 0.005)
+      ["alpha", "ma2X", "std2X", "ma2S", "std2S"])
+
+-- * modelling
+-- | take a decay rate for regression fits, and a list of decay rates for the underyling stats, and fit model 1
+model1fit :: Model1HistoryConfig -> Double -> [Double] -> [[Double]]
+model1fit m1hc r rs =
+  fmap (fmap ((min (m1hc ^. #m1Max)) .
+              (max (m1hc ^. #m1Min)))) .
+  scan (model1BetaFit (m1hc ^. #m1RegRate) r) $ rs
 
 model1BetaFit' :: Double -> Double -> Mealy Double (Array '[4] Double, Double)
 model1BetaFit' br r =
@@ -232,49 +241,23 @@ model1BetaFit' br r =
 model1BetaFit :: Double -> Double -> Mealy Double [Double]
 model1BetaFit br r = (\(x,y) -> y:toList x) <$> model1BetaFit' br r
 
-tsCharts :: Int -> Double -> (Double -> [a] -> [[Double]]) -> [a] -> [Chart Double]
-tsCharts n r rscan xs = zipWith (\l c -> Chart (LineA l) c)
-  tsZeroLineStyle (zeroLine : (fmap SpotPoint <$> tsr n r rscan xs))
+-- |
+--
+-- > let ts = stats defaultHistoryConfig (first (`UTCTime` 0) <$> rs)
+stats :: HistoryConfig -> [(UTCTime, Double)] -> [[Text]]
+stats cfg rs =
+  [ ["Pre-load from", maybe "" ftime (head ds)],
+    ["Start Date", maybe "" ftime (head $ taker n ds)],
+    ["End Date", maybe "" ftime (head (reverse ds))],
+    ["n", show n],
+    ["nAll", show (nAll cfg)],
+    ["daily average return", formatN (FormatPercent 3) (fold (ma 1) (taker n xs))],
+    ["average return pa", formatN (FormatPercent 3) (250 * fold (ma 1) (taker n xs))],
+    ["daily average sd return", formatN (FormatPercent 3) (fold (std 1) (taker n xs))],
+    ["average sd return pa", formatN (FormatPercent 3) (sqrt 250.0 * fold (std 1) (taker n xs))]
+  ]
   where
-    zeroLine = SpotPoint <$> [Point lx 0, Point ux 0]
-    (Rect lx ux _ _) = space1 $ mconcat (tsr n r rscan xs)
-
-tsr :: Int -> Double -> (Double -> [a] -> [[Double]]) -> [a] -> [[Point Double]]
-tsr n r rscan xs = zipWith Point [0 ..] . taker n <$> (Data.List.transpose $ rscan r xs)
-
-tsModel1BetaHud :: Int -> Text -> [Day] -> HudOptions
-tsModel1BetaHud n title ds =
-  defaultHudOptions
-    & #hudTitles
-    .~ [defaultTitle title & #style . #size .~ 0.08]
-    & #hudLegend
-    .~ Just
-      ( defaultLegendOptions
-          & #ltext . #size .~ 0.3
-          & #lplace .~ PlaceBottom
-          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
-        zipWith
-          (\a r -> (LineA a, r))
-          (drop 1 tsZeroLineStyle)
-          ["alpha", "ma2X", "std2X", "ma2S", "std2S"])
-    & #hudAxes
-    .~ [ defaultAxisOptions
-           & #atick . #tstyle .~ TickRound (FormatPercent 0) 6 TickExtend
-           & #place .~ PlaceLeft,
-         defaultAxisOptions & #atick . #tstyle
-           .~ TickPlaced
-             ( first fromIntegral
-                 <$> makeTickDates PosIncludeBoundaries Nothing 8 ((`UTCTime` 0) <$> taker n ds)
-             )
-       ]
-
-testQ :: IO ()
-testQ = do
-  let hc = defaultHistoryConfig
-  xs <- makeReturns defaultHistoryConfig
-  let rs = taker 1000 $ snd <$> xs
-  let ds = taker 1000 $ fst <$> xs
-  let dgs rs = scan (fromFoldl $ onlineDigitize (hc ^. #hQuantileRate) (hc ^. #hQuantiles)) rs
-  let c = digitChart defaultSvgOptions "digitized return" (quantileNames (hc ^. #hQuantiles)) (zip ds (dgs rs))
-  writeFile "other/scratch.svg" c
-
+    n = cfg ^. #hN
+    ftime = pack . formatTime defaultTimeLocale (iso8601DateFormat Nothing)
+    xs = snd <$> rs
+    ds = fst <$> rs

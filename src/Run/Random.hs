@@ -16,6 +16,7 @@ module Run.Random
     RandomSets(..),
     makeRandomSets,
     repRandomConfig,
+    randomChartsNames,
     randomCharts,
   )
 where
@@ -26,7 +27,6 @@ import Control.Monad
 import Data.Generics.Labels ()
 import qualified Data.HashMap.Strict as HashMap
 import Data.Maybe
-import qualified Data.Text as Text
 import NumHask.Prelude hiding (fold, asum)
 import Data.Mealy
 import Data.Simulate
@@ -34,7 +34,7 @@ import Data.List ((!!))
 import Web.Rep
 import System.Random.MWC
 import Data.Vector (Vector)
-import Run.Types
+import Chart.Various
 
 data RandomConfig =
   RandomConfig
@@ -74,48 +74,30 @@ repRandomConfig cfg = bimap hmap RandomConfig seed' <<*>> n' <<*>> nsets' <<*>> 
       readTextbox (Just "n") (view #corr cfg)
     hmap a b c d = a <> b <> c <> d
 
-randomCharts :: SvgOptions -> RandomSets -> HashMap.HashMap Text Text
-randomCharts svgo rs = HashMap.fromList
-  [ ("walk0",
-     renderHudOptionsChart
-      svgo
-      (titlesHud "random walk" "n" "accumulated value")
-      []
-      (scanChart (const asum) [1] 0 ((rs ^. #rs) !! 0))
-    )
-  , ("walks",
-     renderHudOptionsChart
-      svgo
-      (titlesHud "random walks" "n" "accumulated value" &
-           #hudLegend .~ Just
-      ( defaultLegendOptions
-          & #ltext . #size .~ 0.2
-          & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
-          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
-        zipWith
-          (\a r -> (LineA a, ("rw: " <>) . Text.pack . show $ r))
-          ls
-          (take (length $ rs ^. #rs) [(0::Int)..])
-      ))
-      []
-      (zipWith (\l xs -> Chart (LineA l) (xs)) ls ((zipWith sp [0..] . scan asum) <$> ((rs ^. #rs))))
-      ),
-    ("correlated walks",
-     renderHudOptionsChart
-      svgo
-      (titlesHud "correlated random walks" "n" "accumulated value" &
-           #hudLegend .~ Just
-      ( defaultLegendOptions
-          & #ltext . #size .~ 0.2
-          & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
-          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
-        zipWith
-          (\a r -> (LineA a, ("rw: " <>) . Text.pack . show $ r))
-          ls
-          (take (length $ rs ^. #rs) [(0::Int)..])
-      ))
-      []
-      (zipWith (\l xs -> Chart (LineA l) (xs)) ls ((zipWith sp [0..] . scan asum) <$> transpose (((\(x,y) -> [x,y])) <$> (rs ^. #rsp))))
-      )
-    ]
+randomChartsNames :: [Text]
+randomChartsNames = ["walk0", "walks", "correlated walks"]
 
+randomCharts :: RandomSets -> HashMap.HashMap Text (HudOptions, [Chart Double])
+randomCharts rs = HashMap.fromList
+  [ ("walk0",
+      ((titlesHud "random walk" "n" "accumulated value"),
+       (scanChart (const asum) [1] 0 ((rs ^. #rs) !! 0)))
+    ),
+    ("walks",
+      ((titlesHud "random walks" "n" "accumulated value" &
+           #hudLegend .~ Just leg),
+      (zipWith (\l xs -> Chart (LineA l) (xs))
+       (stdLines 0.005)
+       (fmap SpotPoint . xify . scan asum <$> ((rs ^. #rs)))))),
+    ("correlated walks",
+      ((titlesHud "correlated random walks" "n" "accumulated value" &
+           #hudLegend .~ Just leg,
+      (zipWith (\l xs -> Chart (LineA l) (xs)) (stdLines 0.005)
+       ((fmap SpotPoint . xify . scan asum) <$>
+        transpose (((\(x,y) -> [x,y])) <$> (rs ^. #rsp)))))))
+    ]
+  where
+    leg =
+      lineLegend 0.01
+      ((("rw: " :: Text) <>) . show <$> (rs ^. #rs))
+      palette1

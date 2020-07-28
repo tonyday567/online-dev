@@ -8,16 +8,17 @@ extra-deps:
   - box-0.5.0
   - box-csv-0.0.1
   - box-socket-0.0.1
-  - chart-svg-0.1.1
-  - hslua-1.1.2
-  - jira-wiki-markup-1.3.2
+  # - chart-svg-0.1.2
+  - git: https://github.com/tonyday567/chart-svg
+    commit: 75be18103fc61a83bcdd8dad062924d2d605a465
+  # - chart-various-0.0.1
+  - git: https://github.com/tonyday567/chart-svg-various
+    commit: c1fd6c88197e74aca0e83006d1d3092df0ddf426
   - monad-bayes-0.1.1.0
-  - numhask-0.6.0
+  - numhask-0.6.0.2
   - numhask-array-0.7.0
   - numhask-space-0.5.0
   - online-0.6.0
-  - pandoc-2.10
-  - readme-lhs-0.7.0
   - vinyl-0.13.0
   - web-rep-0.6.0
 

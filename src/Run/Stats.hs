@@ -15,12 +15,12 @@ module Run.Stats
     defaultStatsConfig,
     repStatsConfig,
     testStatsCharts,
-    allTestStatsCharts,
+    testStatsChartsNames,
     Model1(..),
     zeroModel1,
     repModel1,
     model1Charts,
-    model1ChartNames,
+    model1ChartsNames,
   )
 where
 
@@ -36,7 +36,7 @@ import Data.Mealy
 import Data.List ((!!))
 import Web.Rep
 import Run.Random
-import Run.Types
+import Chart.Various
 
 -- | various configuration details
 data StatsConfig = StatsConfig
@@ -80,45 +80,36 @@ repStatsConfig cfg = bimap hmap StatsConfig rates' <<*>> beta' <<*>> betas' <<*>
       readTextbox (Just "rate of beta calc for madep") (view #stMaDepBetaRate cfg)
     hmap rates'' beta'' betas'' stdmadecay'' madepbeta'' madeprate'' madepbetarate'' = rates'' <> beta'' <> betas'' <> stdmadecay'' <> madepbeta'' <> madeprate'' <> madepbetarate''
 
-testStatsCharts :: SvgOptions -> RandomSets -> StatsConfig -> HashMap.HashMap Text Text
-testStatsCharts svgo rs st = HashMap.fromList
+testStatsCharts :: StatsConfig -> RandomSets -> HashMap.HashMap Text (HudOptions, [Chart Double])
+testStatsCharts st rs = HashMap.fromList
     [ ("ex-madep",
-       renderHudOptionsChart
-        svgo
-        (titlesHud ("beta check: " <> (show $ view #stMaDepBeta st)) "n" "beta measure")
-        []
+        ((titlesHud ("beta check: " <> (show $ view #stMaDepBeta st)) "n" "beta measure"),
         (betaCheckChart
          (view #stMaDepBeta st)
          (view #stMaDepRate st)
          (view #stMaDepBetaRate st)
          1000
-         xs)),
+         xs))),
       ("ex-ma",
-       renderHudOptionsChart svgo
-        (scanHud "ma" ((1 -) <$> view #stRates st))
-        []
-        (scanChart ma ((1 -) <$> view #stRates st) 0 (xs <> ((1+) . (2*) <$> xs1)))),
+        ((scanHud 0.01 "ma" ((1 -) <$> view #stRates st)),
+        (scanChart ma ((1 -) <$> view #stRates st) 0 (xs <> ((1+) . (2*) <$> xs1))))),
       ("ex-std",
-       renderHudOptionsChart svgo
-        (scanHud "std" ((1 -) <$> view #stRates st))
-        []
-        (scanChart std ((1 -) <$> view #stRates st) 0 (xs <> ((1+) . (2*) <$> xs1)))),
+        ((scanHud 0.01 "std" ((1 -) <$> view #stRates st)),
+        (scanChart std ((1 -) <$> view #stRates st) 0 (xs <> ((1+) . (2*) <$> xs1))))),
       ("ex-stdma",
-       renderHudOptionsChart svgo
-        (titlesHud "std of ma" "rate" "std of ma / (0.5*r)**0.5")
-        []
-        (foldScanChart ma (scaledStd (view #stStdMaDecay st)) (view #stRates st) xs))
+        ((titlesHud "std of ma" "rate" "std of ma / (0.5*r)**0.5"),
+        (foldScanChart ma (scaledStd (view #stStdMaDecay st)) (view #stRates st) xs)))
     ]
   where
     xs = (rs ^. #rs) !! 0
     xs1 = (rs ^. #rs) !! 1
 
-allTestStatsCharts :: [Text]
-allTestStatsCharts = ["ex-ma", "ex-std", "ex-stdma", "ex-madep"]
+testStatsChartsNames :: [Text]
+testStatsChartsNames = ["ex-ma", "ex-std", "ex-stdma", "ex-madep"]
 
 betaCheckChart :: Double -> Double -> Double -> Int -> [Double] -> [Chart Double]
 betaCheckChart b r rb d xs =
-  [ Chart (LineA defaultLineStyle) $ drop d $ zipWith sp [0..] (scan (beta1 (ma (1 - rb))) $ fromList $ drop 100 $ scan (betaCheck b r) xs)
+  [ Chart (LineA defaultLineStyle) $ drop d $ xify' (scan (beta1 (ma (1 - rb))) $ fromList $ drop 100 $ scan (betaCheck b r) xs)
   ]
 
 betaCheck :: Double -> Double -> Mealy Double (Double, Double)
@@ -150,30 +141,21 @@ repModel1 m1 = bimap hmap Model1 alphaX' <<*>> alphaS' <<*>> betaMa2X' <<*>> bet
       readTextbox (Just "betaStd2S") (view #betaStd2S m1)
     hmap alphaX'' alphaS'' betaMa2X'' betaMa2S'' betaStd2X'' betaStd2S'' = alphaX'' <> alphaS'' <> betaMa2X'' <> betaMa2S'' <> betaStd2X'' <> betaStd2S''
 
-model1ChartNames :: [Text]
-model1ChartNames = ["ex-stats", "ex-model1", "ex-orig", "ex-model1-compare"]
+model1ChartsNames :: [Text]
+model1ChartsNames = ["ex-stats", "ex-model1", "ex-orig", "ex-model1-compare"]
 
-model1Charts :: SvgOptions -> RandomSets -> Model1 -> Double -> HashMap.HashMap Text Text
-model1Charts svgo rs m1 r =
+model1Charts :: Model1 -> RandomSets -> HashMap.HashMap Text (HudOptions, [Chart Double])
+model1Charts m1 rs =
   HashMap.fromList
-    [ ("ex-stats",
-      show (fold (depModel1 r m1 >>> ((,) <$> ma r <*> std r)) xs)),
+    [ 
       ("ex-model1",
-       renderHudOptionsChart
-       svgo
-       (titlesHud "model1 random walk: " "" "")
-       []
-       (scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs)),
+       ((titlesHud "model1 random walk: " "" ""),
+       (scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs))),
       ("ex-orig",
-        renderHudOptionsChart
-        svgo
-        (titlesHud "origin random walk: " "" "")
-        []
-        (scanChart (\_ -> M id (+) id) [0.01] 0 xs)),
+        ((titlesHud "origin random walk: " "" ""),
+        (scanChart (\_ -> M id (+) id) [0.01] 0 xs))),
       ("ex-model1-compare",
-       renderHudOptionsChart
-       svgo
-       (titlesHud "model1 random walk: " "" ""  &
+       ((titlesHud "model1 random walk: " "" ""  &
          #hudLegend .~ Just
          ( defaultLegendOptions
           & #ltext . #size .~ 0.2
@@ -181,13 +163,11 @@ model1Charts svgo rs m1 r =
           & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
            zipWith
            (\a l -> (LineA a, l))
-           ls
+           (stdLines 0.005)
            ["model1", "original"]
-         ))
-       []
+         )),
        ((scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs) <>
-       (scanChart (\_ -> M id (+) id) [0.01] 0 xs)))
+       (scanChart (\_ -> M id (+) id) [0.01] 0 xs))))
     ]
   where
     xs = (rs ^. #rs) !! 0
-
