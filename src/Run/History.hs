@@ -46,7 +46,7 @@ import qualified Data.HashMap.Strict as HashMap
 import Web.Rep
 import Data.Time
 import Data.Mealy
-import Data.Quantiles
+import Data.Mealy.Quantiles
 import Data.List ((!!))
 import NumHask.Array.Fixed
 
@@ -196,11 +196,11 @@ historyCharts hc m1hc xs =
 -- * scans
 -- | scan of quantiles
 qscan :: [Double] -> Double -> Mealy Double [Double]
-qscan qs r = fromFoldl (onlineQuantiles r qs)
+qscan qs r = quantiles r qs
 
 -- | scan of digits
 dscan :: [Double] -> Double -> Mealy Double Int
-dscan qs r = fromFoldl (onlineDigitize r qs)
+dscan qs r = digitize r qs
 
 tsModel1BetaHud :: Text -> [UTCTime] -> HudOptions
 tsModel1BetaHud title ds =

@@ -42,7 +42,7 @@ import qualified Data.HashMap.Strict as HashMap
 import Data.Mealy
 import Data.Profunctor.Strong
 import Data.Sequence (Seq (..), ViewR (..))
-import Data.Simulate
+import Data.Mealy.Simulate
 import qualified Data.Text as Text
 import Lucid
 import Network.Wai (rawPathInfo)

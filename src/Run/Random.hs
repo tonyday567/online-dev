@@ -29,7 +29,7 @@ import qualified Data.HashMap.Strict as HashMap
 import Data.Maybe
 import NumHask.Prelude hiding (fold, asum)
 import Data.Mealy
-import Data.Simulate
+import Data.Mealy.Simulate
 import Data.List ((!!))
 import Web.Rep
 import System.Random.MWC
@@ -88,12 +88,12 @@ randomCharts rs = HashMap.fromList
            #hudLegend .~ Just leg),
       (zipWith (\l xs -> Chart (LineA l) (xs))
        (stdLines 0.005)
-       (fmap SpotPoint . xify . scan asum <$> ((rs ^. #rs)))))),
+       (fmap PointXY . xify . scan asum <$> ((rs ^. #rs)))))),
     ("correlated walks",
       ((titlesHud "correlated random walks" "n" "accumulated value" &
            #hudLegend .~ Just leg,
       (zipWith (\l xs -> Chart (LineA l) (xs)) (stdLines 0.005)
-       ((fmap SpotPoint . xify . scan asum) <$>
+       ((fmap PointXY . xify . scan asum) <$>
         transpose (((\(x,y) -> [x,y])) <$> (rs ^. #rsp)))))))
     ]
   where
