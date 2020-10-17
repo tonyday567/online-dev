@@ -5,7 +5,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
@@ -50,7 +49,6 @@ import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Network.Wai.Middleware.Static ((>->), addBase, noDots, staticPolicy)
 import NumHask.Array.Dynamic hiding (append)
 import NumHask.Prelude hiding (L1, State, StateT, fold, get, replace, runState, runStateT, state)
-import Options.Generic
 import Options.Generic
 import Run.History
 import Run.Random
@@ -142,7 +140,7 @@ serveRep' :: SharedRep IO ServeType -> IO ()
 serveRep' srep = sharedServer srep defaultSocketConfig defaultSocketPage
   defaultInputCode outputCode
   where
-    outputCode ea = do
+    outputCode ea =
       case ea of
         Left err -> pure [Append "debug" err]
         Right st -> do
@@ -154,7 +152,7 @@ serveRep' srep = sharedServer srep defaultSocketConfig defaultSocketPage
 makeCharts :: ServeType -> IO [(Text, Text)]
 makeCharts (ServeStats rcfg ncfg items svgo) =
   makeRandomCharts rcfg svgo items (testStatsCharts ncfg)
-makeCharts (ServeRandoms cfg items svgo) = do
+makeCharts (ServeRandoms cfg items svgo) =
   makeRandomCharts cfg svgo items randomCharts
 makeCharts (ServeModel1 cfg m1 _ items svgo) =
   makeRandomCharts cfg svgo items

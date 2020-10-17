@@ -9,7 +9,13 @@ extra-deps:
   - box-csv-0.0.2
   - box-socket-0.0.2
   - chart-svg-0.1.3
-  - chart-svg-various-0.0.2
+  # - chart-svg-various-0.0.3
+  - git: https://github.com/tonyday567/chart-svg-various
+    commit: 9f81e410f301d88ca008e505e874c72170e66301
+  - reanimate-1.1.1.0
+  - reanimate-svg-0.13.0.0
+  - hgeometry-0.11.0.0
+  - hgeometry-combinatorial-0.11.0.0
   - monad-bayes-0.1.1.0
   - numhask-0.6.0.2
   - numhask-array-0.7.0

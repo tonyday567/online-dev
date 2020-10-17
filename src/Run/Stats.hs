@@ -25,6 +25,7 @@ module Run.Stats
 where
 
 import Chart
+import Chart.Mealy hiding (taker)
 import Control.Category ((>>>))
 import Control.Lens hiding ((:>), (<&>), Unwrapped, Wrapped)
 import Control.Monad
@@ -83,22 +84,22 @@ repStatsConfig cfg = bimap hmap StatsConfig rates' <<*>> beta' <<*>> betas' <<*>
 testStatsCharts :: StatsConfig -> RandomSets -> HashMap.HashMap Text (HudOptions, [Chart Double])
 testStatsCharts st rs = HashMap.fromList
     [ ("ex-madep",
-        ((titlesHud ("beta check: " <> (show $ view #stMaDepBeta st)) "n" "beta measure"),
-        (betaCheckChart
+        (titlesHud ("beta check: " <> show (view #stMaDepBeta st)) "n" "beta measure",
+        betaCheckChart
          (view #stMaDepBeta st)
          (view #stMaDepRate st)
          (view #stMaDepBetaRate st)
          1000
-         xs))),
+         xs)),
       ("ex-ma",
-        ((scanHud 0.01 "ma" ((1 -) <$> view #stRates st)),
-        (scanChart ma ((1 -) <$> view #stRates st) 0 (xs <> ((1+) . (2*) <$> xs1))))),
+        (scanHud 0.01 "ma" ((1 -) <$> view #stRates st),
+        scanChart ma ((1 -) <$> view #stRates st) 0 (xs <> ((1+) . (2*) <$> xs1)))),
       ("ex-std",
-        ((scanHud 0.01 "std" ((1 -) <$> view #stRates st)),
-        (scanChart std ((1 -) <$> view #stRates st) 0 (xs <> ((1+) . (2*) <$> xs1))))),
+        (scanHud 0.01 "std" ((1 -) <$> view #stRates st),
+        scanChart std ((1 -) <$> view #stRates st) 0 (xs <> ((1+) . (2*) <$> xs1)))),
       ("ex-stdma",
-        ((titlesHud "std of ma" "rate" "std of ma / (0.5*r)**0.5"),
-        (foldScanChart ma (scaledStd (view #stStdMaDecay st)) (view #stRates st) xs)))
+        (titlesHud "std of ma" "rate" "std of ma / (0.5*r)**0.5",
+        foldScanChart ma (scaledStd (view #stStdMaDecay st)) (view #stRates st) xs))
     ]
   where
     xs = (rs ^. #rs) !! 0
@@ -116,12 +117,12 @@ betaCheck :: Double -> Double -> Mealy Double (Double, Double)
 betaCheck b r = (,) <$> xs' <*> ma'
   where
     xs' = depState (\a m -> a + b * m) (ma (1 - r))
-    ma' = (ma r) >>> delay [0]
+    ma' = ma r >>> delay [0]
 
 scaledStd :: (Fractional b, Eq b, ExpField b) => b -> b -> Mealy b b
-scaledStd stdr r = (/ ((0.5 * r')**0.5)) <$> (std stdr)
+scaledStd stdr r = (/ sqrt (0.5 * r')) <$> std stdr
   where
-    r' = (bool r 0.00001 (r==0))
+    r' = bool r 0.00001 (r==0)
 
 -- | representation of model1
 repModel1 :: (Monad m) => Model1 -> SharedRep m Model1
@@ -147,27 +148,27 @@ model1ChartsNames = ["ex-stats", "ex-model1", "ex-orig", "ex-model1-compare"]
 model1Charts :: Model1 -> RandomSets -> HashMap.HashMap Text (HudOptions, [Chart Double])
 model1Charts m1 rs =
   HashMap.fromList
-    [ 
+    [
       ("ex-model1",
-       ((titlesHud "model1 random walk: " "" ""),
-       (scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs))),
+       (titlesHud "model1 random walk: " "" "",
+       scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs)),
       ("ex-orig",
-        ((titlesHud "origin random walk: " "" ""),
-        (scanChart (\_ -> M id (+) id) [0.01] 0 xs))),
+        (titlesHud "origin random walk: " "" "",
+        scanChart (\_ -> M id (+) id) [0.01] 0 xs)),
       ("ex-model1-compare",
-       ((titlesHud "model1 random walk: " "" ""  &
-         #hudLegend .~ Just
+       (titlesHud "model1 random walk: " "" ""  &
+         #hudLegend ?~
          ( defaultLegendOptions
           & #ltext . #size .~ 0.2
           & #lplace .~ PlaceAbsolute (Point 0.3 (-0.3))
-          & #legendFrame .~ Just (RectStyle 0.02 (palette1 !! 5) white),
+          & #legendFrame ?~ RectStyle 0.02 (palette1 !! 5) white,
            zipWith
            (\a l -> (LineA a, l))
            (stdLines 0.005)
            ["model1", "original"]
-         )),
-       ((scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs) <>
-       (scanChart (\_ -> M id (+) id) [0.01] 0 xs))))
+         ),
+       scanChart (\r -> depModel1 r m1 >>> M id (+) id) [0.01] 0 xs <>
+       scanChart (\_ -> M id (+) id) [0.01] 0 xs))
     ]
   where
     xs = (rs ^. #rs) !! 0
